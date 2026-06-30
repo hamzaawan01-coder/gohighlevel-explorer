@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import type { Stage } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
+import { useTenancy } from "@/lib/tenancy";
 import { useQuery } from "@tanstack/react-query";
 
 const NO_CONTACT = "__none__";
@@ -47,10 +48,11 @@ export function NewDealDialog({
     }
   }, [open, stages]);
 
+  const subId = useTenancy((s) => s.currentSubAccountId);
   const contactsQuery = useQuery({
-    queryKey: ["contacts"],
-    queryFn: fetchContacts,
-    enabled: open,
+    queryKey: ["contacts", subId],
+    queryFn: () => fetchContacts(subId!),
+    enabled: open && !!subId,
   });
 
   const contacts = contactsQuery.data ?? [];
