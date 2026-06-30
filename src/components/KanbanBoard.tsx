@@ -110,7 +110,11 @@ export function KanbanBoard({
                 ) : (
                   <div className="space-y-3 overflow-y-auto pr-1">
                     {stageDeals.map((deal) => (
-                      <DealCard key={deal.id} deal={deal} />
+                      <DealCard
+                        key={deal.id}
+                        deal={deal}
+                        contact={deal.contact_id ? contactsById.get(deal.contact_id) ?? null : null}
+                      />
                     ))}
                   </div>
                 )}
@@ -120,7 +124,13 @@ export function KanbanBoard({
         })}
       </div>
       <DragOverlay>
-        {activeDeal ? <DealCardView deal={activeDeal} dragging /> : null}
+        {activeDeal ? (
+          <DealCardView
+            deal={activeDeal}
+            dragging
+            contact={activeDeal.contact_id ? contactsById.get(activeDeal.contact_id) ?? null : null}
+          />
+        ) : null}
       </DragOverlay>
     </DndContext>
   );
