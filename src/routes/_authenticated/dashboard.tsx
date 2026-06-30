@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   LayoutGrid,
   Users,
@@ -10,7 +11,10 @@ import {
   Bell,
   ChevronsUpDown,
   Plus,
+  LogOut,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -199,15 +203,7 @@ function Dashboard() {
         </nav>
 
         <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-3 px-2">
-            <div className="size-8 rounded-full bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center text-[10px] font-semibold text-accent-foreground">
-              SC
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold">Sarah Chen</p>
-              <p className="text-[10px] text-muted-foreground">Pro Operator</p>
-            </div>
-          </div>
+          <UserMenu />
         </div>
       </aside>
 
