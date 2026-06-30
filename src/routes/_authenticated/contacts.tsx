@@ -13,6 +13,7 @@ import {
   type Contact,
   type ContactInput,
 } from "@/lib/contacts";
+import { useTenancy } from "@/lib/tenancy";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/contacts")({
@@ -32,17 +33,19 @@ function ContactsPage() {
   const [editing, setEditing] = useState<Contact | null>(null);
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const subId = useTenancy((s) => s.currentSubAccountId);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
   const contactsQuery = useQuery({
-    queryKey: ["contacts"],
-    queryFn: fetchContacts,
+    queryKey: ["contacts", subId],
+    queryFn: () => fetchContacts(subId!),
+    enabled: !!subId,
   });
 
-  const contacts = contactsQuery.data ?? [];
+  const contacts: Contact[] = contactsQuery.data ?? [];
 
   const allTags = useMemo(() => {
     const s = new Set<string>();
@@ -67,8 +70,8 @@ function ContactsPage() {
 
   const createMut = useMutation({
     mutationFn: (input: ContactInput) => {
-      if (!userId) throw new Error("Not ready");
-      return createContact(input, userId);
+      if (!userId || !subId) throw new Error("Not ready");
+      return createContact(input, userId, subId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
