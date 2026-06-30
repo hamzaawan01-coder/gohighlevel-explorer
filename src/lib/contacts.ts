@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 export type Contact = {
   id: string;
   owner_id: string;
+  sub_account_id: string;
   first_name: string | null;
   last_name: string | null;
   email: string | null;
@@ -14,10 +15,11 @@ export type Contact = {
   updated_at: string;
 };
 
-export async function fetchContacts(): Promise<Contact[]> {
+export async function fetchContacts(subAccountId: string): Promise<Contact[]> {
   const { data, error } = await supabase
     .from("contacts")
     .select("*")
+    .eq("sub_account_id", subAccountId)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Contact[];
@@ -33,10 +35,19 @@ export type ContactInput = {
   notes?: string | null;
 };
 
-export async function createContact(input: ContactInput, ownerId: string) {
+export async function createContact(
+  input: ContactInput,
+  ownerId: string,
+  subAccountId: string,
+) {
   const { data, error } = await supabase
     .from("contacts")
-    .insert({ ...input, owner_id: ownerId, tags: input.tags ?? [] })
+    .insert({
+      ...input,
+      owner_id: ownerId,
+      sub_account_id: subAccountId,
+      tags: input.tags ?? [],
+    })
     .select("*")
     .single();
   if (error) throw error;

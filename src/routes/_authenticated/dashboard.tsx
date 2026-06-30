@@ -10,6 +10,7 @@ import {
   moveDeal,
   type Deal,
 } from "@/lib/pipeline";
+import { useTenancy } from "@/lib/tenancy";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { NewDealDialog } from "@/components/NewDealDialog";
 import { AppShell } from "@/components/AppShell";
@@ -38,10 +39,12 @@ function Dashboard() {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
+  const subId = useTenancy((s) => s.currentSubAccountId);
+
   const pipelineQuery = useQuery({
-    queryKey: ["pipeline", userId],
-    enabled: !!userId,
-    queryFn: () => ensureDefaultPipeline(userId!),
+    queryKey: ["pipeline", userId, subId],
+    enabled: !!userId && !!subId,
+    queryFn: () => ensureDefaultPipeline(userId!, subId!),
   });
 
   const pipelineId = pipelineQuery.data?.id;
@@ -62,8 +65,8 @@ function Dashboard() {
       stage_id: string;
       contact_id: string | null;
     }) => {
-      if (!userId || !pipelineId) throw new Error("Not ready");
-      return createDeal({ ...input, pipeline_id: pipelineId, owner_id: userId });
+      if (!userId || !pipelineId || !subId) throw new Error("Not ready");
+      return createDeal({ ...input, pipeline_id: pipelineId, owner_id: userId, sub_account_id: subId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board", pipelineId] });

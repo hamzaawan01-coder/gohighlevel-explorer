@@ -19,6 +19,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useQuery } from "@tanstack/react-query";
 import type { Deal, Stage } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
+import { useTenancy } from "@/lib/tenancy";
 import { User } from "lucide-react";
 
 function formatMoney(n: number) {
@@ -38,10 +39,15 @@ export function KanbanBoard({
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-  const contactsQuery = useQuery({ queryKey: ["contacts"], queryFn: fetchContacts });
+  const subId = useTenancy((s) => s.currentSubAccountId);
+  const contactsQuery = useQuery({
+    queryKey: ["contacts", subId],
+    queryFn: () => fetchContacts(subId!),
+    enabled: !!subId,
+  });
   const contactsById = useMemo(() => {
     const m = new Map<string, Contact>();
-    (contactsQuery.data ?? []).forEach((c) => m.set(c.id, c));
+    (contactsQuery.data ?? []).forEach((c: Contact) => m.set(c.id, c));
     return m;
   }, [contactsQuery.data]);
 

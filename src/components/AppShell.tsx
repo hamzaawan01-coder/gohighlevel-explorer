@@ -9,11 +9,11 @@ import {
   Settings,
   Search,
   Bell,
-  ChevronsUpDown,
   LogOut,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { SubAccountSwitcher } from "@/components/SubAccountSwitcher";
 
 type NavItem = {
   label: string;
@@ -48,16 +48,7 @@ export function AppShell({
     <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
       <aside className="w-64 border-r border-border bg-sidebar flex flex-col shrink-0">
         <div className="p-4 border-b border-border">
-          <button className="w-full flex items-center gap-3 px-2 py-1.5 bg-card ring-1 ring-black/5 rounded-md hover:bg-card/80 transition-colors text-left">
-            <div className="size-6 bg-accent rounded flex items-center justify-center text-[10px] text-accent-foreground font-bold">
-              A
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold truncate">Agency Engine</p>
-              <p className="text-[10px] text-muted-foreground truncate">Workspace: Global</p>
-            </div>
-            <ChevronsUpDown className="size-3 text-muted-foreground" />
-          </button>
+          <SubAccountSwitcher />
         </div>
         <nav className="flex-1 py-4 overflow-y-auto">
           <NavGroup label="Sales" items={salesNav} />

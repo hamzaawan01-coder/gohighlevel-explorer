@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      agencies: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          owner_user_id: string
+          plan: string
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          owner_user_id: string
+          plan?: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_user_id?: string
+          plan?: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agency_memberships: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["agency_role"]
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["agency_role"]
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["agency_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_memberships_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           company: string | null
@@ -25,6 +90,7 @@ export type Database = {
           notes: string | null
           owner_id: string
           phone: string | null
+          sub_account_id: string
           tags: string[]
           updated_at: string
         }
@@ -38,6 +104,7 @@ export type Database = {
           notes?: string | null
           owner_id: string
           phone?: string | null
+          sub_account_id: string
           tags?: string[]
           updated_at?: string
         }
@@ -51,10 +118,19 @@ export type Database = {
           notes?: string | null
           owner_id?: string
           phone?: string | null
+          sub_account_id?: string
           tags?: string[]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contacts_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       deals: {
         Row: {
@@ -68,6 +144,7 @@ export type Database = {
           pipeline_id: string
           position: number
           stage_id: string
+          sub_account_id: string
           title: string
           updated_at: string
           value: number
@@ -83,6 +160,7 @@ export type Database = {
           pipeline_id: string
           position?: number
           stage_id: string
+          sub_account_id: string
           title: string
           updated_at?: string
           value?: number
@@ -98,6 +176,7 @@ export type Database = {
           pipeline_id?: string
           position?: number
           stage_id?: string
+          sub_account_id?: string
           title?: string
           updated_at?: string
           value?: number
@@ -124,6 +203,67 @@ export type Database = {
             referencedRelation: "pipeline_stages"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "deals_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitations: {
+        Row: {
+          accepted_at: string | null
+          agency_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          sub_account_id: string | null
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          agency_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role: string
+          sub_account_id?: string | null
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          agency_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          sub_account_id?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       pipeline_stages: {
@@ -135,6 +275,7 @@ export type Database = {
           owner_id: string
           pipeline_id: string
           position: number
+          sub_account_id: string
         }
         Insert: {
           color?: string
@@ -144,6 +285,7 @@ export type Database = {
           owner_id: string
           pipeline_id: string
           position?: number
+          sub_account_id: string
         }
         Update: {
           color?: string
@@ -153,6 +295,7 @@ export type Database = {
           owner_id?: string
           pipeline_id?: string
           position?: number
+          sub_account_id?: string
         }
         Relationships: [
           {
@@ -160,6 +303,13 @@ export type Database = {
             columns: ["pipeline_id"]
             isOneToOne: false
             referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_stages_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -171,6 +321,7 @@ export type Database = {
           id: string
           name: string
           owner_id: string
+          sub_account_id: string
           updated_at: string
         }
         Insert: {
@@ -179,6 +330,7 @@ export type Database = {
           id?: string
           name: string
           owner_id: string
+          sub_account_id: string
           updated_at?: string
         }
         Update: {
@@ -187,9 +339,18 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string
+          sub_account_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pipelines_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -214,6 +375,82 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sub_account_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["sub_account_role"]
+          sub_account_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["sub_account_role"]
+          sub_account_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["sub_account_role"]
+          sub_account_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_account_memberships_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sub_accounts: {
+        Row: {
+          agency_id: string
+          archived_at: string | null
+          created_at: string
+          id: string
+          industry: string | null
+          name: string
+          slug: string | null
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          name: string
+          slug?: string | null
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          name?: string
+          slug?: string | null
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_accounts_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -241,6 +478,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_agency_access: {
+        Args: { _agency: string; _user: string }
+        Returns: boolean
+      }
+      has_agency_role: {
+        Args: {
+          _agency: string
+          _role: Database["public"]["Enums"]["agency_role"]
+          _user: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -248,9 +497,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_subaccount_access: {
+        Args: { _sub: string; _user: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      agency_role: "owner" | "admin"
       app_role: "admin" | "user"
+      sub_account_role: "member" | "client"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -378,7 +633,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agency_role: ["owner", "admin"],
       app_role: ["admin", "user"],
+      sub_account_role: ["member", "client"],
     },
   },
 } as const
