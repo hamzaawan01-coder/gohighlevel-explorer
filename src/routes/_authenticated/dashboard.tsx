@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   LayoutGrid,
   Users,
@@ -12,9 +12,20 @@ import {
   ChevronsUpDown,
   Plus,
   LogOut,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ensureDefaultPipeline,
+  fetchBoard,
+  createDeal,
+  moveDeal,
+  type Deal,
+} from "@/lib/pipeline";
+import { KanbanBoard } from "@/components/KanbanBoard";
+import { NewDealDialog } from "@/components/NewDealDialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -24,12 +35,6 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
         name: "description",
         content:
           "Multi-tenant CRM, sales pipelines, email/SMS conversations and calendar bookings — all in one operator dashboard.",
-      },
-      { property: "og:title", content: "Agency Engine — Operator Dashboard" },
-      {
-        property: "og:description",
-        content:
-          "Run your agency on a single dense, fast operator surface: contacts, deals, inbox, calendar.",
       },
     ],
   }),
@@ -50,139 +55,86 @@ const automationNav: NavItem[] = [
   { label: "Settings", icon: Settings },
 ];
 
-type Deal = {
-  id: string;
-  title: string;
-  value: number;
-  tag: { label: string; tone: "blue" | "orange" | "green" | "purple" };
-  lastContact?: string;
-  badges?: string[];
-};
-
-type Column = { title: string; deals: Deal[] };
-
-const board: Column[] = [
-  {
-    title: "New Leads",
-    deals: [
-      {
-        id: "DL-492",
-        title: "Apex Systems Retainer",
-        value: 12000,
-        tag: { label: "Cold Outbound", tone: "blue" },
-        lastContact: "Last contact 2h ago",
-      },
-      {
-        id: "DL-488",
-        title: "Modern Loft Interiors",
-        value: 4500,
-        tag: { label: "Referral", tone: "orange" },
-      },
-      {
-        id: "DL-485",
-        title: "Northwind Coffee Co.",
-        value: 2800,
-        tag: { label: "Cold Outbound", tone: "blue" },
-        lastContact: "Last contact yesterday",
-      },
-    ],
-  },
-  {
-    title: "Qualified",
-    deals: [
-      {
-        id: "DL-481",
-        title: "Venture Path Media",
-        value: 8200,
-        tag: { label: "Inbound", tone: "green" },
-        badges: ["Priority", "Q3"],
-      },
-      {
-        id: "DL-479",
-        title: "Helio Solar Installs",
-        value: 10000,
-        tag: { label: "Inbound", tone: "green" },
-      },
-    ],
-  },
-  {
-    title: "Demo Scheduled",
-    deals: [
-      {
-        id: "DL-472",
-        title: "Global Logistics Hub",
-        value: 25000,
-        tag: { label: "Enterprise", tone: "purple" },
-        lastContact: "Demo Thu 2pm",
-      },
-    ],
-  },
-  {
-    title: "Closing",
-    deals: [],
-  },
-];
-
-const tagTone: Record<Deal["tag"]["tone"], string> = {
-  blue: "bg-blue-50 text-blue-700",
-  orange: "bg-orange-50 text-orange-700",
-  green: "bg-green-50 text-green-700",
-  purple: "bg-purple-50 text-purple-700",
-};
-
-type Thread = {
-  name: string;
-  time: string;
-  preview: string;
-  body?: string;
-  channel: "SMS" | "Email";
-  unread?: boolean;
-};
-
-const threads: Thread[] = [
-  {
-    name: "Marcus Aurelius",
-    time: "14:02",
-    preview: "Just sent over the signed proposal…",
-    body: "I noticed a typo in the payment terms on page 4, let's fix that before EOD.",
-    channel: "Email",
-    unread: true,
-  },
-  {
-    name: "Sarah Jenkins",
-    time: "12:45",
-    preview: "Confirmed for tomorrow at 10 AM",
-    body: "Looking forward to seeing the platform walkthrough.",
-    channel: "SMS",
-    unread: true,
-  },
-  {
-    name: "David Wu",
-    time: "Yesterday",
-    preview: "Re: Security Questionnaire",
-    channel: "Email",
-  },
-  {
-    name: "Priya Shah",
-    time: "Yesterday",
-    preview: "Thanks — invoice received.",
-    channel: "Email",
-  },
-];
-
-function formatMoney(n: number) {
-  if (n >= 1000) return `$${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`;
-  return `$${n}`;
-}
-
-function columnTotal(deals: Deal[]) {
-  return deals.reduce((sum, d) => sum + d.value, 0);
-}
-
 function Dashboard() {
+  const queryClient = useQueryClient();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [newDealOpen, setNewDealOpen] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
+  const pipelineQuery = useQuery({
+    queryKey: ["pipeline", userId],
+    enabled: !!userId,
+    queryFn: () => ensureDefaultPipeline(userId!),
+  });
+
+  const pipelineId = pipelineQuery.data?.id;
+
+  const boardQuery = useQuery({
+    queryKey: ["board", pipelineId],
+    enabled: !!pipelineId,
+    queryFn: () => fetchBoard(pipelineId!),
+  });
+
+  const stages = boardQuery.data?.stages ?? [];
+  const deals = boardQuery.data?.deals ?? [];
+
+  const createDealMut = useMutation({
+    mutationFn: async (input: { title: string; value: number; stage_id: string }) => {
+      if (!userId || !pipelineId) throw new Error("Not ready");
+      return createDeal({
+        ...input,
+        pipeline_id: pipelineId,
+        owner_id: userId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board", pipelineId] });
+      toast.success("Deal added");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const moveMut = useMutation({
+    mutationFn: ({ dealId, stageId, position }: { dealId: string; stageId: string; position: number }) =>
+      moveDeal(dealId, stageId, position),
+    onMutate: async ({ dealId, stageId, position }) => {
+      await queryClient.cancelQueries({ queryKey: ["board", pipelineId] });
+      const prev = queryClient.getQueryData<{ stages: typeof stages; deals: Deal[] }>([
+        "board",
+        pipelineId,
+      ]);
+      if (prev) {
+        const next = prev.deals.map((d) => ({ ...d }));
+        const moving = next.find((d) => d.id === dealId);
+        if (moving) {
+          moving.stage_id = stageId;
+          moving.position = position;
+        }
+        queryClient.setQueryData(["board", pipelineId], { ...prev, deals: next });
+      }
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["board", pipelineId], ctx.prev);
+      toast.error("Move failed");
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["board", pipelineId] }),
+  });
+
+  const loading = pipelineQuery.isLoading || boardQuery.isLoading;
+  const totalDeals = deals.length;
+  const unreadInbox = 2;
+
+  const recentDeals = useMemo(
+    () => [...deals].sort((a, b) => b.position - a.position).slice(0, 4),
+    [deals],
+  );
+
   return (
     <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
-      {/* Left Sidebar */}
       <aside className="w-64 border-r border-border bg-sidebar flex flex-col shrink-0">
         <div className="p-4 border-b border-border">
           <button className="w-full flex items-center gap-3 px-2 py-1.5 bg-card ring-1 ring-black/5 rounded-md hover:bg-card/80 transition-colors text-left">
@@ -207,7 +159,6 @@ function Dashboard() {
         </div>
       </aside>
 
-      {/* Main Canvas */}
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-14 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center gap-4 flex-1">
@@ -227,75 +178,68 @@ function Dashboard() {
             <div className="flex items-center gap-1.5">
               <span className="size-2 bg-accent rounded-full animate-pulse" />
               <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
-                Live Sync
+                {totalDeals} deals
               </span>
             </div>
             <div className="h-4 w-px bg-border" />
             <button className="size-8 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors">
               <Bell className="size-3.5 text-muted-foreground" />
             </button>
-            <button className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors">
+            <button
+              onClick={() => setNewDealOpen(true)}
+              disabled={!stages.length}
+              className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
               <Plus className="size-3.5" />
               New Deal
             </button>
           </div>
         </header>
 
-        {/* Kanban */}
         <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
-          <div className="flex gap-6 h-full min-w-max">
-            {board.map((col, ci) => (
-              <div key={col.title} className="w-72 flex flex-col">
-                <div className="flex items-center justify-between mb-4 px-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xs font-bold uppercase tracking-widest">
-                      {col.title}
-                    </h3>
-                    <span className="font-mono text-[10px] bg-secondary px-1.5 rounded">
-                      {String(col.deals.length).padStart(2, "0")}
-                    </span>
-                  </div>
-                  <div className="font-mono text-[10px] text-muted-foreground">
-                    {formatMoney(columnTotal(col.deals))}
-                  </div>
-                </div>
-
-                {col.deals.length === 0 ? (
-                  <div className="border-2 border-dashed border-border rounded-lg flex-1 min-h-32 flex items-center justify-center">
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
-                      Drop here
-                    </span>
-                  </div>
-                ) : (
-                  <div className="space-y-3 overflow-y-auto pr-1">
-                    {col.deals.map((deal, di) => (
-                      <DealCard
-                        key={deal.id}
-                        deal={deal}
-                        delay={ci * 60 + di * 60}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="h-full flex items-center justify-center text-muted-foreground">
+              <Loader2 className="size-4 animate-spin mr-2" />
+              <span className="text-xs">Loading your pipeline…</span>
+            </div>
+          ) : (
+            <KanbanBoard
+              stages={stages}
+              deals={deals}
+              onMove={(dealId, stageId, position) =>
+                moveMut.mutate({ dealId, stageId, position })
+              }
+            />
+          )}
         </div>
       </main>
 
-      {/* Right Rail */}
       <aside className="w-80 border-l border-border bg-card flex flex-col shrink-0">
         <div className="h-14 border-b border-border px-4 flex items-center justify-between shrink-0">
-          <h2 className="text-xs font-bold uppercase tracking-wider">Inbox</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider">Activity</h2>
           <span className="font-mono text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded">
-            {threads.filter((t) => t.unread).length} Unread
+            {unreadInbox} new
           </span>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {threads.map((t) => (
-            <ThreadRow key={t.name} thread={t} />
-          ))}
+          {recentDeals.length === 0 ? (
+            <div className="p-6 text-center">
+              <p className="text-xs text-muted-foreground">
+                No activity yet. Add your first deal to get started.
+              </p>
+            </div>
+          ) : (
+            recentDeals.map((d) => (
+              <div key={d.id} className="p-4 border-b border-border">
+                <p className="text-xs font-semibold mb-1">{d.title}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  ${Number(d.value).toLocaleString()} ·{" "}
+                  {stages.find((s) => s.id === d.stage_id)?.name ?? "—"}
+                </p>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="p-4 bg-secondary/50 border-t border-border">
@@ -310,6 +254,15 @@ function Dashboard() {
           </div>
         </div>
       </aside>
+
+      <NewDealDialog
+        open={newDealOpen}
+        onOpenChange={setNewDealOpen}
+        stages={stages}
+        onCreate={async (input) => {
+          await createDealMut.mutateAsync(input);
+        }}
+      />
     </div>
   );
 }
@@ -389,86 +342,6 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function DealCard({ deal, delay }: { deal: Deal; delay: number }) {
-  return (
-    <div
-      className="animate-card-entry bg-card p-3 rounded-lg ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:ring-accent/40 transition-all cursor-pointer"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <div className="flex justify-between items-start mb-2">
-        <span className="font-mono text-[10px] text-muted-foreground">
-          #{deal.id}
-        </span>
-        <span
-          className={`text-[10px] px-1.5 py-0.5 rounded ${tagTone[deal.tag.tone]}`}
-        >
-          {deal.tag.label}
-        </span>
-      </div>
-      <h4 className="text-sm font-semibold mb-2">{deal.title}</h4>
-      <div className="flex items-center justify-between">
-        <p className="font-mono text-xs font-medium text-accent">
-          ${deal.value.toLocaleString()}
-        </p>
-        <div className="size-5 rounded bg-secondary" />
-      </div>
-      {(deal.lastContact || deal.badges) && (
-        <div className="mt-3 pt-3 border-t border-border flex items-center gap-2 flex-wrap">
-          {deal.lastContact && (
-            <>
-              <div className="size-4 rounded-full bg-secondary" />
-              <span className="text-[10px] text-muted-foreground">
-                {deal.lastContact}
-              </span>
-            </>
-          )}
-          {deal.badges?.map((b) => (
-            <span
-              key={b}
-              className="text-[9px] px-1.5 py-0.5 bg-secondary rounded text-muted-foreground"
-            >
-              {b}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ThreadRow({ thread }: { thread: Thread }) {
-  return (
-    <div className="p-4 border-b border-border hover:bg-secondary/40 cursor-pointer relative">
-      {thread.unread && (
-        <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-accent rounded-r" />
-      )}
-      <div className="flex justify-between mb-1">
-        <span className="text-xs font-semibold">{thread.name}</span>
-        <span
-          className={`font-mono text-[10px] ${thread.unread ? "text-accent" : "text-muted-foreground"}`}
-        >
-          {thread.time}
-        </span>
-      </div>
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-[9px] bg-secondary px-1 rounded uppercase font-bold text-muted-foreground">
-          {thread.channel}
-        </span>
-        <p
-          className={`text-xs truncate ${thread.unread ? "font-bold text-foreground" : "text-muted-foreground"}`}
-        >
-          {thread.preview}
-        </p>
-      </div>
-      {thread.body && (
-        <p className="text-[10px] text-muted-foreground line-clamp-2 leading-relaxed">
-          {thread.body}
-        </p>
-      )}
     </div>
   );
 }
