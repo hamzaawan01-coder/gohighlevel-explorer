@@ -478,6 +478,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: {
+        Args: { _token: string }
+        Returns: {
+          agency_id: string
+          role: string
+          sub_account_id: string
+        }[]
+      }
       has_agency_access: {
         Args: { _agency: string; _user: string }
         Returns: boolean
@@ -500,6 +508,31 @@ export type Database = {
       has_subaccount_access: {
         Args: { _sub: string; _user: string }
         Returns: boolean
+      }
+      list_agency_members: {
+        Args: { _agency: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          role: string
+          scope: string
+          sub_account_id: string
+          sub_account_name: string
+          user_id: string
+        }[]
+      }
+      preview_invitation: {
+        Args: { _token: string }
+        Returns: {
+          accepted_at: string
+          agency_id: string
+          agency_name: string
+          email: string
+          expires_at: string
+          role: string
+          sub_account_id: string
+          sub_account_name: string
+        }[]
       }
     }
     Enums: {
