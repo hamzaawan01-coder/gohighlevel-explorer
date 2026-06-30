@@ -14,10 +14,12 @@ import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
-  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useQuery } from "@tanstack/react-query";
 import type { Deal, Stage } from "@/lib/pipeline";
+import { fetchContacts, type Contact } from "@/lib/contacts";
+import { User } from "lucide-react";
 
 function formatMoney(n: number) {
   if (n >= 1000) return `$${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`;
