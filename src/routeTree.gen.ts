@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
+import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
 
 const AuthRoute = AuthRouteImport.update({
@@ -40,6 +41,12 @@ const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsTeamRoute =
+  AuthenticatedSettingsTeamRouteImport.update({
+    id: '/settings/team',
+    path: '/settings/team',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsSubAccountsRoute =
   AuthenticatedSettingsSubAccountsRouteImport.update({
     id: '/settings/sub-accounts',
@@ -53,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
+  '/settings/team': typeof AuthenticatedSettingsTeamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -60,6 +68,7 @@ export interface FileRoutesByTo {
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
+  '/settings/team': typeof AuthenticatedSettingsTeamRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,6 +78,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
+  '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -78,8 +88,15 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/dashboard'
     | '/settings/sub-accounts'
+    | '/settings/team'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/contacts' | '/dashboard' | '/settings/sub-accounts'
+  to:
+    | '/'
+    | '/auth'
+    | '/contacts'
+    | '/dashboard'
+    | '/settings/sub-accounts'
+    | '/settings/team'
   id:
     | '__root__'
     | '/'
@@ -88,6 +105,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts'
     | '/_authenticated/dashboard'
     | '/_authenticated/settings/sub-accounts'
+    | '/_authenticated/settings/team'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -133,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/team': {
+      id: '/_authenticated/settings/team'
+      path: '/settings/team'
+      fullPath: '/settings/team'
+      preLoaderRoute: typeof AuthenticatedSettingsTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/sub-accounts': {
       id: '/_authenticated/settings/sub-accounts'
       path: '/settings/sub-accounts'
@@ -147,12 +172,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSettingsSubAccountsRoute: typeof AuthenticatedSettingsSubAccountsRoute
+  AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSettingsSubAccountsRoute: AuthenticatedSettingsSubAccountsRoute,
+  AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
