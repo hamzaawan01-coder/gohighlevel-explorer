@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Stage } from "@/lib/pipeline";
+import { fetchContacts, type Contact } from "@/lib/contacts";
+import { useQuery } from "@tanstack/react-query";
+
+const NO_CONTACT = "__none__";
 
 export function NewDealDialog({
   open,
@@ -21,12 +25,47 @@ export function NewDealDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   stages: Stage[];
-  onCreate: (input: { title: string; value: number; stage_id: string }) => Promise<void>;
+  onCreate: (input: {
+    title: string;
+    value: number;
+    stage_id: string;
+    contact_id: string | null;
+  }) => Promise<void>;
 }) {
   const [title, setTitle] = useState("");
   const [value, setValue] = useState("");
   const [stageId, setStageId] = useState<string>(stages[0]?.id ?? "");
+  const [contactId, setContactId] = useState<string>(NO_CONTACT);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle("");
+      setValue("");
+      setStageId(stages[0]?.id ?? "");
+      setContactId(NO_CONTACT);
+    }
+  }, [open, stages]);
+
+  const contactsQuery = useQuery({
+    queryKey: ["contacts"],
+    queryFn: fetchContacts,
+    enabled: open,
+  });
+
+  const contacts = contactsQuery.data ?? [];
+  const contactOptions = useMemo(
+    () =>
+      contacts.map((c: Contact) => ({
+        id: c.id,
+        label:
+          [c.first_name, c.last_name].filter(Boolean).join(" ") ||
+          c.email ||
+          c.company ||
+          "Unnamed",
+      })),
+    [contacts],
+  );
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,9 +76,8 @@ export function NewDealDialog({
         title: title.trim(),
         value: Number(value) || 0,
         stage_id: stageId,
+        contact_id: contactId === NO_CONTACT ? null : contactId,
       });
-      setTitle("");
-      setValue("");
       onOpenChange(false);
     } finally {
       setSubmitting(false);
@@ -91,6 +129,27 @@ export function NewDealDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Contact</Label>
+            <Select value={contactId} onValueChange={setContactId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Link a contact (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_CONTACT}>— None —</SelectItem>
+                {contactOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {contactOptions.length === 0 && !contactsQuery.isLoading && (
+              <p className="text-[10px] text-muted-foreground">
+                No contacts yet. You can add one from the Contacts page.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
