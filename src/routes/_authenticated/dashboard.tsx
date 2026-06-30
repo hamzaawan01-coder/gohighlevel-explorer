@@ -314,7 +314,56 @@ function Dashboard() {
   );
 }
 
-function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
+function UserMenu() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [email, setEmail] = useState<string>("");
+  const [name, setName] = useState<string>("");
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const u = data.user;
+      if (!u) return;
+      setEmail(u.email ?? "");
+      setName((u.user_metadata?.full_name as string) ?? u.email?.split("@")[0] ?? "User");
+    });
+  }, []);
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
+
+  const initials = (name || email || "U")
+    .split(/[\s@.]+/)
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  return (
+    <div className="flex items-center gap-3 px-2">
+      <div className="size-8 rounded-full bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center text-[10px] font-semibold text-accent-foreground">
+        {initials}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold truncate">{name || "Operator"}</p>
+        <p className="text-[10px] text-muted-foreground truncate">{email}</p>
+      </div>
+      <button
+        onClick={signOut}
+        title="Sign out"
+        className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <LogOut className="size-3.5" />
+      </button>
+    </div>
+  );
+}
+
   return (
     <div className="px-3 mb-4">
       <p className="px-3 mb-2 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
