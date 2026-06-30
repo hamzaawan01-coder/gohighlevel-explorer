@@ -180,7 +180,7 @@ function EmptyDropzone({ stageId }: { stageId: string }) {
   );
 }
 
-function DealCard({ deal }: { deal: Deal }) {
+function DealCard({ deal, contact }: { deal: Deal; contact: Contact | null }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: deal.id,
   });
@@ -191,12 +191,26 @@ function DealCard({ deal }: { deal: Deal }) {
   };
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <DealCardView deal={deal} />
+      <DealCardView deal={deal} contact={contact} />
     </div>
   );
 }
 
-function DealCardView({ deal, dragging }: { deal: Deal; dragging?: boolean }) {
+function contactLabel(c: Contact) {
+  return (
+    [c.first_name, c.last_name].filter(Boolean).join(" ") || c.email || c.company || "Contact"
+  );
+}
+
+function DealCardView({
+  deal,
+  dragging,
+  contact,
+}: {
+  deal: Deal;
+  dragging?: boolean;
+  contact?: Contact | null;
+}) {
   return (
     <div
       className={`bg-card p-3 rounded-lg ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] cursor-grab active:cursor-grabbing ${
@@ -209,10 +223,16 @@ function DealCardView({ deal, dragging }: { deal: Deal; dragging?: boolean }) {
         </span>
       </div>
       <h4 className="text-sm font-semibold mb-2">{deal.title}</h4>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <p className="font-mono text-xs font-medium text-accent">
           ${Number(deal.value).toLocaleString()}
         </p>
+        {contact ? (
+          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-secondary rounded px-1.5 py-0.5 max-w-[60%] truncate">
+            <User className="size-2.5 shrink-0" />
+            <span className="truncate">{contactLabel(contact)}</span>
+          </span>
+        ) : null}
       </div>
     </div>
   );
