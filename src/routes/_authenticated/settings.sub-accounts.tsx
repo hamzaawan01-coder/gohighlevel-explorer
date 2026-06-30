@@ -59,9 +59,11 @@ function SubAccountsPage() {
   return (
     <AppShell
       headerStatus={
-        <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
-          {subs.length} sub-account{subs.length === 1 ? "" : "s"}
-        </span>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="text-foreground font-medium">Sub-accounts</span>
+          <span>·</span>
+          <Link to="/settings/team" className="hover:text-foreground">Team</Link>
+        </div>
       }
       headerActions={
         <button
