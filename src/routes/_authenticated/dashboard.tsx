@@ -364,6 +364,7 @@ function UserMenu() {
   );
 }
 
+function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
   return (
     <div className="px-3 mb-4">
       <p className="px-3 mb-2 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
