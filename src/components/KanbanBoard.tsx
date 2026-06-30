@@ -38,6 +38,13 @@ export function KanbanBoard({
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
+  const contactsQuery = useQuery({ queryKey: ["contacts"], queryFn: fetchContacts });
+  const contactsById = useMemo(() => {
+    const m = new Map<string, Contact>();
+    (contactsQuery.data ?? []).forEach((c) => m.set(c.id, c));
+    return m;
+  }, [contactsQuery.data]);
+
   const dealsByStage = useMemo(() => {
     const m = new Map<string, Deal[]>();
     stages.forEach((s) => m.set(s.id, []));
