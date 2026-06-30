@@ -12,7 +12,7 @@ import {
   Plus,
 } from "lucide-react";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Agency Engine — CRM, Pipelines, Conversations" },
