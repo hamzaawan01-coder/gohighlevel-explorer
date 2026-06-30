@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 export type Pipeline = {
   id: string;
   name: string;
+  sub_account_id: string;
 };
 
 export type Stage = {
   id: string;
   pipeline_id: string;
+  sub_account_id: string;
   name: string;
   color: string;
   position: number;
@@ -16,6 +18,7 @@ export type Stage = {
 export type Deal = {
   id: string;
   pipeline_id: string;
+  sub_account_id: string;
   stage_id: string;
   title: string;
   value: number;
@@ -33,19 +36,23 @@ const DEFAULT_STAGES = [
   { name: "Closing", color: "#f97316", position: 3 },
 ];
 
-export async function ensureDefaultPipeline(userId: string): Promise<Pipeline> {
+export async function ensureDefaultPipeline(
+  userId: string,
+  subAccountId: string,
+): Promise<Pipeline> {
   const { data: existing, error: selErr } = await supabase
     .from("pipelines")
-    .select("id,name")
+    .select("id,name,sub_account_id")
+    .eq("sub_account_id", subAccountId)
     .order("created_at", { ascending: true })
     .limit(1);
   if (selErr) throw selErr;
-  if (existing && existing.length > 0) return existing[0];
+  if (existing && existing.length > 0) return existing[0] as Pipeline;
 
   const { data: pipeline, error: pErr } = await supabase
     .from("pipelines")
-    .insert({ name: "Sales Pipeline", owner_id: userId })
-    .select("id,name")
+    .insert({ name: "Sales Pipeline", owner_id: userId, sub_account_id: subAccountId })
+    .select("id,name,sub_account_id")
     .single();
   if (pErr) throw pErr;
 
@@ -54,11 +61,12 @@ export async function ensureDefaultPipeline(userId: string): Promise<Pipeline> {
       ...s,
       pipeline_id: pipeline.id,
       owner_id: userId,
+      sub_account_id: subAccountId,
     })),
   );
   if (sErr) throw sErr;
 
-  return pipeline;
+  return pipeline as Pipeline;
 }
 
 export async function fetchBoard(pipelineId: string) {
@@ -85,6 +93,7 @@ export async function fetchBoard(pipelineId: string) {
 export async function createDeal(input: {
   pipeline_id: string;
   stage_id: string;
+  sub_account_id: string;
   title: string;
   value: number;
   owner_id: string;
@@ -95,6 +104,7 @@ export async function createDeal(input: {
     .insert({
       pipeline_id: input.pipeline_id,
       stage_id: input.stage_id,
+      sub_account_id: input.sub_account_id,
       title: input.title,
       value: input.value,
       owner_id: input.owner_id,
