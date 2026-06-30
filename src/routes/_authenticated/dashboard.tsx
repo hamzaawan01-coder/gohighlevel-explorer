@@ -56,7 +56,12 @@ function Dashboard() {
   const deals = boardQuery.data?.deals ?? [];
 
   const createDealMut = useMutation({
-    mutationFn: async (input: { title: string; value: number; stage_id: string }) => {
+    mutationFn: async (input: {
+      title: string;
+      value: number;
+      stage_id: string;
+      contact_id: string | null;
+    }) => {
       if (!userId || !pipelineId) throw new Error("Not ready");
       return createDeal({ ...input, pipeline_id: pipelineId, owner_id: userId });
     },
