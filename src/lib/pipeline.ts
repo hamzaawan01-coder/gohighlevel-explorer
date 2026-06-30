@@ -88,6 +88,7 @@ export async function createDeal(input: {
   title: string;
   value: number;
   owner_id: string;
+  contact_id?: string | null;
 }) {
   const { data, error } = await supabase
     .from("deals")
@@ -97,6 +98,7 @@ export async function createDeal(input: {
       title: input.title,
       value: input.value,
       owner_id: input.owner_id,
+      contact_id: input.contact_id ?? null,
     })
     .select("*")
     .single();
