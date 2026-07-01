@@ -28,7 +28,8 @@ import { NewDealDialog } from "@/components/NewDealDialog";
 import { DealDetailPanel } from "@/components/DealDetailPanel";
 import { PipelinesManagerPanel } from "@/components/PipelinesManagerPanel";
 import { BulkActionsPanel } from "@/components/BulkActionsPanel";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -460,6 +461,10 @@ function OpportunitiesPage() {
 
       <Dialog open={!!openDealId} onOpenChange={(o) => !o && setOpenDealId(null)}>
         <DialogContent className="max-w-3xl p-0 gap-0">
+          <VisuallyHidden>
+            <DialogTitle>Opportunity details</DialogTitle>
+            <DialogDescription>View and edit opportunity details</DialogDescription>
+          </VisuallyHidden>
           {openDealId && (
             <>
               <div className="flex justify-end px-4 pt-3">
