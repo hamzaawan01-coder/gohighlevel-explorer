@@ -106,7 +106,7 @@ export function AppShell({
             {headerActions}
           </div>
         </header>
-        <div className="flex-1 overflow-hidden">{children}</div>
+        <div className="flex-1 overflow-auto min-h-0">{children}</div>
       </main>
 
       {rightPane ? (
