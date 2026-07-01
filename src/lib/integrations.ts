@@ -68,16 +68,19 @@ export async function saveEmailIntegration(input: {
 
 export async function saveSmsIntegration(input: {
   sub_account_id: string;
-  config: TwilioConfig;
+  provider?: SmsProvider;
+  config?: TwilioConfig | Record<string, never>;
   from_number: string;
 }) {
+  const provider: SmsProvider = input.provider ?? "twilio";
+  const config = input.config ?? (provider === "twilio_connector" ? {} : { account_sid: "", auth_token: "" });
   const { error } = await supabase
     .from("sub_account_integrations")
     .upsert(
       {
         sub_account_id: input.sub_account_id,
-        sms_provider: "twilio",
-        sms_config: input.config as never,
+        sms_provider: provider,
+        sms_config: config as never,
         sms_from_number: input.from_number,
       },
       { onConflict: "sub_account_id" },
