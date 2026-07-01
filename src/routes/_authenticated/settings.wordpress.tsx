@@ -255,6 +255,8 @@ function WebhookRow({ hook, subId }: { hook: WordPressWebhook; subId: string }) 
         </div>
       )}
 
+      <FieldMappingPreview hook={hook} subId={subId} />
+
       <SetupInstructions url={url} secret={hook.secret} />
     </div>
   );
