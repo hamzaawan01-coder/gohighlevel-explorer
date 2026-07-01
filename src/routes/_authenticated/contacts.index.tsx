@@ -1,12 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Pencil, Trash2, Mail, Phone, Building2 } from "lucide-react";
+import {
+  Plus, Loader2, Pencil, Trash2, Mail, Phone, Building2,
+  Bookmark, BookmarkPlus, X, Tag as TagIcon, ChevronDown,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { ContactDialog } from "@/components/ContactDialog";
 import { ContactDetailPanel } from "@/components/ContactDetailPanel";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
   fetchContacts,
   createContact,
@@ -17,6 +25,11 @@ import {
   type ContactInput,
   type LifecycleStage,
 } from "@/lib/contacts";
+import {
+  bulkUpdateStage, bulkDeleteContacts, bulkAddTag, bulkRemoveTag,
+  fetchContactViews, createContactView, deleteContactView,
+  type ContactView,
+} from "@/lib/contact-bulk";
 import { useTenancy } from "@/lib/tenancy";
 import { toast } from "sonner";
 
@@ -39,6 +52,9 @@ function ContactsPage() {
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [activeStage, setActiveStage] = useState<LifecycleStage | "all">("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [saveViewOpen, setSaveViewOpen] = useState(false);
+  const [newViewName, setNewViewName] = useState("");
   const subId = useTenancy((s) => s.currentSubAccountId);
 
   useEffect(() => {
@@ -104,6 +120,118 @@ function ContactsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const viewsQuery = useQuery({
+    queryKey: ["contact-views", subId],
+    queryFn: () => fetchContactViews(subId!),
+    enabled: !!subId,
+  });
+  const views: ContactView[] = viewsQuery.data ?? [];
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    setSelectedIds(new Set());
+  };
+
+  const bulkStageMut = useMutation({
+    mutationFn: ({ ids, stage }: { ids: string[]; stage: LifecycleStage }) =>
+      bulkUpdateStage(ids, stage),
+    onSuccess: (_d, v) => {
+      toast.success(`Moved ${v.ids.length} to ${v.stage.toUpperCase()}`);
+      invalidateAll();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const bulkTagMut = useMutation({
+    mutationFn: ({ ids, tag }: { ids: string[]; tag: string }) => bulkAddTag(ids, tag),
+    onSuccess: (_d, v) => {
+      toast.success(`Tagged ${v.ids.length} with "${v.tag}"`);
+      invalidateAll();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const bulkUntagMut = useMutation({
+    mutationFn: ({ ids, tag }: { ids: string[]; tag: string }) => bulkRemoveTag(ids, tag),
+    onSuccess: (_d, v) => {
+      toast.success(`Removed "${v.tag}" from ${v.ids.length}`);
+      invalidateAll();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const bulkDeleteMut = useMutation({
+    mutationFn: (ids: string[]) => bulkDeleteContacts(ids),
+    onSuccess: (_d, ids) => {
+      toast.success(`Deleted ${ids.length} contacts`);
+      invalidateAll();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const saveViewMut = useMutation({
+    mutationFn: (name: string) => {
+      if (!userId || !subId) throw new Error("Not ready");
+      return createContactView({
+        name,
+        filters: { search, stage: activeStage, tag: activeTag },
+        subAccountId: subId,
+        ownerId: userId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contact-views"] });
+      toast.success("View saved");
+      setSaveViewOpen(false);
+      setNewViewName("");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteViewMut = useMutation({
+    mutationFn: (id: string) => deleteContactView(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contact-views"] });
+      toast.success("View deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const applyView = (v: ContactView) => {
+    setSearch(v.filters.search ?? "");
+    setActiveStage(v.filters.stage ?? "all");
+    setActiveTag(v.filters.tag ?? null);
+  };
+
+  const filteredIds = useMemo(() => filtered.map((c) => c.id), [filtered]);
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedIds.has(id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+  const toggleAll = () => {
+    if (allSelected) {
+      const next = new Set(selectedIds);
+      filteredIds.forEach((id) => next.delete(id));
+      setSelectedIds(next);
+    } else {
+      setSelectedIds(new Set([...selectedIds, ...filteredIds]));
+    }
+  };
+  const toggleOne = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+  const selectedArr = Array.from(selectedIds);
+  const selectedTags = useMemo(() => {
+    const s = new Set<string>();
+    contacts
+      .filter((c) => selectedIds.has(c.id))
+      .forEach((c) => (c.tags ?? []).forEach((t) => s.add(t)));
+    return Array.from(s).sort();
+  }, [contacts, selectedIds]);
+
+
 
   return (
     <AppShell
@@ -192,6 +320,128 @@ function ContactsPage() {
           </div>
         </div>
 
+        {/* Saved views */}
+        <div className="px-6 py-2.5 border-b border-border flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mr-1">
+            Views
+          </span>
+          {views.length === 0 && (
+            <span className="text-[10px] text-muted-foreground italic">
+              Save a filter combination to reuse it later.
+            </span>
+          )}
+          {views.map((v) => (
+            <div key={v.id} className="inline-flex items-center rounded bg-secondary text-muted-foreground hover:text-foreground overflow-hidden">
+              <button
+                onClick={() => applyView(v)}
+                className="text-[10px] font-mono uppercase tracking-wider pl-2 pr-1 py-1 flex items-center gap-1"
+              >
+                <Bookmark className="size-2.5" /> {v.name}
+              </button>
+              <button
+                onClick={() => { if (confirm(`Delete view "${v.name}"?`)) deleteViewMut.mutate(v.id); }}
+                className="px-1 py-1 hover:text-destructive"
+                title="Delete view"
+              >
+                <X className="size-2.5" />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => setSaveViewOpen(true)}
+            className="ml-auto text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+          >
+            <BookmarkPlus className="size-2.5" /> Save view
+          </button>
+        </div>
+
+        {/* Bulk actions toolbar */}
+        {selectedIds.size > 0 && (
+          <div className="px-6 py-2 border-b border-border bg-primary/5 flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-medium">
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-[10px] text-muted-foreground hover:text-foreground uppercase font-mono tracking-wider"
+            >
+              Clear
+            </button>
+            <div className="h-4 w-px bg-border mx-1" />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
+                Set stage <ChevronDown className="size-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {LIFECYCLE_STAGES.map((s) => (
+                  <DropdownMenuItem
+                    key={s.value}
+                    onClick={() => bulkStageMut.mutate({ ids: selectedArr, stage: s.value })}
+                  >
+                    {s.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
+                <TagIcon className="size-3" /> Add tag <ChevronDown className="size-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel className="text-[10px]">Existing tags</DropdownMenuLabel>
+                {allTags.length === 0 && (
+                  <DropdownMenuItem disabled className="text-xs italic">
+                    No tags yet
+                  </DropdownMenuItem>
+                )}
+                {allTags.map((t) => (
+                  <DropdownMenuItem key={t} onClick={() => bulkTagMut.mutate({ ids: selectedArr, tag: t })}>
+                    {t}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    const tag = prompt("New tag name")?.trim();
+                    if (tag) bulkTagMut.mutate({ ids: selectedArr, tag });
+                  }}
+                >
+                  + New tag…
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {selectedTags.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
+                  Remove tag <ChevronDown className="size-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {selectedTags.map((t) => (
+                    <DropdownMenuItem key={t} onClick={() => bulkUntagMut.mutate({ ids: selectedArr, tag: t })}>
+                      {t}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            <button
+              onClick={() => {
+                if (confirm(`Delete ${selectedIds.size} contacts? This cannot be undone.`))
+                  bulkDeleteMut.mutate(selectedArr);
+              }}
+              className="text-[11px] px-2 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 inline-flex items-center gap-1"
+            >
+              <Trash2 className="size-3" /> Delete
+            </button>
+          </div>
+        )}
+
+
+
         <div className="flex-1 overflow-auto">
           {contactsQuery.isLoading ? (
             <div className="h-full flex items-center justify-center text-muted-foreground">
@@ -219,7 +469,14 @@ function ContactsPage() {
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-card border-b border-border z-10">
                 <tr className="text-left font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <th className="px-6 py-2 font-bold">Name</th>
+                  <th className="pl-6 pr-2 py-2 w-8">
+                    <Checkbox
+                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                      onCheckedChange={toggleAll}
+                      aria-label="Select all"
+                    />
+                  </th>
+                  <th className="px-3 py-2 font-bold">Name</th>
                   <th className="px-3 py-2 font-bold">Stage</th>
                   <th className="px-3 py-2 font-bold">Email</th>
                   <th className="px-3 py-2 font-bold">Phone</th>
@@ -232,8 +489,21 @@ function ContactsPage() {
                 {filtered.map((c) => {
                   const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "—";
                   return (
-                    <tr key={c.id} className="border-b border-border hover:bg-secondary/40">
-                      <td className="px-6 py-2.5 font-medium">
+                    <tr
+                      key={c.id}
+                      className={
+                        "border-b border-border hover:bg-secondary/40 " +
+                        (selectedIds.has(c.id) ? "bg-primary/5" : "")
+                      }
+                    >
+                      <td className="pl-6 pr-2 py-2.5">
+                        <Checkbox
+                          checked={selectedIds.has(c.id)}
+                          onCheckedChange={() => toggleOne(c.id)}
+                          aria-label={`Select ${name}`}
+                        />
+                      </td>
+                      <td className="px-3 py-2.5 font-medium">
                         <button
                           type="button"
                           onClick={() => setSelectedId(c.id)}
@@ -344,6 +614,48 @@ function ContactsPage() {
               onClose={() => setSelectedId(null)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={saveViewOpen} onOpenChange={setSaveViewOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>Save view</DialogTitle>
+          <DialogDescription>
+            Save the current filter combination so you can jump back to it later.
+          </DialogDescription>
+          <div className="space-y-3 mt-2">
+            <input
+              autoFocus
+              type="text"
+              value={newViewName}
+              onChange={(e) => setNewViewName(e.target.value)}
+              placeholder="e.g. MQLs I own"
+              className="w-full bg-secondary border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newViewName.trim()) saveViewMut.mutate(newViewName.trim());
+              }}
+            />
+            <div className="text-[11px] text-muted-foreground space-y-1 rounded-md bg-secondary/60 p-3">
+              <div>Stage: <span className="font-mono uppercase">{activeStage}</span></div>
+              <div>Tag: <span className="font-mono">{activeTag ?? "any"}</span></div>
+              <div>Search: <span className="font-mono">{search || "—"}</span></div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setSaveViewOpen(false)}
+                className="text-xs px-3 py-1.5 rounded-md hover:bg-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => saveViewMut.mutate(newViewName.trim())}
+                disabled={!newViewName.trim() || saveViewMut.isPending}
+                className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </AppShell>
