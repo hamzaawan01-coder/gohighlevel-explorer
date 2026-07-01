@@ -133,12 +133,22 @@ function WorkflowsPage() {
                     onCheckedChange={(v) => updateMut.mutate({ id: w.id, input: { enabled: v } })}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{w.name}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium truncate">{w.name}</p>
+                      {!w.enabled && (
+                        <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          paused
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
                       When {WORKFLOW_TRIGGERS.find((t) => t.value === w.trigger_type)?.label}
-                      {" • "}
-                      {w.actions.length} action{w.actions.length === 1 ? "" : "s"}
                     </p>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {w.actions.map((a, i) => (
+                        <ActionChip key={i} action={a} />
+                      ))}
+                    </div>
                   </div>
                   <button
                     onClick={() => { setEditing(w); setDialogOpen(true); }}
@@ -161,10 +171,31 @@ function WorkflowsPage() {
         </div>
 
         <aside className="w-80 border-l border-border bg-card flex flex-col">
-          <div className="px-4 py-3 border-b border-border">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-              Recent runs
-            </p>
+          <div className="px-4 py-3 border-b border-border space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                Recent runs
+              </p>
+              {errCount > 0 && (
+                <span className="text-[10px] font-mono text-destructive">{errCount} error{errCount === 1 ? "" : "s"}</span>
+              )}
+            </div>
+            <div className="flex gap-1">
+              {(["all", "ok", "error"] as const).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => setRunFilter(k)}
+                  className={
+                    "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded transition-colors " +
+                    (runFilter === k
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:text-foreground")
+                  }
+                >
+                  {k}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex-1 overflow-auto">
             {runs.length === 0 ? (
