@@ -321,6 +321,9 @@ function describeWorkflow(w: Workflow): string {
     ? parts[0] + "."
     : parts.slice(0, -1).join(", ") + ", and " + parts[parts.length - 1] + ".";
   return `${when}, ${then}`;
+}
+
+
 
 const QUICK_TEMPLATES: { key: string; label: string; description: string; input: WorkflowInput }[] = [
   {
