@@ -234,13 +234,13 @@ function ContactsPage() {
                   return (
                     <tr key={c.id} className="border-b border-border hover:bg-secondary/40">
                       <td className="px-6 py-2.5 font-medium">
-                        <Link
-                          to="/contacts/$contactId"
-                          params={{ contactId: c.id }}
-                          className="hover:text-primary hover:underline"
+                        <button
+                          type="button"
+                          onClick={() => setSelectedId(c.id)}
+                          className="hover:text-primary hover:underline text-left"
                         >
                           {name}
-                        </Link>
+                        </button>
                       </td>
                       <td className="px-3 py-2.5">
                         <span className="inline-block bg-accent/10 text-accent rounded px-1.5 py-0.5 text-[10px] font-mono uppercase">
