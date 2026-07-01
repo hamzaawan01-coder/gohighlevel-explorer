@@ -1,0 +1,156 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Loader2,
+  Trophy,
+  Clock,
+  Target,
+  DollarSign,
+} from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import { AppShell } from "@/components/AppShell";
+import { useTenancy } from "@/lib/tenancy";
+import { fetchReports } from "@/lib/reports";
+
+export const Route = createFileRoute("/_authenticated/reports")({
+  head: () => ({
+    meta: [
+      { title: "Reports — Agency Engine" },
+      { name: "description", content: "Win rate, cycle time, source attribution, and per-rep activity." },
+    ],
+  }),
+  component: ReportsPage,
+});
+
+function ReportsPage() {
+  const subId = useTenancy((s) => s.currentSubAccountId);
+  const { data, isLoading } = useQuery({
+    queryKey: ["reports", subId],
+    enabled: !!subId,
+    queryFn: () => fetchReports(subId!),
+  });
+
+  return (
+    <AppShell>
+      <div className="h-full overflow-y-auto p-8">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold">Reports</h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              Sales performance across your pipeline, sources, and team.
+            </p>
+          </div>
+
+          {isLoading || !data ? (
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              <Loader2 className="size-4 animate-spin mr-2" />
+              <span className="text-xs">Crunching numbers…</span>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <Kpi label="Win rate" value={`${data.winRate}%`} sub={`${data.wonCount} won · ${data.lostCount} lost`} icon={Target} tint="text-emerald-500" />
+                <Kpi label="Won value" value={`$${data.totalWonValue.toLocaleString()}`} sub={`${data.wonCount} deals`} icon={Trophy} tint="text-amber-500" />
+                <Kpi label="Avg cycle" value={data.avgCycleDays == null ? "—" : `${data.avgCycleDays}d`} sub="Created → won" icon={Clock} tint="text-blue-500" />
+                <Kpi label="Pipeline sources" value={String(data.sourceBreakdown.length)} sub="Attributed channels" icon={DollarSign} tint="text-violet-500" />
+              </div>
+
+              <div className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+                <h2 className="text-sm font-semibold mb-4">Deals over time (last 8 weeks)</h2>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={data.dealsByWeek}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" style={{ fontSize: 10 }} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" style={{ fontSize: 10 }} allowDecimals={false} />
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                      <Line type="monotone" dataKey="created" stroke="#3b82f6" strokeWidth={2} name="Created" dot={false} />
+                      <Line type="monotone" dataKey="won" stroke="#10b981" strokeWidth={2} name="Won" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+                  <h2 className="text-sm font-semibold mb-4">Source attribution</h2>
+                  {data.sourceBreakdown.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-8 text-center">No sources yet.</p>
+                  ) : (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data.sourceBreakdown} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis type="number" stroke="hsl(var(--muted-foreground))" style={{ fontSize: 10 }} />
+                          <YAxis type="category" dataKey="source" stroke="hsl(var(--muted-foreground))" style={{ fontSize: 10 }} width={80} />
+                          <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} formatter={(v: number) => `$${v.toLocaleString()}`} />
+                          <Bar dataKey="value" fill="#8b5cf6" name="Deal value" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+                  <h2 className="text-sm font-semibold mb-4">Per-rep activity</h2>
+                  {data.repActivity.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-8 text-center">No activity yet.</p>
+                  ) : (
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
+                          <th className="text-left py-2 font-mono">Rep</th>
+                          <th className="text-right py-2 font-mono">Deals</th>
+                          <th className="text-right py-2 font-mono">Value</th>
+                          <th className="text-right py-2 font-mono">Tasks done</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.repActivity.map((r, i) => (
+                          <tr key={i} className="border-b border-border/50">
+                            <td className="py-2 font-medium truncate max-w-[140px]">{r.name}</td>
+                            <td className="py-2 text-right font-mono">{r.deals}</td>
+                            <td className="py-2 text-right font-mono">${r.value.toLocaleString()}</td>
+                            <td className="py-2 text-right font-mono">{r.tasksDone}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+
+function Kpi({
+  label, value, sub, icon: Icon, tint,
+}: {
+  label: string; value: string; sub: string;
+  icon: React.ComponentType<{ className?: string }>; tint: string;
+}) {
+  return (
+    <div className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</p>
+        <Icon className={`size-4 ${tint}`} />
+      </div>
+      <p className="text-2xl font-bold">{value}</p>
+      <p className="text-[11px] text-muted-foreground mt-1">{sub}</p>
+    </div>
+  );
+}
