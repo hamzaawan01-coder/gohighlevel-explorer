@@ -43,7 +43,7 @@ function DealDetailPage() {
           to="/opportunities"
           className="flex items-center gap-1.5 border border-border rounded-md py-1.5 px-2.5 text-xs font-medium hover:bg-secondary transition-colors"
         >
-          <ArrowLeft className="size-3.5" /> Back to pipeline
+          <ArrowLeft className="size-3.5" /> Back to opportunities
         </Link>
       }
     >
