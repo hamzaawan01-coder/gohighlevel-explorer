@@ -645,10 +645,22 @@ function ContactsPage() {
             View and edit contact details, deals, tasks, notes, and events.
           </DialogDescription>
           {selectedId && (
-            <ContactDetailPanel
-              contactId={selectedId}
-              onClose={() => setSelectedId(null)}
-            />
+            <>
+              <div className="flex justify-end px-4 pt-3">
+                <Link
+                  to="/contacts/$id"
+                  params={{ id: selectedId }}
+                  onClick={() => setSelectedId(null)}
+                  className="text-[11px] text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Open full page <ArrowUpRight className="size-3" />
+                </Link>
+              </div>
+              <ContactDetailPanel
+                contactId={selectedId}
+                onClose={() => setSelectedId(null)}
+              />
+            </>
           )}
         </DialogContent>
       </Dialog>
