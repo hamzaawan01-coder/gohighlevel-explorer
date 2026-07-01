@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-const GOOGLE_ADS_API = "https://googleads.googleapis.com/v18";
+const GOOGLE_ADS_API = "https://googleads.googleapis.com/v21";
 
 function siteOrigin(): string {
   return process.env.PUBLIC_SITE_URL || "https://gohighlevel-explorer.lovable.app";

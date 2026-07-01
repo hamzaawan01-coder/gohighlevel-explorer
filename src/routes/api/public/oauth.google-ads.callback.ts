@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-const GOOGLE_ADS_API = "https://googleads.googleapis.com/v18";
+const GOOGLE_ADS_API = "https://googleads.googleapis.com/v21";
 
 function origin(): string {
   return process.env.PUBLIC_SITE_URL || "https://gohighlevel-explorer.lovable.app";
