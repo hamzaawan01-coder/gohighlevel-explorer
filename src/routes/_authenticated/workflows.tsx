@@ -109,14 +109,21 @@ function WorkflowsPage() {
     >
       <div className="h-full flex">
         <div className="flex-1 overflow-auto">
+          <QuickTemplates
+            onPick={(tpl) => {
+              setEditing(null);
+              // Pre-load builder with a template by wrapping input creation
+              createMut.mutate(tpl);
+            }}
+          />
           {wfQ.isLoading ? (
             <div className="h-full flex items-center justify-center text-muted-foreground">
               <Loader2 className="size-4 animate-spin mr-2" /><span className="text-xs">Loading…</span>
             </div>
           ) : workflows.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
+            <div className="py-16 flex flex-col items-center justify-center gap-2 text-muted-foreground">
               <Zap className="size-8 opacity-40" />
-              <p className="text-xs">No workflows yet.</p>
+              <p className="text-xs">No workflows yet — pick a template above or</p>
               <button
                 onClick={() => { setEditing(null); setDialogOpen(true); }}
                 className="text-xs text-primary hover:underline"
