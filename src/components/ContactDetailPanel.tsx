@@ -257,6 +257,7 @@ export function ContactDetailPanel({
           <TabsTrigger value="tasks">Tasks · {openTasks.length}</TabsTrigger>
           <TabsTrigger value="notes">Notes · {messages.length}</TabsTrigger>
           <TabsTrigger value="events">Events · {events.length}</TabsTrigger>
+          <TabsTrigger value="files">Files · {files.length}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="flex-1 overflow-auto px-6 py-4 space-y-4">
