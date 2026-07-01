@@ -82,6 +82,59 @@ export type Database = {
           },
         ]
       }
+      ad_platform_connections: {
+        Row: {
+          accessible_customers: Json
+          account_name: string | null
+          connected_by: string
+          created_at: string
+          external_customer_id: string | null
+          id: string
+          last_sync_error: string | null
+          last_synced_at: string | null
+          platform: string
+          refresh_token: string
+          sub_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          accessible_customers?: Json
+          account_name?: string | null
+          connected_by: string
+          created_at?: string
+          external_customer_id?: string | null
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          platform: string
+          refresh_token: string
+          sub_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          accessible_customers?: Json
+          account_name?: string | null
+          connected_by?: string
+          created_at?: string
+          external_customer_id?: string | null
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          platform?: string
+          refresh_token?: string
+          sub_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_platform_connections_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agencies: {
         Row: {
           created_at: string
