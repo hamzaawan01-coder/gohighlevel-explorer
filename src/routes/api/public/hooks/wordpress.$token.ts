@@ -187,6 +187,7 @@ export const Route = createFileRoute("/api/public/hooks/wordpress/$token")({
           .update({
             last_received_at: new Date().toISOString(),
             last_error: null,
+            total_received: ((hook as { total_received?: number }).total_received ?? 0) + 1,
           } as never)
           .eq("id", hook.id);
 
