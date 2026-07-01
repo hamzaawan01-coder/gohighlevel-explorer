@@ -629,6 +629,15 @@ function ContactsPage() {
         }}
       />
 
+      {userId && subId && (
+        <ContactsImportDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          ownerId={userId}
+          subAccountId={subId}
+        />
+      )}
+
       <Dialog open={!!selectedId} onOpenChange={(o) => !o && setSelectedId(null)}>
         <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
           <DialogTitle className="sr-only">Contact detail</DialogTitle>
