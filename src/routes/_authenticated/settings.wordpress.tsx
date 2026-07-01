@@ -257,6 +257,7 @@ function SetupInstructions({ url, secret }: { url: string; secret: string | null
           <TabsTrigger value="wpforms">WPForms</TabsTrigger>
           <TabsTrigger value="gravity">Gravity Forms</TabsTrigger>
           <TabsTrigger value="cf7">Contact Form 7</TabsTrigger>
+          <TabsTrigger value="elementor">Elementor</TabsTrigger>
         </TabsList>
 
         <TabsContent value="functions" className="space-y-2">
@@ -310,7 +311,40 @@ function SetupInstructions({ url, secret }: { url: string; secret: string | null
           </p>
           <CodeBlock code={cf7Snippet} />
         </TabsContent>
+
+        <TabsContent value="elementor" className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Elementor Pro Forms has a native <b>Webhook</b> action — no plugin or code needed.
+          </p>
+          <ol className="text-sm text-muted-foreground list-decimal ml-5 space-y-1">
+            <li>Edit your form widget → <b>Content → Actions After Submit</b> → add <b>Webhook</b>.</li>
+            <li>Open the new <b>Webhook</b> section below.</li>
+            <li>
+              Webhook URL: <code className="text-foreground break-all">{url}</code>
+            </li>
+            <li>Advanced Data: <b>On</b> (sends field IDs and meta as JSON).</li>
+            <li>
+              In each form field's <b>Advanced</b> tab, set the <b>ID</b> to one of the aliases
+              below (e.g. <code>email</code>, <code>first_name</code>, <code>phone</code>). Any
+              other field ID is kept on the submission record as-is.
+            </li>
+            {secret && (
+              <li>
+                Elementor's built-in webhook can't sign requests. Either delete the HMAC secret on
+                this webhook, or use the <b>functions.php</b> snippet instead (it signs the
+                payload).
+              </li>
+            )}
+          </ol>
+          <p className="text-xs text-muted-foreground">
+            Free Elementor doesn't include the Webhook action. If you're on the free version, use
+            the <b>functions.php</b> tab — it also catches Elementor form submissions via the{" "}
+            <code>elementor_pro/forms/new_record</code> hook when Pro is present, and via the
+            generic mail hook otherwise.
+          </p>
+        </TabsContent>
       </Tabs>
+
 
       <div className="mt-4 rounded-md border border-border p-4 text-xs space-y-1">
         <div className="font-medium text-foreground">Recognized field aliases</div>
@@ -370,6 +404,15 @@ function crm_send_gform($entry, $form) {
     foreach ($form['fields'] as $f) { $payload[sanitize_key($f->label)] = rgar($entry, (string)$f->id); }
     crm_send_to_webhook($payload);
 }
+// Elementor Pro Forms
+add_action('elementor_pro/forms/new_record', function ($record, $handler) {
+    $payload = [];
+    foreach ($record->get('fields') as $id => $f) {
+        $payload[sanitize_key($f['id'] ?: $id)] = $f['value'];
+    }
+    $payload['source_url'] = home_url(add_query_arg(null, null));
+    crm_send_to_webhook($payload);
+}, 10, 2);
 function crm_send_to_webhook($payload) {
     $body = wp_json_encode($payload);
     $headers = ['Content-Type' => 'application/json'];${sig}
