@@ -131,6 +131,13 @@ export function ContactDetailPanel({
     enabled: !!convoQ.data?.id,
   });
 
+  const filesQ = useQuery({
+    queryKey: ["contact-files", contactId],
+    queryFn: () => fetchContactFiles(contactId),
+  });
+
+
+
   const updateContactMut = useMutation({
     mutationFn: (input: ContactInput) => updateContact(contactId, input),
     onSuccess: () => {
