@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Plus, Loader2, Pencil, Trash2, Mail, Phone, Building2,
   Bookmark, BookmarkPlus, X, Tag as TagIcon, ChevronDown,
+  Download, Upload,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
@@ -31,6 +32,8 @@ import {
   type ContactView,
 } from "@/lib/contact-bulk";
 import { useTenancy } from "@/lib/tenancy";
+import { contactsToCsv, downloadCsv } from "@/lib/contacts-csv";
+import { ContactsImportDialog } from "@/components/ContactsImportDialog";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/contacts/")({
@@ -47,6 +50,7 @@ function ContactsPage() {
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Contact | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -244,16 +248,39 @@ function ContactsPage() {
         </div>
       }
       headerActions={
-        <button
-          onClick={() => {
-            setEditing(null);
-            setDialogOpen(true);
-          }}
-          className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="size-3.5" />
-          New Contact
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              downloadCsv(
+                `contacts-${new Date().toISOString().slice(0, 10)}.csv`,
+                contactsToCsv(contacts),
+              );
+            }}
+            className="flex items-center gap-1.5 border border-border rounded-md py-1.5 px-2.5 text-xs font-medium hover:bg-secondary transition-colors"
+            title="Export contacts to CSV"
+          >
+            <Download className="size-3.5" />
+            Export
+          </button>
+          <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-1.5 border border-border rounded-md py-1.5 px-2.5 text-xs font-medium hover:bg-secondary transition-colors"
+            title="Import contacts from CSV"
+          >
+            <Upload className="size-3.5" />
+            Import
+          </button>
+          <button
+            onClick={() => {
+              setEditing(null);
+              setDialogOpen(true);
+            }}
+            className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="size-3.5" />
+            New Contact
+          </button>
+        </div>
       }
     >
       <div className="h-full flex flex-col">
@@ -601,6 +628,15 @@ function ContactsPage() {
           else await createMut.mutateAsync(input);
         }}
       />
+
+      {userId && subId && (
+        <ContactsImportDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          ownerId={userId}
+          subAccountId={subId}
+        />
+      )}
 
       <Dialog open={!!selectedId} onOpenChange={(o) => !o && setSelectedId(null)}>
         <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
