@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Loader2, PanelRightClose, PanelRightOpen, ArrowUpRight } from "lucide-react";
+import { Plus, Loader2, PanelRightClose, PanelRightOpen, ArrowUpRight, Settings, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,13 +8,21 @@ import {
   fetchBoard,
   createDeal,
   moveDeal,
+  listPipelines,
   type Deal,
 } from "@/lib/pipeline";
 import { useTenancy } from "@/lib/tenancy";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { NewDealDialog } from "@/components/NewDealDialog";
 import { DealDetailPanel } from "@/components/DealDetailPanel";
+import { ManagePipelinesDialog } from "@/components/ManagePipelinesDialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 
@@ -39,6 +47,8 @@ function Dashboard() {
   const [newDealOpen, setNewDealOpen] = useState(false);
   const [openDealId, setOpenDealId] = useState<string | null>(null);
   const [activityMinimized, setActivityMinimized] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -47,13 +57,25 @@ function Dashboard() {
 
   const subId = useTenancy((s) => s.currentSubAccountId);
 
-  const pipelineQuery = useQuery({
-    queryKey: ["pipeline", userId, subId],
+  // Ensures at least one pipeline exists
+  const defaultQuery = useQuery({
+    queryKey: ["default-pipeline", userId, subId],
     enabled: !!userId && !!subId,
     queryFn: () => ensureDefaultPipeline(userId!, subId!),
   });
 
-  const pipelineId = pipelineQuery.data?.id;
+  const pipelinesQuery = useQuery({
+    queryKey: ["pipelines", subId],
+    enabled: !!subId && !!defaultQuery.data,
+    queryFn: () => listPipelines(subId!),
+  });
+
+  const pipelines = pipelinesQuery.data ?? [];
+  const pipelineId =
+    selectedPipelineId && pipelines.some((p) => p.id === selectedPipelineId)
+      ? selectedPipelineId
+      : pipelines[0]?.id ?? defaultQuery.data?.id ?? undefined;
+  const currentPipeline = pipelines.find((p) => p.id === pipelineId);
 
   const boardQuery = useQuery({
     queryKey: ["board", pipelineId],
@@ -108,7 +130,7 @@ function Dashboard() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["board", pipelineId] }),
   });
 
-  const loading = pipelineQuery.isLoading || boardQuery.isLoading;
+  const loading = defaultQuery.isLoading || pipelinesQuery.isLoading || boardQuery.isLoading;
   const totalDeals = deals.length;
   const unreadInbox = 2;
 
@@ -138,6 +160,28 @@ function Dashboard() {
               <PanelRightOpen className="size-3.5" />
             </button>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1.5 h-8 px-2.5 rounded-md hover:bg-secondary text-xs font-medium border border-border">
+                {currentPipeline?.name ?? "Pipeline"}
+                <ChevronDown className="size-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {pipelines.map((p) => (
+                <DropdownMenuItem
+                  key={p.id}
+                  onClick={() => setSelectedPipelineId(p.id)}
+                  className={p.id === pipelineId ? "font-semibold" : ""}
+                >
+                  {p.name}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuItem onClick={() => setManageOpen(true)}>
+                <Settings className="size-3.5 mr-2" /> Manage pipelines
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <button
             onClick={() => setNewDealOpen(true)}
             disabled={!stages.length}
@@ -249,6 +293,17 @@ function Dashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {userId && subId && (
+        <ManagePipelinesDialog
+          open={manageOpen}
+          onOpenChange={setManageOpen}
+          subAccountId={subId}
+          userId={userId}
+          activePipelineId={pipelineId ?? null}
+          onSelectPipeline={setSelectedPipelineId}
+        />
+      )}
     </AppShell>
   );
 }

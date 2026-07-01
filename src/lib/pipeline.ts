@@ -69,6 +69,96 @@ export async function ensureDefaultPipeline(
   return pipeline as Pipeline;
 }
 
+export async function listPipelines(subAccountId: string): Promise<Pipeline[]> {
+  const { data, error } = await supabase
+    .from("pipelines")
+    .select("id,name,sub_account_id")
+    .eq("sub_account_id", subAccountId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Pipeline[];
+}
+
+export async function createPipeline(input: {
+  name: string;
+  userId: string;
+  subAccountId: string;
+}): Promise<Pipeline> {
+  const { data: pipeline, error } = await supabase
+    .from("pipelines")
+    .insert({ name: input.name, owner_id: input.userId, sub_account_id: input.subAccountId })
+    .select("id,name,sub_account_id")
+    .single();
+  if (error) throw error;
+  const { error: sErr } = await supabase.from("pipeline_stages").insert(
+    DEFAULT_STAGES.map((s) => ({
+      ...s,
+      pipeline_id: pipeline.id,
+      owner_id: input.userId,
+      sub_account_id: input.subAccountId,
+    })),
+  );
+  if (sErr) throw sErr;
+  return pipeline as Pipeline;
+}
+
+export async function renamePipeline(id: string, name: string): Promise<void> {
+  const { error } = await supabase.from("pipelines").update({ name }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deletePipeline(id: string): Promise<void> {
+  const { error } = await supabase.from("pipelines").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function createStage(input: {
+  pipeline_id: string;
+  sub_account_id: string;
+  owner_id: string;
+  name: string;
+  color?: string;
+  position: number;
+}): Promise<Stage> {
+  const { data, error } = await supabase
+    .from("pipeline_stages")
+    .insert({
+      pipeline_id: input.pipeline_id,
+      sub_account_id: input.sub_account_id,
+      owner_id: input.owner_id,
+      name: input.name,
+      color: input.color ?? "#64748b",
+      position: input.position,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as Stage;
+}
+
+export async function updateStage(
+  id: string,
+  patch: Partial<{ name: string; color: string; position: number }>,
+): Promise<void> {
+  const { error } = await supabase.from("pipeline_stages").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteStage(id: string): Promise<void> {
+  const { error } = await supabase.from("pipeline_stages").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function reorderStages(
+  stages: { id: string; position: number }[],
+): Promise<void> {
+  await Promise.all(
+    stages.map((s) =>
+      supabase.from("pipeline_stages").update({ position: s.position }).eq("id", s.id),
+    ),
+  );
+}
+
 export async function fetchBoard(pipelineId: string) {
   const [stagesRes, dealsRes] = await Promise.all([
     supabase
