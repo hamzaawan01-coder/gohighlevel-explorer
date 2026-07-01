@@ -371,6 +371,64 @@ function SmsPanel({ subId }: { subId: string }) {
             {test.isPending ? "Sending..." : "Send test"}
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Use E.164 format (e.g. <code className="font-mono">+15551234567</code>).
+        </p>
+      </div>
+
+      <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-5 space-y-3">
+        <h2 className="font-medium text-sm">Test SMS failing? Verify the destination number</h2>
+        <p className="text-xs text-muted-foreground">
+          If Twilio returns an error like{" "}
+          <span className="font-mono">
+            "The number +1555XXXXXXX is unverified. Trial accounts cannot send messages to
+            unverified numbers"
+          </span>
+          , your Twilio account is still in trial mode. Trial accounts can only send SMS to
+          numbers you have explicitly verified in the Twilio console.
+        </p>
+        <div className="space-y-2 text-xs">
+          <p className="font-medium text-foreground">Option 1 — Verify the number (free, stays on trial)</p>
+          <ol className="list-decimal pl-5 space-y-1 text-muted-foreground">
+            <li>
+              Open{" "}
+              <a
+                className="underline"
+                href="https://console.twilio.com/us1/develop/phone-numbers/manage/verified"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Twilio Console → Verified Caller IDs
+              </a>
+              .
+            </li>
+            <li>Click <b>Add a new Caller ID</b> and enter the destination number in E.164 format.</li>
+            <li>Twilio calls or texts the number with a 6-digit code — enter it to confirm.</li>
+            <li>Come back here and click <b>Send test</b> again.</li>
+          </ol>
+        </div>
+        <div className="space-y-2 text-xs">
+          <p className="font-medium text-foreground">Option 2 — Upgrade Twilio (send to any number)</p>
+          <ol className="list-decimal pl-5 space-y-1 text-muted-foreground">
+            <li>
+              Open{" "}
+              <a
+                className="underline"
+                href="https://console.twilio.com/us1/billing/manage-billing/upgrade"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Twilio Console → Upgrade
+              </a>{" "}
+              and add a payment method.
+            </li>
+            <li>After upgrading, you can send SMS to any number worldwide (subject to Geo Permissions).</li>
+          </ol>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          This is a Twilio account restriction — no changes to this app are needed once the
+          number is verified or the account is upgraded.
+        </p>
       </div>
     </div>
   );
