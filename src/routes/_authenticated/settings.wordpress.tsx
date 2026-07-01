@@ -93,6 +93,7 @@ function WordPressPage() {
         ) : (
           <WebhooksPanel subId={subId} userId={userId} />
         )}
+        </div>
       </div>
     </AppShell>
   );
