@@ -121,6 +121,118 @@ function ContactsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const viewsQuery = useQuery({
+    queryKey: ["contact-views", subId],
+    queryFn: () => fetchContactViews(subId!),
+    enabled: !!subId,
+  });
+  const views: ContactView[] = viewsQuery.data ?? [];
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    setSelectedIds(new Set());
+  };
+
+  const bulkStageMut = useMutation({
+    mutationFn: ({ ids, stage }: { ids: string[]; stage: LifecycleStage }) =>
+      bulkUpdateStage(ids, stage),
+    onSuccess: (_d, v) => {
+      toast.success(`Moved ${v.ids.length} to ${v.stage.toUpperCase()}`);
+      invalidateAll();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const bulkTagMut = useMutation({
+    mutationFn: ({ ids, tag }: { ids: string[]; tag: string }) => bulkAddTag(ids, tag),
+    onSuccess: (_d, v) => {
+      toast.success(`Tagged ${v.ids.length} with "${v.tag}"`);
+      invalidateAll();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const bulkUntagMut = useMutation({
+    mutationFn: ({ ids, tag }: { ids: string[]; tag: string }) => bulkRemoveTag(ids, tag),
+    onSuccess: (_d, v) => {
+      toast.success(`Removed "${v.tag}" from ${v.ids.length}`);
+      invalidateAll();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const bulkDeleteMut = useMutation({
+    mutationFn: (ids: string[]) => bulkDeleteContacts(ids),
+    onSuccess: (_d, ids) => {
+      toast.success(`Deleted ${ids.length} contacts`);
+      invalidateAll();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const saveViewMut = useMutation({
+    mutationFn: (name: string) => {
+      if (!userId || !subId) throw new Error("Not ready");
+      return createContactView({
+        name,
+        filters: { search, stage: activeStage, tag: activeTag },
+        subAccountId: subId,
+        ownerId: userId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contact-views"] });
+      toast.success("View saved");
+      setSaveViewOpen(false);
+      setNewViewName("");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteViewMut = useMutation({
+    mutationFn: (id: string) => deleteContactView(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contact-views"] });
+      toast.success("View deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const applyView = (v: ContactView) => {
+    setSearch(v.filters.search ?? "");
+    setActiveStage(v.filters.stage ?? "all");
+    setActiveTag(v.filters.tag ?? null);
+  };
+
+  const filteredIds = useMemo(() => filtered.map((c) => c.id), [filtered]);
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedIds.has(id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+  const toggleAll = () => {
+    if (allSelected) {
+      const next = new Set(selectedIds);
+      filteredIds.forEach((id) => next.delete(id));
+      setSelectedIds(next);
+    } else {
+      setSelectedIds(new Set([...selectedIds, ...filteredIds]));
+    }
+  };
+  const toggleOne = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+  const selectedArr = Array.from(selectedIds);
+  const selectedTags = useMemo(() => {
+    const s = new Set<string>();
+    contacts
+      .filter((c) => selectedIds.has(c.id))
+      .forEach((c) => (c.tags ?? []).forEach((t) => s.add(t)));
+    return Array.from(s).sort();
+  }, [contacts, selectedIds]);
+
+
+
   return (
     <AppShell
       headerStatus={
