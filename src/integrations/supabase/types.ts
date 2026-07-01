@@ -1166,6 +1166,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      scan_time_workflows: { Args: never; Returns: undefined }
     }
     Enums: {
       agency_role: "owner" | "admin"
