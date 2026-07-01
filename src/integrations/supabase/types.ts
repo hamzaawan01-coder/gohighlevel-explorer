@@ -1181,6 +1181,8 @@ export type Database = {
         | "deal.stage_changed"
         | "task.completed"
         | "form.submitted"
+        | "task.due_soon"
+        | "contact.stale"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1321,6 +1323,8 @@ export const Constants = {
         "deal.stage_changed",
         "task.completed",
         "form.submitted",
+        "task.due_soon",
+        "contact.stale",
       ],
     },
   },
