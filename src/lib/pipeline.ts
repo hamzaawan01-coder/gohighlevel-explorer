@@ -26,7 +26,10 @@ export type Deal = {
   position: number;
   notes: string | null;
   contact_id: string | null;
+  owner_id: string | null;
   expected_close_date: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 const DEFAULT_STAGES = [
