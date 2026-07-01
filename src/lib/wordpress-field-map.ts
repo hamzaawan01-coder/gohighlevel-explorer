@@ -17,12 +17,32 @@ export type StandardKey = (typeof STANDARD_KEYS)[number];
 export type FieldMap = Partial<Record<StandardKey, string[]>>;
 
 export const BUILTIN_ALIASES: Record<StandardKey, string[]> = {
-  first_name: ["first_name", "fname", "firstname", "your-name", "name", "full_name", "your_name"],
-  last_name: ["last_name", "lname", "lastname", "surname", "your-lastname"],
-  email: ["email", "your-email", "email_address", "user_email", "mail", "e_mail"],
-  phone: ["phone", "your-phone", "telephone", "tel", "mobile", "phone_number"],
-  company: ["company", "your-company", "organization", "business", "company_name"],
-  notes: ["notes", "message", "your-message", "comments", "your-comment", "inquiry", "details"],
+  first_name: [
+    "first_name", "first name", "fname", "firstname", "your-name",
+    "name", "full_name", "full name", "your_name", "your name", "contact_name", "contact name",
+  ],
+  last_name: [
+    "last_name", "last name", "lname", "lastname", "surname",
+    "your-lastname", "family_name", "family name",
+  ],
+  email: [
+    "email", "e-mail", "your-email", "your email", "email_address", "email address",
+    "user_email", "user email", "mail", "e_mail", "contact_email", "contact email",
+  ],
+  phone: [
+    "phone", "phone number", "your-phone", "your phone", "telephone", "tel",
+    "mobile", "mobile number", "mobile phone", "cell", "cell phone", "cellphone",
+    "contact_number", "contact number", "phone_number", "whatsapp", "whatsapp number",
+  ],
+  company: [
+    "company", "company name", "your-company", "your company", "organization", "organisation",
+    "business", "business name", "company_name", "employer",
+  ],
+  notes: [
+    "notes", "note", "message", "your message", "your-message", "comments", "comment",
+    "your-comment", "your comment", "inquiry", "enquiry", "details", "description",
+    "how can we help", "how can we help you", "tell us more", "additional information",
+  ],
 };
 
 export function normKey(k: string): string {
