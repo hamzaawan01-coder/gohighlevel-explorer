@@ -15,6 +15,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { SubAccountSwitcher } from "@/components/SubAccountSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
+import { CommandPalette } from "@/components/CommandPalette";
+
+function openPalette() {
+  (window as unknown as { __openPalette?: () => void }).__openPalette?.();
+}
 
 type NavItem = {
   label: string;
@@ -64,17 +69,19 @@ export function AppShell({
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-14 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center gap-4 flex-1">
-            <div className="w-full max-w-md relative">
+            <button
+              type="button"
+              onClick={openPalette}
+              className="w-full max-w-md relative text-left"
+            >
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search records…"
-                className="w-full bg-secondary border border-border rounded-md py-1.5 pl-9 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-              />
+              <span className="block w-full bg-secondary border border-border rounded-md py-1.5 pl-9 pr-3 text-xs text-muted-foreground hover:bg-secondary/70 transition-colors">
+                Search contacts, deals, tasks…
+              </span>
               <kbd className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[10px] text-muted-foreground bg-card border border-border rounded px-1.5 py-0.5">
-                /
+                ⌘K
               </kbd>
-            </div>
+            </button>
           </div>
           <div className="flex items-center gap-4">
             {headerStatus}
