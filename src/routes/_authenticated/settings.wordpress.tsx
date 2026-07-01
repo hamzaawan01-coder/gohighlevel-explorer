@@ -404,6 +404,15 @@ function crm_send_gform($entry, $form) {
     foreach ($form['fields'] as $f) { $payload[sanitize_key($f->label)] = rgar($entry, (string)$f->id); }
     crm_send_to_webhook($payload);
 }
+// Elementor Pro Forms
+add_action('elementor_pro/forms/new_record', function ($record, $handler) {
+    $payload = [];
+    foreach ($record->get('fields') as $id => $f) {
+        $payload[sanitize_key($f['id'] ?: $id)] = $f['value'];
+    }
+    $payload['source_url'] = home_url(add_query_arg(null, null));
+    crm_send_to_webhook($payload);
+}, 10, 2);
 function crm_send_to_webhook($payload) {
     $body = wp_json_encode($payload);
     $headers = ['Content-Type' => 'application/json'];${sig}
