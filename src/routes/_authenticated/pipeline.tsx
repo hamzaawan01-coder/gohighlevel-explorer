@@ -47,6 +47,8 @@ function Dashboard() {
   const [newDealOpen, setNewDealOpen] = useState(false);
   const [openDealId, setOpenDealId] = useState<string | null>(null);
   const [activityMinimized, setActivityMinimized] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -55,13 +57,25 @@ function Dashboard() {
 
   const subId = useTenancy((s) => s.currentSubAccountId);
 
-  const pipelineQuery = useQuery({
-    queryKey: ["pipeline", userId, subId],
+  // Ensures at least one pipeline exists
+  const defaultQuery = useQuery({
+    queryKey: ["default-pipeline", userId, subId],
     enabled: !!userId && !!subId,
     queryFn: () => ensureDefaultPipeline(userId!, subId!),
   });
 
-  const pipelineId = pipelineQuery.data?.id;
+  const pipelinesQuery = useQuery({
+    queryKey: ["pipelines", subId],
+    enabled: !!subId && !!defaultQuery.data,
+    queryFn: () => listPipelines(subId!),
+  });
+
+  const pipelines = pipelinesQuery.data ?? [];
+  const pipelineId =
+    selectedPipelineId && pipelines.some((p) => p.id === selectedPipelineId)
+      ? selectedPipelineId
+      : pipelines[0]?.id ?? defaultQuery.data?.id ?? undefined;
+  const currentPipeline = pipelines.find((p) => p.id === pipelineId);
 
   const boardQuery = useQuery({
     queryKey: ["board", pipelineId],
