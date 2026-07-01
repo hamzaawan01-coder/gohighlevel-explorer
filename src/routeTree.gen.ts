@@ -18,6 +18,7 @@ import { Route as AuthenticatedWorkflowsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
+import { Route as AuthenticatedFormsRouteImport } from './routes/_authenticated/forms'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConversationsRouteImport } from './routes/_authenticated/conversations'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
@@ -70,6 +71,11 @@ const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
   path: '/pipeline',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFormsRoute = AuthenticatedFormsRouteImport.update({
+  id: '/forms',
+  path: '/forms',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/conversations': typeof AuthenticatedConversationsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/forms': typeof AuthenticatedFormsRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/tasks': typeof AuthenticatedTasksRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/conversations': typeof AuthenticatedConversationsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/forms': typeof AuthenticatedFormsRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/tasks': typeof AuthenticatedTasksRoute
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/conversations': typeof AuthenticatedConversationsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/forms': typeof AuthenticatedFormsRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/conversations'
     | '/dashboard'
+    | '/forms'
     | '/pipeline'
     | '/reports'
     | '/tasks'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/conversations'
     | '/dashboard'
+    | '/forms'
     | '/pipeline'
     | '/reports'
     | '/tasks'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar'
     | '/_authenticated/conversations'
     | '/_authenticated/dashboard'
+    | '/_authenticated/forms'
     | '/_authenticated/pipeline'
     | '/_authenticated/reports'
     | '/_authenticated/tasks'
@@ -292,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPipelineRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/forms': {
+      id: '/_authenticated/forms'
+      path: '/forms'
+      fullPath: '/forms'
+      preLoaderRoute: typeof AuthenticatedFormsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -348,6 +367,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedConversationsRoute: typeof AuthenticatedConversationsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFormsRoute: typeof AuthenticatedFormsRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
@@ -361,6 +381,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedConversationsRoute: AuthenticatedConversationsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFormsRoute: AuthenticatedFormsRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
