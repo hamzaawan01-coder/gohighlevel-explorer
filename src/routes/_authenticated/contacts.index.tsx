@@ -469,7 +469,14 @@ function ContactsPage() {
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-card border-b border-border z-10">
                 <tr className="text-left font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <th className="px-6 py-2 font-bold">Name</th>
+                  <th className="pl-6 pr-2 py-2 w-8">
+                    <Checkbox
+                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                      onCheckedChange={toggleAll}
+                      aria-label="Select all"
+                    />
+                  </th>
+                  <th className="px-3 py-2 font-bold">Name</th>
                   <th className="px-3 py-2 font-bold">Stage</th>
                   <th className="px-3 py-2 font-bold">Email</th>
                   <th className="px-3 py-2 font-bold">Phone</th>
