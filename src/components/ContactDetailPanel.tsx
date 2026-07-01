@@ -188,6 +188,7 @@ export function ContactDetailPanel({
   const stagesById = new Map((stagesQ.data ?? []).map((s) => [s.id, s]));
   const events = eventsQ.data ?? [];
   const messages = msgsQ.data ?? [];
+  const files = filesQ.data ?? [];
 
   return (
     <div className="flex flex-col overflow-hidden max-h-[80vh]">
