@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
@@ -36,6 +37,11 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/tasks': typeof AuthenticatedTasksRoute
   '/invite/$token': typeof InviteTokenRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/tasks': typeof AuthenticatedTasksRoute
   '/invite/$token': typeof InviteTokenRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contacts'
     | '/dashboard'
+    | '/tasks'
     | '/invite/$token'
     | '/settings/sub-accounts'
     | '/settings/team'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contacts'
     | '/dashboard'
+    | '/tasks'
     | '/invite/$token'
     | '/settings/sub-accounts'
     | '/settings/team'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/contacts'
     | '/_authenticated/dashboard'
+    | '/_authenticated/tasks'
     | '/invite/$token'
     | '/_authenticated/settings/sub-accounts'
     | '/_authenticated/settings/team'
@@ -157,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/tasks': {
+      id: '/_authenticated/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedTasksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -191,6 +210,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedSettingsSubAccountsRoute: typeof AuthenticatedSettingsSubAccountsRoute
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
 }
@@ -198,6 +218,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedSettingsSubAccountsRoute: AuthenticatedSettingsSubAccountsRoute,
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
 }
