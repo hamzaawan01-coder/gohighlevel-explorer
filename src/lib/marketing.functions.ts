@@ -36,7 +36,7 @@ export const sendCampaign = createServerFn({ method: "POST" })
     const seg = c.segment ?? {};
     const stage = seg["stage"] as string | undefined;
     const tags = seg["tags"] as string[] | undefined;
-    if (stage) q = q.eq("lifecycle_stage", stage);
+    if (stage) q = q.eq("lifecycle_stage", stage as "lead" | "mql" | "sql" | "customer" | "lost");
     if (tags && tags.length) q = q.overlaps("tags", tags);
     if (c.channel === "email") q = q.not("email", "is", null);
     if (c.channel === "sms") q = q.not("phone", "is", null);
