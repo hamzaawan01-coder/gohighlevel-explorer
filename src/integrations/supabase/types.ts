@@ -634,6 +634,7 @@ export type Database = {
           channel: Database["public"]["Enums"]["message_channel"]
           contact_id: string
           created_at: string
+          external_thread_id: string | null
           id: string
           last_message_at: string | null
           sub_account_id: string
@@ -643,6 +644,7 @@ export type Database = {
           channel?: Database["public"]["Enums"]["message_channel"]
           contact_id: string
           created_at?: string
+          external_thread_id?: string | null
           id?: string
           last_message_at?: string | null
           sub_account_id: string
@@ -652,6 +654,7 @@ export type Database = {
           channel?: Database["public"]["Enums"]["message_channel"]
           contact_id?: string
           created_at?: string
+          external_thread_id?: string | null
           id?: string
           last_message_at?: string | null
           sub_account_id?: string
@@ -2228,7 +2231,12 @@ export type Database = {
         | "linkedin"
         | "tiktok"
       message_direction: "inbound" | "outbound"
-      message_kind: "note" | "email_log" | "sms_log"
+      message_kind:
+        | "note"
+        | "email_log"
+        | "sms_log"
+        | "messenger_log"
+        | "instagram_log"
       outbound_channel: "email" | "sms"
       outbound_status: "queued" | "sending" | "sent" | "failed"
       social_platform: "facebook" | "instagram" | "linkedin" | "twitter"
@@ -2391,7 +2399,13 @@ export const Constants = {
         "tiktok",
       ],
       message_direction: ["inbound", "outbound"],
-      message_kind: ["note", "email_log", "sms_log"],
+      message_kind: [
+        "note",
+        "email_log",
+        "sms_log",
+        "messenger_log",
+        "instagram_log",
+      ],
       outbound_channel: ["email", "sms"],
       outbound_status: ["queued", "sending", "sent", "failed"],
       social_platform: ["facebook", "instagram", "linkedin", "twitter"],
