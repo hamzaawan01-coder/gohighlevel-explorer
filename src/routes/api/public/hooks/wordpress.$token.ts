@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
+import { mapPayload, type FieldMap } from "@/lib/wordpress-field-map";
 
 /**
  * Public WordPress webhook receiver.
@@ -11,69 +12,8 @@ import { createHmac, timingSafeEqual } from "crypto";
  * Creates or updates a contact in the workspace and stores the raw payload as a form_submission.
  */
 
-type FieldMap = Record<string, string[]>;
-
 const MAX_BODY = 100_000; // 100KB
-const STANDARD_KEYS = ["first_name", "last_name", "email", "phone", "company", "notes"] as const;
-type StandardKey = (typeof STANDARD_KEYS)[number];
 
-// Built-in aliases covering WPForms, Gravity Forms, and Contact Form 7 defaults.
-const BUILTIN_ALIASES: Record<StandardKey, string[]> = {
-  first_name: ["first_name", "fname", "firstname", "your-name", "name", "full_name", "your_name"],
-  last_name: ["last_name", "lname", "lastname", "surname", "your-lastname"],
-  email: ["email", "your-email", "email_address", "user_email", "mail", "e_mail"],
-  phone: ["phone", "your-phone", "telephone", "tel", "mobile", "phone_number"],
-  company: ["company", "your-company", "organization", "business", "company_name"],
-  notes: ["notes", "message", "your-message", "comments", "your-comment", "inquiry", "details"],
-};
-
-function normKey(k: string): string {
-  return k.toLowerCase().replace(/[\s\-_.]+/g, "_");
-}
-
-function mapPayload(raw: Record<string, unknown>, fieldMap: FieldMap) {
-  // Build lookup: normalized alias -> standard key. User-provided field_map overrides built-ins on conflict.
-  const aliasToStd = new Map<string, StandardKey>();
-  for (const std of STANDARD_KEYS) {
-    aliasToStd.set(normKey(std), std);
-    for (const a of BUILTIN_ALIASES[std]) aliasToStd.set(normKey(a), std);
-  }
-  for (const std of STANDARD_KEYS) {
-    for (const a of fieldMap[std] ?? []) aliasToStd.set(normKey(a), std);
-  }
-
-  const mapped: Partial<Record<StandardKey, string>> = {};
-  const extras: Record<string, string> = {};
-
-  for (const [rawKey, rawVal] of Object.entries(raw)) {
-    if (rawVal == null) continue;
-    const val =
-      typeof rawVal === "string"
-        ? rawVal
-        : typeof rawVal === "number" || typeof rawVal === "boolean"
-          ? String(rawVal)
-          : JSON.stringify(rawVal);
-    const trimmed = val.trim();
-    if (!trimmed) continue;
-
-    const std = aliasToStd.get(normKey(rawKey));
-    if (std && !mapped[std]) {
-      mapped[std] = trimmed.slice(0, std === "notes" ? 5000 : 255);
-    } else {
-      // preserve raw for extras
-      extras[rawKey.slice(0, 120)] = trimmed.slice(0, 2000);
-    }
-  }
-
-  // If "name" arrived as a single full-name field mapped to first_name, split it.
-  if (mapped.first_name && !mapped.last_name && /\s+/.test(mapped.first_name)) {
-    const parts = mapped.first_name.split(/\s+/);
-    mapped.first_name = parts.shift() ?? mapped.first_name;
-    mapped.last_name = parts.join(" ").slice(0, 255);
-  }
-
-  return { mapped, extras };
-}
 
 function verifySignature(rawBody: string, secret: string, header: string | null): boolean {
   if (!header) return false;
