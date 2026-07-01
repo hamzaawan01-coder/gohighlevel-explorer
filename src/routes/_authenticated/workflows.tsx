@@ -274,3 +274,106 @@ function ActionChip({ action }: { action: WorkflowAction }) {
     </span>
   );
 }
+
+const QUICK_TEMPLATES: { key: string; label: string; description: string; input: WorkflowInput }[] = [
+  {
+    key: "new-lead-sms",
+    label: "New opportunity → SMS the customer",
+    description: "Text the linked contact the moment a new deal is added.",
+    input: {
+      name: "New opportunity — SMS the customer",
+      enabled: true,
+      trigger_type: "deal.created",
+      trigger_config: {},
+      actions: [
+        {
+          type: "send_sms",
+          body: "Hi! Thanks for your interest — we've received your enquiry and someone will be in touch shortly.",
+        },
+      ],
+    },
+  },
+  {
+    key: "new-lead-email",
+    label: "New opportunity → Email the customer",
+    description: "Send a branded acknowledgement email when a new opportunity comes in.",
+    input: {
+      name: "New opportunity — Email the customer",
+      enabled: true,
+      trigger_type: "deal.created",
+      trigger_config: {},
+      actions: [
+        {
+          type: "send_email",
+          subject: "We got your enquiry",
+          body_text: "Hi there,\n\nThanks for reaching out — we've received your enquiry and someone from our team will follow up shortly.\n\n— The team",
+          body_html: "<p>Hi there,</p><p>Thanks for reaching out — we've received your enquiry and someone from our team will follow up shortly.</p><p>— The team</p>",
+        },
+      ],
+    },
+  },
+  {
+    key: "stage-changed-sms",
+    label: "Deal stage changed → SMS the customer",
+    description: "Notify the customer whenever their opportunity moves to a new stage.",
+    input: {
+      name: "Deal stage changed — SMS the customer",
+      enabled: true,
+      trigger_type: "deal.stage_changed",
+      trigger_config: {},
+      actions: [
+        {
+          type: "send_sms",
+          body: "Good news — there's an update on your enquiry. We'll be in touch shortly with next steps.",
+        },
+      ],
+    },
+  },
+  {
+    key: "stage-changed-email",
+    label: "Deal stage changed → Email the customer",
+    description: "Send an email update whenever the deal advances to a new stage.",
+    input: {
+      name: "Deal stage changed — Email the customer",
+      enabled: true,
+      trigger_type: "deal.stage_changed",
+      trigger_config: {},
+      actions: [
+        {
+          type: "send_email",
+          subject: "An update on your enquiry",
+          body_text: "Hi there,\n\nThere's an update on your enquiry with us. We'll follow up shortly with next steps.\n\n— The team",
+          body_html: "<p>Hi there,</p><p>There's an update on your enquiry with us. We'll follow up shortly with next steps.</p><p>— The team</p>",
+        },
+      ],
+    },
+  },
+];
+
+function QuickTemplates({ onPick }: { onPick: (input: WorkflowInput) => void }) {
+  return (
+    <div className="px-6 py-4 border-b border-border bg-secondary/20">
+      <div className="flex items-center gap-2 mb-2">
+        <Zap className="size-3 text-accent" />
+        <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          Quick templates — customer response automations
+        </p>
+      </div>
+      <p className="text-[11px] text-muted-foreground mb-3">
+        One-click automations that message the customer linked to a deal. Recipient is the deal's contact; message body is editable after adding. Requires an SMS/email provider in Settings → Integrations.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        {QUICK_TEMPLATES.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => onPick(t.input)}
+            className="text-left rounded-md border border-border bg-card px-3 py-2 hover:border-primary/60 hover:bg-secondary/50 transition-colors"
+          >
+            <p className="text-xs font-medium">{t.label}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{t.description}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
