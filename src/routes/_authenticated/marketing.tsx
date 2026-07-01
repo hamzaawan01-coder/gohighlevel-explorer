@@ -21,7 +21,7 @@ import {
   fetchCampaigns, upsertCampaign, deleteCampaign, type Campaign,
   fetchTriggerLinks, createTriggerLink, updateTriggerLink, deleteTriggerLink, type TriggerLink,
   fetchSocialPosts, upsertSocialPost, deleteSocialPost, type SocialPost, type SocialPlatform,
-  fetchAdCampaigns, upsertAdCampaign, deleteAdCampaign, type AdCampaign, type AdPlatform,
+  fetchAdCampaigns, upsertAdCampaign, deleteAdCampaign, type AdCampaign, type AdPlatform, type AdCampaignStatus,
 } from "@/lib/marketing";
 import { sendCampaign } from "@/lib/marketing.functions";
 import { LIFECYCLE_STAGES } from "@/lib/contacts";
