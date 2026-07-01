@@ -61,6 +61,17 @@ function ConversationsPage() {
     [convos],
   );
 
+  const filteredContacts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const withActivity = [...contacts].sort((a, b) => {
+      const at = convoByContact.get(a.id)?.last_message_at ?? "";
+      const bt = convoByContact.get(b.id)?.last_message_at ?? "";
+      return bt.localeCompare(at);
+    });
+    if (!q) return withActivity;
+    return withActivity.filter((c) => displayName(c).toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q));
+  }, [contacts, convoByContact, search]);
+
   const selectedContact = contacts.find((c) => c.id === selectedContactId) ?? null;
   const selectedConvoId = selectedContactId ? convoByContact.get(selectedContactId)?.id ?? null : null;
 
