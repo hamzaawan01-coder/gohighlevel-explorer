@@ -611,3 +611,88 @@ function FileCard({
     </li>
   );
 }
+
+function MessagesTab({
+  contactId,
+  contact,
+}: {
+  contactId: string | null;
+  contact: Contact | null;
+}) {
+  const msgsQ = useQuery({
+    queryKey: ["contact-messages", contactId],
+    queryFn: () => fetchContactMessages(contactId!, 30),
+    enabled: !!contactId,
+  });
+
+  if (!contactId) {
+    return (
+      <div className="rounded-md border border-dashed border-border p-8 text-center">
+        <MessageSquare className="size-5 mx-auto mb-2 text-muted-foreground" />
+        <p className="text-xs text-muted-foreground">
+          Link a contact to this deal to see messages.
+        </p>
+      </div>
+    );
+  }
+
+  const contactName =
+    (contact && ([contact.first_name, contact.last_name].filter(Boolean).join(" ") || contact.email)) ||
+    "contact";
+  const messages = msgsQ.data ?? [];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-muted-foreground">
+          Recent messages across all channels for <span className="font-medium text-foreground">{contactName}</span>
+        </p>
+        <Link
+          to="/conversations"
+          className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+        >
+          Open inbox <ArrowUpRight className="size-3" />
+        </Link>
+      </div>
+
+      {msgsQ.isLoading ? (
+        <p className="text-xs text-muted-foreground">Loading…</p>
+      ) : messages.length === 0 ? (
+        <div className="rounded-md border border-dashed border-border p-8 text-center">
+          <MessageSquare className="size-5 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">
+            No messages yet. Start a conversation from the inbox.
+          </p>
+        </div>
+      ) : (
+        <ul className="divide-y divide-border rounded-md border border-border overflow-hidden">
+          {messages.map((m) => {
+            const ch = CHANNEL_BY_KEY[m.channel];
+            const Icon = ch?.icon ?? MessageSquare;
+            return (
+              <li key={m.id} className="px-4 py-3 flex gap-3 hover:bg-secondary/40">
+                <div className={`size-7 rounded-md flex items-center justify-center shrink-0 ${ch?.bg ?? "bg-secondary"}`}>
+                  <Icon className={`size-3.5 ${ch?.color ?? "text-muted-foreground"}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 text-[10px] font-mono uppercase text-muted-foreground">
+                    <span>{ch?.label ?? m.channel}</span>
+                    <span>·</span>
+                    <span>{m.direction}</span>
+                    <span className="ml-auto">
+                      {formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                  <p className="text-sm mt-0.5 whitespace-pre-wrap break-words line-clamp-3">
+                    {m.body}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
