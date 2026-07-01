@@ -8,13 +8,13 @@ import {
   Workflow,
   Settings,
   Search,
-  Bell,
   LogOut,
   CheckSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { SubAccountSwitcher } from "@/components/SubAccountSwitcher";
+import { NotificationBell } from "@/components/NotificationBell";
 
 type NavItem = {
   label: string;
