@@ -331,6 +331,21 @@ function ContactsPage() {
           else await createMut.mutateAsync(input);
         }}
       />
+
+      <Dialog open={!!selectedId} onOpenChange={(o) => !o && setSelectedId(null)}>
+        <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
+          <DialogTitle className="sr-only">Contact detail</DialogTitle>
+          <DialogDescription className="sr-only">
+            View and edit contact details, deals, tasks, notes, and events.
+          </DialogDescription>
+          {selectedId && (
+            <ContactDetailPanel
+              contactId={selectedId}
+              onClose={() => setSelectedId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
