@@ -14,7 +14,7 @@
  *    can't take the whole cron run down (no more 500 storm on /process-outbound).
  */
 import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig } from "./integrations";
-import { sendEmailViaProvider, sendSmsViaTwilio } from "./integrations.server";
+import { sendEmailViaProvider, sendSmsViaTwilio, sendSmsViaTwilioGateway } from "./integrations.server";
 
 const MAX_ATTEMPTS = 5;
 const BASE_BACKOFF_MS = 60_000; // 1 minute
