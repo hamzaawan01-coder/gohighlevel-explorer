@@ -711,3 +711,136 @@ function AdDialog({ open, onOpenChange, editing, subId, userId }: { open: boolea
     </Dialog>
   );
 }
+
+// ============================= AD CONNECTIONS =============================
+function AdConnectionsPanel({ subId }: { subId: string }) {
+  const qc = useQueryClient();
+  const startConnect = useServerFn(startGoogleAdsConnect);
+  const runSync = useServerFn(syncGoogleAds);
+
+  const q = useQuery({ queryKey: ["ad-connections", subId], queryFn: () => fetchAdConnections(subId) });
+
+  // Handle post-OAuth redirect banner (?google_ads=ok|error)
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const s = url.searchParams.get("google_ads");
+    if (!s) return;
+    const msg = url.searchParams.get("message");
+    if (s === "ok") toast.success("Google Ads connected");
+    else toast.error(`Google Ads connect failed: ${msg ?? "unknown"}`);
+    url.searchParams.delete("google_ads");
+    url.searchParams.delete("message");
+    window.history.replaceState({}, "", url.toString());
+    qc.invalidateQueries({ queryKey: ["ad-connections"] });
+  }, [qc]);
+
+  const connect = useMutation({
+    mutationFn: async () => startConnect({ data: { subAccountId: subId } }),
+    onSuccess: (r) => { window.location.href = r.authorizeUrl; },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const sync = useMutation({
+    mutationFn: async () => runSync({ data: { subAccountId: subId } }),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["ad-campaigns"] });
+      qc.invalidateQueries({ queryKey: ["ad-connections"] });
+      toast.success(`Synced ${r.upserted} campaigns from Google Ads`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const disc = useMutation({
+    mutationFn: deleteAdConnection,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["ad-connections"] }); toast.success("Disconnected"); },
+  });
+
+  const updateCust = useMutation({
+    mutationFn: ({ id, cid, name }: { id: string; cid: string; name: string | null }) =>
+      updateAdConnectionCustomer(id, cid, name),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["ad-connections"] }),
+  });
+
+  const google = (q.data ?? []).find((c) => c.platform === "google");
+
+  return (
+    <div className="border border-border rounded-md p-4 mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <p className="text-sm font-semibold">Ad platform connections</p>
+          <p className="text-xs text-muted-foreground">Auto-sync spend, clicks, and impressions.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Google Ads */}
+        <div className="border border-border rounded-md p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-sm">Google Ads</span>
+              {google ? <Badge variant="default" className="text-[10px]">Connected</Badge>
+                       : <Badge variant="secondary" className="text-[10px]">Not connected</Badge>}
+            </div>
+            {google ? (
+              <div className="flex gap-1">
+                <Button size="sm" variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+                  {sync.isPending ? <Loader2 className="size-3.5 animate-spin" /> : "Sync now"}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => disc.mutate(google.id)}><Trash2 className="size-3.5" /></Button>
+              </div>
+            ) : (
+              <Button size="sm" onClick={() => connect.mutate()} disabled={connect.isPending}>
+                {connect.isPending ? <Loader2 className="size-3.5 animate-spin" /> : "Connect"}
+              </Button>
+            )}
+          </div>
+          {google && (
+            <div className="mt-2 space-y-1">
+              {google.accessible_customers.length > 1 ? (
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs">Customer</Label>
+                  <Select
+                    value={google.external_customer_id ?? ""}
+                    onValueChange={(v) => {
+                      const item = google.accessible_customers.find((x) => x.id === v);
+                      updateCust.mutate({ id: google.id, cid: v, name: item?.name ?? null });
+                    }}
+                  >
+                    <SelectTrigger className="h-7 text-xs w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {google.accessible_customers.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name || c.id}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Customer: {google.external_customer_id ?? "—"}</p>
+              )}
+              <p className="text-[11px] text-muted-foreground">
+                {google.last_synced_at
+                  ? `Last synced ${formatDistanceToNow(new Date(google.last_synced_at), { addSuffix: true })}`
+                  : "Never synced"}
+              </p>
+              {google.last_sync_error && (
+                <p className="text-[11px] text-destructive">Last error: {google.last_sync_error}</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Meta (placeholder) */}
+        <div className="border border-border rounded-md p-3 opacity-70">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-sm">Meta Ads</span>
+              <Badge variant="outline" className="text-[10px]">Coming next</Badge>
+            </div>
+            <Button size="sm" variant="outline" disabled>Connect</Button>
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">Meta app review pending — will unlock the same one-click connect flow.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
