@@ -11,6 +11,23 @@ const CONTACT_KEYS = new Set(["email", "first_name", "last_name", "phone", "comp
 export const Route = createFileRoute("/api/public/forms/$slug")({
   server: {
     handlers: {
+      GET: async ({ params }) => {
+        const slug = params.slug;
+        if (!slug || slug.length > 100) {
+          return new Response("Bad slug", { status: 400 });
+        }
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data, error } = await supabaseAdmin
+          .from("lead_forms")
+          .select("id, slug, name, description, fields, success_message, redirect_url, enabled")
+          .eq("slug", slug)
+          .eq("enabled", true)
+          .maybeSingle();
+        if (error || !data) {
+          return new Response("Form not found", { status: 404 });
+        }
+        return Response.json(data);
+      },
       POST: async ({ request, params }) => {
         const slug = params.slug;
         if (!slug || slug.length > 100) {
