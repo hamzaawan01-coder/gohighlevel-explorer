@@ -28,7 +28,8 @@ import { NewDealDialog } from "@/components/NewDealDialog";
 import { DealDetailPanel } from "@/components/DealDetailPanel";
 import { PipelinesManagerPanel } from "@/components/PipelinesManagerPanel";
 import { BulkActionsPanel } from "@/components/BulkActionsPanel";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   DropdownMenu,
   DropdownMenuContent,
