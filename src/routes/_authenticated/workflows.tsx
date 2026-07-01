@@ -239,3 +239,25 @@ function WorkflowsPage() {
     </AppShell>
   );
 }
+
+function ActionChip({ action }: { action: WorkflowAction }) {
+  const config = (() => {
+    switch (action.type) {
+      case "create_task":
+        return { icon: ListChecks, label: action.title || "Task", tone: "bg-primary/10 text-primary" };
+      case "set_contact_stage":
+        return { icon: ArrowRightCircle, label: `→ ${action.stage}`, tone: "bg-accent/15 text-accent" };
+      case "add_contact_tag":
+        return { icon: Tag, label: action.tag || "tag", tone: "bg-amber-500/10 text-amber-600 dark:text-amber-400" };
+      case "create_notification":
+        return { icon: BellRing, label: action.title || "Notify", tone: "bg-secondary text-foreground" };
+    }
+  })();
+  const Icon = config.icon;
+  return (
+    <span className={"inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded max-w-[160px] " + config.tone}>
+      <Icon className="size-2.5 shrink-0" />
+      <span className="truncate">{config.label}</span>
+    </span>
+  );
+}
