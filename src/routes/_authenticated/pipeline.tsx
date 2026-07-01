@@ -19,7 +19,7 @@ import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 
 
-export const Route = createFileRoute("/_authenticated/dashboard")({
+export const Route = createFileRoute("/_authenticated/pipeline")({
   head: () => ({
     meta: [
       { title: "Agency Engine — CRM, Pipelines, Conversations" },
