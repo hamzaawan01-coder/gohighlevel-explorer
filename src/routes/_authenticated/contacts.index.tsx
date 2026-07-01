@@ -244,16 +244,39 @@ function ContactsPage() {
         </div>
       }
       headerActions={
-        <button
-          onClick={() => {
-            setEditing(null);
-            setDialogOpen(true);
-          }}
-          className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="size-3.5" />
-          New Contact
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              downloadCsv(
+                `contacts-${new Date().toISOString().slice(0, 10)}.csv`,
+                contactsToCsv(contacts),
+              );
+            }}
+            className="flex items-center gap-1.5 border border-border rounded-md py-1.5 px-2.5 text-xs font-medium hover:bg-secondary transition-colors"
+            title="Export contacts to CSV"
+          >
+            <Download className="size-3.5" />
+            Export
+          </button>
+          <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-1.5 border border-border rounded-md py-1.5 px-2.5 text-xs font-medium hover:bg-secondary transition-colors"
+            title="Import contacts from CSV"
+          >
+            <Upload className="size-3.5" />
+            Import
+          </button>
+          <button
+            onClick={() => {
+              setEditing(null);
+              setDialogOpen(true);
+            }}
+            className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="size-3.5" />
+            New Contact
+          </button>
+        </div>
       }
     >
       <div className="h-full flex flex-col">
