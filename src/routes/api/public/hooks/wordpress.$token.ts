@@ -17,18 +17,29 @@ const MAX_BODY = 100_000; // 100KB
 const STANDARD_KEYS = ["first_name", "last_name", "email", "phone", "company", "notes"] as const;
 type StandardKey = (typeof STANDARD_KEYS)[number];
 
+// Built-in aliases covering WPForms, Gravity Forms, and Contact Form 7 defaults.
+const BUILTIN_ALIASES: Record<StandardKey, string[]> = {
+  first_name: ["first_name", "fname", "firstname", "your-name", "name", "full_name", "your_name"],
+  last_name: ["last_name", "lname", "lastname", "surname", "your-lastname"],
+  email: ["email", "your-email", "email_address", "user_email", "mail", "e_mail"],
+  phone: ["phone", "your-phone", "telephone", "tel", "mobile", "phone_number"],
+  company: ["company", "your-company", "organization", "business", "company_name"],
+  notes: ["notes", "message", "your-message", "comments", "your-comment", "inquiry", "details"],
+};
+
 function normKey(k: string): string {
   return k.toLowerCase().replace(/[\s\-_.]+/g, "_");
 }
 
 function mapPayload(raw: Record<string, unknown>, fieldMap: FieldMap) {
-  // Build lookup: normalized alias -> standard key
+  // Build lookup: normalized alias -> standard key. User-provided field_map overrides built-ins on conflict.
   const aliasToStd = new Map<string, StandardKey>();
   for (const std of STANDARD_KEYS) {
-    // Standard key itself is always an alias
     aliasToStd.set(normKey(std), std);
-    const aliases = fieldMap[std] ?? [];
-    for (const a of aliases) aliasToStd.set(normKey(a), std);
+    for (const a of BUILTIN_ALIASES[std]) aliasToStd.set(normKey(a), std);
+  }
+  for (const std of STANDARD_KEYS) {
+    for (const a of fieldMap[std] ?? []) aliasToStd.set(normKey(a), std);
   }
 
   const mapped: Partial<Record<StandardKey, string>> = {};
