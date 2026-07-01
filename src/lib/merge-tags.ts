@@ -21,9 +21,27 @@ export const MERGE_TAGS: MergeTag[] = [
   { token: "workflow.name", label: "Workflow name", sample: "New enquiry follow-up", scopes: ["workflow"] },
 ];
 
-export function renderMergeTagsPreview(tpl: string | null | undefined): string {
+export type MergeContext = Record<string, Record<string, string | number | null | undefined>>;
+
+export function renderMergeTagsPreview(
+  tpl: string | null | undefined,
+  ctx?: MergeContext,
+): string {
   if (!tpl) return "";
   return tpl.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_m, path: string) => {
+    if (ctx) {
+      const parts = path.split(".");
+      let cur: unknown = ctx;
+      for (const p of parts) {
+        if (cur && typeof cur === "object" && p in (cur as Record<string, unknown>)) {
+          cur = (cur as Record<string, unknown>)[p];
+        } else {
+          cur = undefined;
+          break;
+        }
+      }
+      if (cur !== undefined && cur !== null) return String(cur);
+    }
     const t = MERGE_TAGS.find((x) => x.token === path);
     return t ? t.sample : "";
   });

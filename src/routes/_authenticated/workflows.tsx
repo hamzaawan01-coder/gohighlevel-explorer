@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing, Copy } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing, Copy, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
+import { WorkflowTestDialog } from "@/components/WorkflowTestDialog";
 import { useTenancy } from "@/lib/tenancy";
 import {
   fetchWorkflows,
@@ -37,6 +38,8 @@ function WorkflowsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Workflow | null>(null);
+  const [testing, setTesting] = useState<Workflow | null>(null);
+
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -158,6 +161,13 @@ function WorkflowsPage() {
                     </div>
                   </div>
                   <button
+                    onClick={() => setTesting(w)}
+                    className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    title="Test / preview"
+                  >
+                    <PlayCircle className="size-3" />
+                  </button>
+                  <button
                     onClick={() =>
                       createMut.mutate({
                         name: `${w.name} (copy)`,
@@ -258,6 +268,11 @@ function WorkflowsPage() {
           else await createMut.mutateAsync(input);
         }}
       />
+      <WorkflowTestDialog
+        open={!!testing}
+        onOpenChange={(o) => { if (!o) setTesting(null); }}
+        workflow={testing}
+      />
     </AppShell>
   );
 }
@@ -325,105 +340,248 @@ function describeWorkflow(w: Workflow): string {
 
 
 
-const QUICK_TEMPLATES: { key: string; label: string; description: string; input: WorkflowInput }[] = [
+type QuickTemplate = { key: string; group: string; label: string; description: string; input: WorkflowInput };
+
+const QUICK_TEMPLATES: QuickTemplate[] = [
+  // ── New leads / opportunities ──
   {
-    key: "new-lead-sms",
+    key: "new-lead-sms", group: "New leads",
     label: "New opportunity → SMS the customer",
     description: "Text the linked contact the moment a new deal is added.",
     input: {
-      name: "New opportunity — SMS the customer",
-      enabled: true,
-      trigger_type: "deal.created",
-      trigger_config: {},
-      actions: [
-        {
-          type: "send_sms",
-          body: "Hi! Thanks for your interest — we've received your enquiry and someone will be in touch shortly.",
-        },
-      ],
+      name: "New opportunity — SMS the customer", enabled: true,
+      trigger_type: "deal.created", trigger_config: {},
+      actions: [{ type: "send_sms", body: "Hi {{contact.first_name}}! Thanks for your interest in {{deal.name}} — we've received your enquiry and someone will be in touch shortly." }],
     },
   },
   {
-    key: "new-lead-email",
+    key: "new-lead-email", group: "New leads",
     label: "New opportunity → Email the customer",
     description: "Send a branded acknowledgement email when a new opportunity comes in.",
     input: {
-      name: "New opportunity — Email the customer",
-      enabled: true,
-      trigger_type: "deal.created",
-      trigger_config: {},
-      actions: [
-        {
-          type: "send_email",
-          subject: "We got your enquiry",
-          body_text: "Hi there,\n\nThanks for reaching out — we've received your enquiry and someone from our team will follow up shortly.\n\n— The team",
-          body_html: "<p>Hi there,</p><p>Thanks for reaching out — we've received your enquiry and someone from our team will follow up shortly.</p><p>— The team</p>",
-        },
-      ],
+      name: "New opportunity — Email the customer", enabled: true,
+      trigger_type: "deal.created", trigger_config: {},
+      actions: [{
+        type: "send_email",
+        subject: "We got your enquiry, {{contact.first_name}}",
+        body_text: "Hi {{contact.first_name}},\n\nThanks for reaching out about {{deal.name}} — we've received your enquiry and someone from our team will follow up shortly.\n\n— The team",
+        body_html: "<p>Hi {{contact.first_name}},</p><p>Thanks for reaching out about {{deal.name}} — we've received your enquiry and someone from our team will follow up shortly.</p><p>— The team</p>",
+      }],
     },
   },
   {
-    key: "stage-changed-sms",
+    key: "new-lead-notify-owner", group: "New leads",
+    label: "New opportunity → Notify the owner",
+    description: "Ping the owner in-app the moment a new deal lands.",
+    input: {
+      name: "New opportunity — notify owner", enabled: true,
+      trigger_type: "deal.created", trigger_config: {},
+      actions: [{ type: "create_notification", title: "New opportunity: {{deal.name}}", body: "From {{contact.full_name}} ({{contact.email}})" }],
+    },
+  },
+  {
+    key: "new-lead-followup-task", group: "New leads",
+    label: "New opportunity → Create a follow-up task",
+    description: "Assign a same-day follow-up task to the owner.",
+    input: {
+      name: "New opportunity — follow-up task", enabled: true,
+      trigger_type: "deal.created", trigger_config: {},
+      actions: [{ type: "create_task", title: "Follow up with {{contact.first_name}} about {{deal.name}}", priority: "high", due_in_days: 0 }],
+    },
+  },
+
+  // ── Deal stage changes ──
+  {
+    key: "stage-changed-sms", group: "Deal updates",
     label: "Deal stage changed → SMS the customer",
     description: "Notify the customer whenever their opportunity moves to a new stage.",
     input: {
-      name: "Deal stage changed — SMS the customer",
-      enabled: true,
-      trigger_type: "deal.stage_changed",
-      trigger_config: {},
-      actions: [
-        {
-          type: "send_sms",
-          body: "Good news — there's an update on your enquiry. We'll be in touch shortly with next steps.",
-        },
-      ],
+      name: "Deal stage changed — SMS the customer", enabled: true,
+      trigger_type: "deal.stage_changed", trigger_config: {},
+      actions: [{ type: "send_sms", body: "Hi {{contact.first_name}} — there's an update on {{deal.name}}. We'll be in touch shortly with next steps." }],
     },
   },
   {
-    key: "stage-changed-email",
+    key: "stage-changed-email", group: "Deal updates",
     label: "Deal stage changed → Email the customer",
     description: "Send an email update whenever the deal advances to a new stage.",
     input: {
-      name: "Deal stage changed — Email the customer",
-      enabled: true,
-      trigger_type: "deal.stage_changed",
-      trigger_config: {},
-      actions: [
-        {
-          type: "send_email",
-          subject: "An update on your enquiry",
-          body_text: "Hi there,\n\nThere's an update on your enquiry with us. We'll follow up shortly with next steps.\n\n— The team",
-          body_html: "<p>Hi there,</p><p>There's an update on your enquiry with us. We'll follow up shortly with next steps.</p><p>— The team</p>",
-        },
-      ],
+      name: "Deal stage changed — Email the customer", enabled: true,
+      trigger_type: "deal.stage_changed", trigger_config: {},
+      actions: [{
+        type: "send_email",
+        subject: "An update on {{deal.name}}",
+        body_text: "Hi {{contact.first_name}},\n\nThere's an update on your enquiry ({{deal.name}}). We'll follow up shortly with next steps.\n\n— The team",
+      }],
+    },
+  },
+
+  // ── New contact / lifecycle ──
+  {
+    key: "new-contact-welcome-email", group: "New contacts",
+    label: "New contact → Welcome email",
+    description: "Send a welcome email as soon as a contact is created.",
+    input: {
+      name: "New contact — welcome email", enabled: true,
+      trigger_type: "contact.created", trigger_config: {},
+      actions: [{
+        type: "send_email",
+        subject: "Welcome, {{contact.first_name}}",
+        body_text: "Hi {{contact.first_name}},\n\nThanks for joining us. If you have any questions, just reply to this email.\n\n— The team",
+      }],
+    },
+  },
+  {
+    key: "new-contact-tag-lead", group: "New contacts",
+    label: "New contact → Tag as lead",
+    description: "Auto-tag every new contact so you can filter them later.",
+    input: {
+      name: "New contact — tag as lead", enabled: true,
+      trigger_type: "contact.created", trigger_config: {},
+      actions: [{ type: "add_contact_tag", tag: "new-lead" }],
+    },
+  },
+  {
+    key: "contact-mql-sms", group: "Contact stage",
+    label: "Contact became MQL → SMS",
+    description: "Text a contact when they hit the MQL stage.",
+    input: {
+      name: "Contact became MQL — SMS", enabled: true,
+      trigger_type: "contact.stage_changed", trigger_config: { to_stage: "mql" },
+      actions: [{ type: "send_sms", body: "Hi {{contact.first_name}} — thanks for engaging with us! Would you like to book a quick chat?" }],
+    },
+  },
+  {
+    key: "contact-customer-thankyou", group: "Contact stage",
+    label: "Contact became customer → Thank-you email",
+    description: "Send a warm thank-you when a contact becomes a customer.",
+    input: {
+      name: "Contact became customer — thank you", enabled: true,
+      trigger_type: "contact.stage_changed", trigger_config: { to_stage: "customer" },
+      actions: [{
+        type: "send_email",
+        subject: "Welcome aboard, {{contact.first_name}}!",
+        body_text: "Hi {{contact.first_name}},\n\nWelcome — we're really glad to have you as a customer. Let us know how we can help.\n\n— The team",
+      }],
+    },
+  },
+
+  // ── Form submissions ──
+  {
+    key: "form-submitted-email", group: "Forms",
+    label: "Form submitted → Confirmation email",
+    description: "Confirm the submission automatically over email.",
+    input: {
+      name: "Form submitted — confirmation email", enabled: true,
+      trigger_type: "form.submitted", trigger_config: {},
+      actions: [{
+        type: "send_email",
+        subject: "Thanks — we got your submission",
+        body_text: "Hi {{contact.first_name}},\n\nThanks for submitting the form. Someone will get back to you shortly.\n\n— The team",
+      }],
+    },
+  },
+  {
+    key: "form-submitted-task", group: "Forms",
+    label: "Form submitted → Follow-up task",
+    description: "Create a task so nothing slips through.",
+    input: {
+      name: "Form submitted — follow-up task", enabled: true,
+      trigger_type: "form.submitted", trigger_config: {},
+      actions: [{ type: "create_task", title: "Reply to {{contact.first_name}} form submission", priority: "high", due_in_days: 1 }],
+    },
+  },
+
+  // ── Housekeeping / scheduled ──
+  {
+    key: "stale-contact-nudge", group: "Housekeeping",
+    label: "Stale contact → Re-engagement email",
+    description: "Reach out to contacts with no activity in 30 days.",
+    input: {
+      name: "Stale contact — re-engagement", enabled: true,
+      trigger_type: "contact.stale", trigger_config: { days: "30" },
+      actions: [{
+        type: "send_email",
+        subject: "Still interested, {{contact.first_name}}?",
+        body_text: "Hi {{contact.first_name}},\n\nWe haven't heard from you in a while — just checking in to see if there's anything we can help with.\n\n— The team",
+      }],
+    },
+  },
+  {
+    key: "task-due-soon-notify", group: "Housekeeping",
+    label: "Task due soon → Notify owner",
+    description: "Ping the owner 24 hours before a task is due.",
+    input: {
+      name: "Task due soon — notify owner", enabled: true,
+      trigger_type: "task.due_soon", trigger_config: { hours: "24" },
+      actions: [{ type: "create_notification", title: "Task due soon", body: "You have a task due within 24 hours." }],
+    },
+  },
+  {
+    key: "task-completed-notify", group: "Housekeeping",
+    label: "Task completed → In-app notification",
+    description: "Track completions in the notification feed.",
+    input: {
+      name: "Task completed — notify", enabled: true,
+      trigger_type: "task.completed", trigger_config: {},
+      actions: [{ type: "create_notification", title: "Task completed", body: "A task was marked done." }],
     },
   },
 ];
 
 function QuickTemplates({ onPick }: { onPick: (input: WorkflowInput) => void }) {
+  const [openGallery, setOpenGallery] = useState(false);
+  const groups = Array.from(new Set(QUICK_TEMPLATES.map((t) => t.group)));
+  const featured = QUICK_TEMPLATES.slice(0, 4);
   return (
     <div className="px-6 py-4 border-b border-border bg-secondary/20">
-      <div className="flex items-center gap-2 mb-2">
-        <Zap className="size-3 text-accent" />
-        <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-          Quick templates — customer response automations
-        </p>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Zap className="size-3 text-accent" />
+          <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            Quick templates — {QUICK_TEMPLATES.length} recipes
+          </p>
+        </div>
+        <button
+          onClick={() => setOpenGallery((v) => !v)}
+          className="text-[10px] font-mono uppercase tracking-wider text-primary hover:underline"
+        >
+          {openGallery ? "Show less" : "Browse all"}
+        </button>
       </div>
       <p className="text-[11px] text-muted-foreground mb-3">
-        One-click automations that message the customer linked to a deal. Recipient is the deal's contact; message body is editable after adding. Requires an SMS/email provider in Settings → Integrations.
+        One-click automations. Bodies use personalization tokens like <code className="font-mono text-[10px] bg-secondary px-1 rounded">{"{{contact.first_name}}"}</code> and are editable after adding. Messaging templates require an SMS/email provider in Settings → Integrations.
       </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {QUICK_TEMPLATES.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => onPick(t.input)}
-            className="text-left rounded-md border border-border bg-card px-3 py-2 hover:border-primary/60 hover:bg-secondary/50 transition-colors"
-          >
-            <p className="text-xs font-medium">{t.label}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{t.description}</p>
-          </button>
-        ))}
-      </div>
+      {openGallery ? (
+        <div className="space-y-3">
+          {groups.map((g) => (
+            <div key={g}>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">{g}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {QUICK_TEMPLATES.filter((t) => t.group === g).map((t) => (
+                  <TemplateCard key={t.key} t={t} onPick={onPick} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {featured.map((t) => <TemplateCard key={t.key} t={t} onPick={onPick} />)}
+        </div>
+      )}
     </div>
+  );
+}
+
+function TemplateCard({ t, onPick }: { t: QuickTemplate; onPick: (input: WorkflowInput) => void }) {
+  return (
+    <button
+      onClick={() => onPick(t.input)}
+      className="text-left rounded-md border border-border bg-card px-3 py-2 hover:border-primary/60 hover:bg-secondary/50 transition-colors"
+    >
+      <p className="text-xs font-medium">{t.label}</p>
+      <p className="text-[10px] text-muted-foreground mt-0.5">{t.description}</p>
+    </button>
   );
 }
