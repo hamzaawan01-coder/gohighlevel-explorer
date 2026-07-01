@@ -161,6 +161,13 @@ function WorkflowsPage() {
                     </div>
                   </div>
                   <button
+                    onClick={() => setTesting(w)}
+                    className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    title="Test / preview"
+                  >
+                    <PlayCircle className="size-3" />
+                  </button>
+                  <button
                     onClick={() =>
                       createMut.mutate({
                         name: `${w.name} (copy)`,
