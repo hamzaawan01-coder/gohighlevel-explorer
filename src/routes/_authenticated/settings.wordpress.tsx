@@ -462,10 +462,7 @@ function LabelMapper({ hook, subId }: { hook: WordPressWebhook; subId: string })
   );
 }
 
-      <SetupInstructions url={url} secret={hook.secret} />
-    </div>
-  );
-}
+
 
 function SetupInstructions({ url, secret }: { url: string; secret: string | null }) {
   const [tab, setTab] = useState("functions");
