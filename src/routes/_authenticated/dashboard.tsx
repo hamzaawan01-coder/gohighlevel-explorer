@@ -90,10 +90,10 @@ function DashboardHome() {
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-sm font-semibold">Pipeline by stage</h2>
                     <Link
-                      to="/pipeline"
+                      to="/opportunities"
                       className="text-[11px] text-primary hover:underline flex items-center gap-1"
                     >
-                      Open pipeline <ArrowRight className="size-3" />
+                      Open opportunities <ArrowRight className="size-3" />
                     </Link>
                   </div>
                   {data.stageBreakdown.length === 0 ? (
