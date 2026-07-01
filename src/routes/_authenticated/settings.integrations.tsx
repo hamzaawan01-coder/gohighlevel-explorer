@@ -352,12 +352,7 @@ function HistoryPanel({ subId }: { subId: string }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["outbound", subId], queryFn: () => fetchOutbound(subId) });
   const rows = q.data ?? [];
-  const retryFn = useServerFn(
-    // Lazy require avoids adding a static import to the top of this file
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    (require("@/lib/integrations.functions") as typeof import("@/lib/integrations.functions"))
-      .retryOutboundMessage,
-  );
+  const retryFn = useServerFn(retryOutboundMessage);
   const retry = useMutation({
     mutationFn: (id: string) => retryFn({ data: { id } }),
     onSuccess: () => {
