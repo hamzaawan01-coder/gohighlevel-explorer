@@ -27,6 +27,7 @@ import { Route as AuthenticatedConversationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
 import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
+import { Route as AuthenticatedSettingsWordpressRouteImport } from './routes/_authenticated/settings.wordpress'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
@@ -38,6 +39,7 @@ import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/pu
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
 import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/api/public/oauth.google-ads.callback'
+import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -132,6 +134,12 @@ const ApiPublicProcessOutboundRoute =
     path: '/api/public/process-outbound',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedSettingsWordpressRoute =
+  AuthenticatedSettingsWordpressRouteImport.update({
+    id: '/settings/wordpress',
+    path: '/settings/wordpress',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsTeamRoute =
   AuthenticatedSettingsTeamRouteImport.update({
     id: '/settings/team',
@@ -193,6 +201,12 @@ const ApiPublicOauthGoogleAdsCallbackRoute =
     path: '/api/public/oauth/google-ads/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksWordpressTokenRoute =
+  ApiPublicHooksWordpressTokenRouteImport.update({
+    id: '/api/public/hooks/wordpress/$token',
+    path: '/api/public/hooks/wordpress/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -216,12 +230,14 @@ export interface FileRoutesByFullPath {
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
+  '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts/': typeof AuthenticatedContactsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -246,12 +262,14 @@ export interface FileRoutesByTo {
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
+  '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts': typeof AuthenticatedContactsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
 export interface FileRoutesById {
@@ -278,12 +296,14 @@ export interface FileRoutesById {
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
+  '/_authenticated/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/_authenticated/contacts/': typeof AuthenticatedContactsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
 export interface FileRouteTypes {
@@ -310,12 +330,14 @@ export interface FileRouteTypes {
     | '/settings/integrations'
     | '/settings/sub-accounts'
     | '/settings/team'
+    | '/settings/wordpress'
     | '/api/public/process-outbound'
     | '/contacts/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
+    | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -340,12 +362,14 @@ export interface FileRouteTypes {
     | '/settings/integrations'
     | '/settings/sub-accounts'
     | '/settings/team'
+    | '/settings/wordpress'
     | '/api/public/process-outbound'
     | '/contacts'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
+    | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
   id:
     | '__root__'
@@ -371,12 +395,14 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/integrations'
     | '/_authenticated/settings/sub-accounts'
     | '/_authenticated/settings/team'
+    | '/_authenticated/settings/wordpress'
     | '/api/public/process-outbound'
     | '/_authenticated/contacts/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
+    | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
   fileRoutesById: FileRoutesById
 }
@@ -392,6 +418,7 @@ export interface RootRouteChildren {
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
   ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
+  ApiPublicHooksWordpressTokenRoute: typeof ApiPublicHooksWordpressTokenRoute
   ApiPublicOauthGoogleAdsCallbackRoute: typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
 
@@ -523,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicProcessOutboundRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/settings/wordpress': {
+      id: '/_authenticated/settings/wordpress'
+      path: '/settings/wordpress'
+      fullPath: '/settings/wordpress'
+      preLoaderRoute: typeof AuthenticatedSettingsWordpressRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/team': {
       id: '/_authenticated/settings/team'
       path: '/settings/team'
@@ -600,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOauthGoogleAdsCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/wordpress/$token': {
+      id: '/api/public/hooks/wordpress/$token'
+      path: '/api/public/hooks/wordpress/$token'
+      fullPath: '/api/public/hooks/wordpress/$token'
+      preLoaderRoute: typeof ApiPublicHooksWordpressTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -620,6 +661,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedSettingsSubAccountsRoute: typeof AuthenticatedSettingsSubAccountsRoute
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
+  AuthenticatedSettingsWordpressRoute: typeof AuthenticatedSettingsWordpressRoute
   AuthenticatedContactsIndexRoute: typeof AuthenticatedContactsIndexRoute
 }
 
@@ -641,6 +683,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedSettingsIntegrationsRoute,
   AuthenticatedSettingsSubAccountsRoute: AuthenticatedSettingsSubAccountsRoute,
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
+  AuthenticatedSettingsWordpressRoute: AuthenticatedSettingsWordpressRoute,
   AuthenticatedContactsIndexRoute: AuthenticatedContactsIndexRoute,
 }
 
@@ -659,18 +702,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
   ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
+  ApiPublicHooksWordpressTokenRoute: ApiPublicHooksWordpressTokenRoute,
   ApiPublicOauthGoogleAdsCallbackRoute: ApiPublicOauthGoogleAdsCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

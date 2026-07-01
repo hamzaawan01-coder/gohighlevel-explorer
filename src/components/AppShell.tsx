@@ -16,6 +16,7 @@ import {
   Inbox,
   CalendarClock,
   Megaphone,
+  Webhook,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -48,6 +49,7 @@ const automationNav: NavItem[] = [
   { label: "Marketing", icon: Megaphone, to: "/marketing" },
   { label: "Workflows", icon: Workflow, to: "/workflows" },
   { label: "Forms", icon: FileText, to: "/forms" },
+  { label: "WordPress", icon: Webhook, to: "/settings/wordpress" },
   { label: "Booking pages", icon: CalendarClock, to: "/settings/booking" },
   { label: "Integrations", icon: Settings, to: "/settings/integrations" },
 ];

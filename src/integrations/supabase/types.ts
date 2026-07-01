@@ -1682,6 +1682,78 @@ export type Database = {
         }
         Relationships: []
       }
+      wordpress_webhooks: {
+        Row: {
+          created_at: string
+          created_by: string
+          default_tags: string[]
+          enabled: boolean
+          field_map: Json
+          form_id: string
+          id: string
+          last_error: string | null
+          last_received_at: string | null
+          lead_source: string
+          name: string
+          secret: string | null
+          sub_account_id: string
+          token: string
+          total_received: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          default_tags?: string[]
+          enabled?: boolean
+          field_map?: Json
+          form_id: string
+          id?: string
+          last_error?: string | null
+          last_received_at?: string | null
+          lead_source?: string
+          name: string
+          secret?: string | null
+          sub_account_id: string
+          token: string
+          total_received?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          default_tags?: string[]
+          enabled?: boolean
+          field_map?: Json
+          form_id?: string
+          id?: string
+          last_error?: string | null
+          last_received_at?: string | null
+          lead_source?: string
+          name?: string
+          secret?: string | null
+          sub_account_id?: string
+          token?: string
+          total_received?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wordpress_webhooks_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "lead_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wordpress_webhooks_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_runs: {
         Row: {
           error: string | null
