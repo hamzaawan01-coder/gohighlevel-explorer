@@ -1109,6 +1109,66 @@ export type Database = {
           },
         ]
       }
+      outbound_message_logs: {
+        Row: {
+          attempt: number
+          created_at: string
+          error: string | null
+          error_code: string | null
+          id: string
+          latency_ms: number | null
+          message_id: string
+          provider: string | null
+          provider_message_id: string | null
+          retryable: boolean | null
+          status: string
+          sub_account_id: string
+        }
+        Insert: {
+          attempt: number
+          created_at?: string
+          error?: string | null
+          error_code?: string | null
+          id?: string
+          latency_ms?: number | null
+          message_id: string
+          provider?: string | null
+          provider_message_id?: string | null
+          retryable?: boolean | null
+          status: string
+          sub_account_id: string
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          error?: string | null
+          error_code?: string | null
+          id?: string
+          latency_ms?: number | null
+          message_id?: string
+          provider?: string | null
+          provider_message_id?: string | null
+          retryable?: boolean | null
+          status?: string
+          sub_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_message_logs_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_message_logs_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbound_messages: {
         Row: {
           attempts: number
