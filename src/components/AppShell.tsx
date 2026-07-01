@@ -14,6 +14,7 @@ import {
   BarChart3,
   FileText,
   Inbox,
+  CalendarClock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -45,6 +46,7 @@ const salesNav: NavItem[] = [
 const automationNav: NavItem[] = [
   { label: "Workflows", icon: Workflow, to: "/workflows" },
   { label: "Forms", icon: FileText, to: "/forms" },
+  { label: "Booking pages", icon: CalendarClock, to: "/settings/booking" },
   { label: "Integrations", icon: Settings, to: "/settings/integrations" },
 ];
 
