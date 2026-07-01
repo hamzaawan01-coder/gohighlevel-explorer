@@ -18,6 +18,8 @@ export type TwilioConfig = {
   auth_token: string;
 };
 
+export type SmsProvider = "twilio" | "twilio_connector";
+
 export type IntegrationRow = {
   sub_account_id: string;
   email_provider: EmailProvider | null;
@@ -25,7 +27,7 @@ export type IntegrationRow = {
   email_from_address: string | null;
   email_from_name: string | null;
   email_verified_at: string | null;
-  sms_provider: "twilio" | null;
+  sms_provider: SmsProvider | null;
   sms_config: Record<string, unknown>;
   sms_from_number: string | null;
   sms_verified_at: string | null;
@@ -66,16 +68,19 @@ export async function saveEmailIntegration(input: {
 
 export async function saveSmsIntegration(input: {
   sub_account_id: string;
-  config: TwilioConfig;
+  provider?: SmsProvider;
+  config?: TwilioConfig | Record<string, never>;
   from_number: string;
 }) {
+  const provider: SmsProvider = input.provider ?? "twilio";
+  const config = input.config ?? (provider === "twilio_connector" ? {} : { account_sid: "", auth_token: "" });
   const { error } = await supabase
     .from("sub_account_integrations")
     .upsert(
       {
         sub_account_id: input.sub_account_id,
-        sms_provider: "twilio",
-        sms_config: input.config as never,
+        sms_provider: provider,
+        sms_config: config as never,
         sms_from_number: input.from_number,
       },
       { onConflict: "sub_account_id" },

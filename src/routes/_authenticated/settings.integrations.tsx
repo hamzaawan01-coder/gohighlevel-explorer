@@ -248,6 +248,7 @@ function SmsPanel({ subId }: { subId: string }) {
   const q = useQuery({ queryKey: ["integrations", subId], queryFn: () => fetchIntegrations(subId) });
   const testFn = useServerFn(sendTestSms);
 
+  const [provider, setProvider] = useState<"twilio" | "twilio_connector">("twilio_connector");
   const [sid, setSid] = useState("");
   const [token, setToken] = useState("");
   const [fromNumber, setFromNumber] = useState("");
@@ -256,6 +257,9 @@ function SmsPanel({ subId }: { subId: string }) {
   useEffect(() => {
     const row = q.data;
     if (!row) return;
+    if (row.sms_provider === "twilio" || row.sms_provider === "twilio_connector") {
+      setProvider(row.sms_provider);
+    }
     const cfg = (row.sms_config ?? {}) as Record<string, unknown>;
     setSid(String(cfg.account_sid ?? ""));
     setToken(String(cfg.auth_token ?? ""));
@@ -266,7 +270,11 @@ function SmsPanel({ subId }: { subId: string }) {
     mutationFn: async () => {
       await saveSmsIntegration({
         sub_account_id: subId,
-        config: { account_sid: sid, auth_token: token },
+        provider,
+        config:
+          provider === "twilio_connector"
+            ? {}
+            : { account_sid: sid, auth_token: token },
         from_number: fromNumber,
       });
     },
@@ -296,7 +304,7 @@ function SmsPanel({ subId }: { subId: string }) {
     <div className="space-y-6 mt-4">
       <div className="rounded-md border border-border p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-medium">Twilio credentials</h2>
+          <h2 className="font-medium">Twilio</h2>
           {verified ? (
             <Badge variant="secondary" className="gap-1">
               <CheckCircle2 className="size-3 text-green-500" /> Verified
@@ -309,19 +317,40 @@ function SmsPanel({ subId }: { subId: string }) {
         </div>
 
         <div>
-          <Label>Account SID</Label>
-          <Input value={sid} onChange={(e) => setSid(e.target.value)} placeholder="ACxxxxxxxxxxxxxxxx" />
+          <Label>Connection mode</Label>
+          <Select value={provider} onValueChange={(v) => setProvider(v as "twilio" | "twilio_connector")}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="twilio_connector">Lovable connector (recommended)</SelectItem>
+              <SelectItem value="twilio">Your own Twilio credentials</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {provider === "twilio_connector"
+              ? "Uses the Twilio connector linked at the workspace level — no per-tenant credentials needed."
+              : "Paste your own Twilio Account SID and Auth Token. Stored per workspace."}
+          </p>
         </div>
-        <div>
-          <Label>Auth token</Label>
-          <Input value={token} onChange={(e) => setToken(e.target.value)} type="password" placeholder="••••••••" />
-        </div>
+
+        {provider === "twilio" && (
+          <>
+            <div>
+              <Label>Account SID</Label>
+              <Input value={sid} onChange={(e) => setSid(e.target.value)} placeholder="ACxxxxxxxxxxxxxxxx" />
+            </div>
+            <div>
+              <Label>Auth token</Label>
+              <Input value={token} onChange={(e) => setToken(e.target.value)} type="password" placeholder="••••••••" />
+            </div>
+          </>
+        )}
+
         <div>
           <Label>From number (E.164)</Label>
           <Input value={fromNumber} onChange={(e) => setFromNumber(e.target.value)} placeholder="+15551234567" />
         </div>
         <p className="text-[11px] text-muted-foreground">
-          Find your credentials at{" "}
+          Find your credentials and numbers at{" "}
           <a className="underline" href="https://console.twilio.com" target="_blank" rel="noreferrer">
             console.twilio.com
           </a>. The From number must be a Twilio-provisioned number.

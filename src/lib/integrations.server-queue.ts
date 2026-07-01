@@ -14,7 +14,7 @@
  *    can't take the whole cron run down (no more 500 storm on /process-outbound).
  */
 import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig } from "./integrations";
-import { sendEmailViaProvider, sendSmsViaTwilio } from "./integrations.server";
+import { sendEmailViaProvider, sendSmsViaTwilio, sendSmsViaTwilioGateway } from "./integrations.server";
 
 const MAX_ATTEMPTS = 5;
 const BASE_BACKOFF_MS = 60_000; // 1 minute
@@ -156,15 +156,21 @@ async function attemptSend(row: Row): Promise<SendOutcome> {
           latencyMs: Date.now() - start,
         };
       }
-      const r = await sendSmsViaTwilio({
-        config: cfg.sms_config as TwilioConfig,
-        from: cfg.sms_from_number,
-        to: row.to_address,
-        body: row.body_text ?? "",
-      });
+      const r = cfg.sms_provider === "twilio_connector"
+        ? await sendSmsViaTwilioGateway({
+            from: cfg.sms_from_number,
+            to: row.to_address,
+            body: row.body_text ?? "",
+          })
+        : await sendSmsViaTwilio({
+            config: cfg.sms_config as TwilioConfig,
+            from: cfg.sms_from_number,
+            to: row.to_address,
+            body: row.body_text ?? "",
+          });
       return {
         ok: true,
-        provider: "twilio",
+        provider: cfg.sms_provider === "twilio_connector" ? "twilio_connector" : "twilio",
         providerId: r.id,
         latencyMs: Date.now() - start,
       };

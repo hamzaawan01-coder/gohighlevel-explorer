@@ -89,13 +89,19 @@ export const sendTestSms = createServerFn({ method: "POST" })
     if (!row || !row.sms_provider) throw new Error("No SMS provider configured");
     if (!row.sms_from_number) throw new Error("Missing from number");
 
-    const { sendSmsViaTwilio } = await import("./integrations.server");
-    const result = await sendSmsViaTwilio({
-      config: row.sms_config as TwilioConfig,
-      from: row.sms_from_number,
-      to: data.to,
-      body: "Test SMS from your CRM. Integration works.",
-    });
+    const { sendSmsViaTwilio, sendSmsViaTwilioGateway } = await import("./integrations.server");
+    const result = row.sms_provider === "twilio_connector"
+      ? await sendSmsViaTwilioGateway({
+          from: row.sms_from_number,
+          to: data.to,
+          body: "Test SMS from your CRM. Integration works.",
+        })
+      : await sendSmsViaTwilio({
+          config: row.sms_config as TwilioConfig,
+          from: row.sms_from_number,
+          to: data.to,
+          body: "Test SMS from your CRM. Integration works.",
+        });
 
     await supabase
       .from("sub_account_integrations")
