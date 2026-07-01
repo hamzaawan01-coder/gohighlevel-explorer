@@ -1,10 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Loader2, Pencil, Trash2, Mail, Phone, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { ContactDialog } from "@/components/ContactDialog";
+import { ContactDetailPanel } from "@/components/ContactDetailPanel";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   fetchContacts,
   createContact,
@@ -33,6 +35,7 @@ function ContactsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Contact | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [activeStage, setActiveStage] = useState<LifecycleStage | "all">("all");
@@ -231,13 +234,13 @@ function ContactsPage() {
                   return (
                     <tr key={c.id} className="border-b border-border hover:bg-secondary/40">
                       <td className="px-6 py-2.5 font-medium">
-                        <Link
-                          to="/contacts/$contactId"
-                          params={{ contactId: c.id }}
-                          className="hover:text-primary hover:underline"
+                        <button
+                          type="button"
+                          onClick={() => setSelectedId(c.id)}
+                          className="hover:text-primary hover:underline text-left"
                         >
                           {name}
-                        </Link>
+                        </button>
                       </td>
                       <td className="px-3 py-2.5">
                         <span className="inline-block bg-accent/10 text-accent rounded px-1.5 py-0.5 text-[10px] font-mono uppercase">
@@ -328,6 +331,21 @@ function ContactsPage() {
           else await createMut.mutateAsync(input);
         }}
       />
+
+      <Dialog open={!!selectedId} onOpenChange={(o) => !o && setSelectedId(null)}>
+        <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
+          <DialogTitle className="sr-only">Contact detail</DialogTitle>
+          <DialogDescription className="sr-only">
+            View and edit contact details, deals, tasks, notes, and events.
+          </DialogDescription>
+          {selectedId && (
+            <ContactDetailPanel
+              contactId={selectedId}
+              onClose={() => setSelectedId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }

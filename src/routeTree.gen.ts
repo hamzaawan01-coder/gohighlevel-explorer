@@ -21,7 +21,6 @@ import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
-import { Route as AuthenticatedContactsContactIdRouteImport } from './routes/_authenticated/contacts.$contactId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -86,12 +85,6 @@ const AuthenticatedSettingsSubAccountsRoute =
     path: '/settings/sub-accounts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedContactsContactIdRoute =
-  AuthenticatedContactsContactIdRouteImport.update({
-    id: '/contacts/$contactId',
-    path: '/contacts/$contactId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -102,7 +95,6 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AuthenticatedTasksRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
   '/invite/$token': typeof InviteTokenRoute
-  '/contacts/$contactId': typeof AuthenticatedContactsContactIdRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/contacts/': typeof AuthenticatedContactsIndexRoute
@@ -116,7 +108,6 @@ export interface FileRoutesByTo {
   '/tasks': typeof AuthenticatedTasksRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
   '/invite/$token': typeof InviteTokenRoute
-  '/contacts/$contactId': typeof AuthenticatedContactsContactIdRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/contacts': typeof AuthenticatedContactsIndexRoute
@@ -132,7 +123,6 @@ export interface FileRoutesById {
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/workflows': typeof AuthenticatedWorkflowsRoute
   '/invite/$token': typeof InviteTokenRoute
-  '/_authenticated/contacts/$contactId': typeof AuthenticatedContactsContactIdRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/_authenticated/contacts/': typeof AuthenticatedContactsIndexRoute
@@ -148,7 +138,6 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/workflows'
     | '/invite/$token'
-    | '/contacts/$contactId'
     | '/settings/sub-accounts'
     | '/settings/team'
     | '/contacts/'
@@ -162,7 +151,6 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/workflows'
     | '/invite/$token'
-    | '/contacts/$contactId'
     | '/settings/sub-accounts'
     | '/settings/team'
     | '/contacts'
@@ -177,7 +165,6 @@ export interface FileRouteTypes {
     | '/_authenticated/tasks'
     | '/_authenticated/workflows'
     | '/invite/$token'
-    | '/_authenticated/contacts/$contactId'
     | '/_authenticated/settings/sub-accounts'
     | '/_authenticated/settings/team'
     | '/_authenticated/contacts/'
@@ -276,13 +263,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsSubAccountsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/contacts/$contactId': {
-      id: '/_authenticated/contacts/$contactId'
-      path: '/contacts/$contactId'
-      fullPath: '/contacts/$contactId'
-      preLoaderRoute: typeof AuthenticatedContactsContactIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
@@ -292,7 +272,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
-  AuthenticatedContactsContactIdRoute: typeof AuthenticatedContactsContactIdRoute
   AuthenticatedSettingsSubAccountsRoute: typeof AuthenticatedSettingsSubAccountsRoute
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
   AuthenticatedContactsIndexRoute: typeof AuthenticatedContactsIndexRoute
@@ -304,7 +283,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
-  AuthenticatedContactsContactIdRoute: AuthenticatedContactsContactIdRoute,
   AuthenticatedSettingsSubAccountsRoute: AuthenticatedSettingsSubAccountsRoute,
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
   AuthenticatedContactsIndexRoute: AuthenticatedContactsIndexRoute,
@@ -322,13 +300,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
