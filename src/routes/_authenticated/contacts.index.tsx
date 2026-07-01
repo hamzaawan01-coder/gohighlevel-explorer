@@ -52,6 +52,9 @@ function ContactsPage() {
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [activeStage, setActiveStage] = useState<LifecycleStage | "all">("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [saveViewOpen, setSaveViewOpen] = useState(false);
+  const [newViewName, setNewViewName] = useState("");
   const subId = useTenancy((s) => s.currentSubAccountId);
 
   useEffect(() => {
