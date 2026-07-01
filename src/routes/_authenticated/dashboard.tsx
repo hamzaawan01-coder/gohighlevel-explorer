@@ -13,8 +13,11 @@ import {
 import { useTenancy } from "@/lib/tenancy";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { NewDealDialog } from "@/components/NewDealDialog";
+import { DealDetailPanel } from "@/components/DealDetailPanel";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
