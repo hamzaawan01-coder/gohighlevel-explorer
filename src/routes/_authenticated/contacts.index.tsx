@@ -1,12 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Pencil, Trash2, Mail, Phone, Building2 } from "lucide-react";
+import {
+  Plus, Loader2, Pencil, Trash2, Mail, Phone, Building2,
+  Bookmark, BookmarkPlus, X, Tag as TagIcon, ChevronDown,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { ContactDialog } from "@/components/ContactDialog";
 import { ContactDetailPanel } from "@/components/ContactDetailPanel";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
   fetchContacts,
   createContact,
@@ -17,6 +25,11 @@ import {
   type ContactInput,
   type LifecycleStage,
 } from "@/lib/contacts";
+import {
+  bulkUpdateStage, bulkDeleteContacts, bulkAddTag, bulkRemoveTag,
+  fetchContactViews, createContactView, deleteContactView,
+  type ContactView,
+} from "@/lib/contact-bulk";
 import { useTenancy } from "@/lib/tenancy";
 import { toast } from "sonner";
 
