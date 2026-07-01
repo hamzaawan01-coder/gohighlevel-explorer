@@ -123,10 +123,12 @@ export function KanbanBoard({
                         key={deal.id}
                         deal={deal}
                         contact={deal.contact_id ? contactsById.get(deal.contact_id) ?? null : null}
+                        onOpen={onOpenDeal}
                       />
                     ))}
                   </div>
                 )}
+
               </SortableContext>
             </Column>
           );
