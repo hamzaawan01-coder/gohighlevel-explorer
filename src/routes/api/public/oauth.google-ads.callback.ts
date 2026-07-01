@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { verifyState } from "@/lib/ads-integrations.functions";
+
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_ADS_API = "https://googleads.googleapis.com/v18";
@@ -26,7 +26,8 @@ export const Route = createFileRoute("/api/public/oauth/google-ads/callback")({
         if (err) return redirectBack("error", err);
         if (!code || !state) return redirectBack("error", "missing_code_or_state");
 
-        const parsed = verifyState(state);
+        const { verifyOauthState } = await import("@/lib/ads-oauth-state.server");
+        const parsed = verifyOauthState(state);
         if (!parsed) return redirectBack("error", "invalid_state");
         const subId = parsed.sub;
         const uid = parsed.uid;

@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createHmac } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -8,28 +7,7 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_ADS_API = "https://googleads.googleapis.com/v18";
 
 function siteOrigin(): string {
-  // Production redirect. Google requires exact match; only registered URIs work.
   return process.env.PUBLIC_SITE_URL || "https://gohighlevel-explorer.lovable.app";
-}
-
-function signState(payload: Record<string, string>): string {
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const sig = createHmac("sha256", secret).update(body).digest("base64url");
-  return `${body}.${sig}`;
-}
-
-export function verifyState(state: string): Record<string, string> | null {
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  const [body, sig] = state.split(".");
-  if (!body || !sig) return null;
-  const expected = createHmac("sha256", secret).update(body).digest("base64url");
-  if (expected !== sig) return null;
-  try {
-    const p = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
-    if (Number(p.exp) < Date.now()) return null;
-    return p;
-  } catch { return null; }
 }
 
 /** Build the Google Ads OAuth authorize URL for the caller's sub-account. */
@@ -46,7 +24,8 @@ export const startGoogleAdsConnect = createServerFn({ method: "POST" })
       .from("sub_accounts").select("id, agency_id").eq("id", data.subAccountId).maybeSingle();
     if (error || !ok) throw new Error("Sub-account not accessible");
 
-    const state = signState({
+    const { signOauthState } = await import("@/lib/ads-oauth-state.server");
+    const state = signOauthState({
       sub: data.subAccountId,
       uid: context.userId,
       exp: String(Date.now() + 15 * 60 * 1000),
