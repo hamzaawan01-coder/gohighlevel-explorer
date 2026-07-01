@@ -1,0 +1,505 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Plus,
+  Loader2,
+  PanelRightClose,
+  PanelRightOpen,
+  ArrowUpRight,
+  ChevronDown,
+  LayoutGrid,
+  List,
+  Search,
+  Upload,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ensureDefaultPipeline,
+  fetchBoard,
+  createDeal,
+  moveDeal,
+  listPipelines,
+  type Deal,
+} from "@/lib/pipeline";
+import { useTenancy } from "@/lib/tenancy";
+import { KanbanBoard } from "@/components/KanbanBoard";
+import { NewDealDialog } from "@/components/NewDealDialog";
+import { DealDetailPanel } from "@/components/DealDetailPanel";
+import { PipelinesManagerPanel } from "@/components/PipelinesManagerPanel";
+import { BulkActionsPanel } from "@/components/BulkActionsPanel";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AppShell } from "@/components/AppShell";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_authenticated/opportunities")({
+  head: () => ({
+    meta: [
+      { title: "Opportunities — Agency Engine" },
+      {
+        name: "description",
+        content:
+          "Manage sales opportunities across pipelines, stages, and bulk actions — GHL-style operator dashboard.",
+      },
+    ],
+  }),
+  component: OpportunitiesPage,
+});
+
+type TabKey = "opportunities" | "pipelines" | "bulk";
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "opportunities", label: "Opportunities" },
+  { key: "pipelines", label: "Pipelines" },
+  { key: "bulk", label: "Bulk Actions" },
+];
+
+function OpportunitiesPage() {
+  const queryClient = useQueryClient();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [tab, setTab] = useState<TabKey>("opportunities");
+  const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [search, setSearch] = useState("");
+  const [newDealOpen, setNewDealOpen] = useState(false);
+  const [openDealId, setOpenDealId] = useState<string | null>(null);
+  const [activityMinimized, setActivityMinimized] = useState(false);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
+  const subId = useTenancy((s) => s.currentSubAccountId);
+
+  const defaultQuery = useQuery({
+    queryKey: ["default-pipeline", userId, subId],
+    enabled: !!userId && !!subId,
+    queryFn: () => ensureDefaultPipeline(userId!, subId!),
+  });
+
+  const pipelinesQuery = useQuery({
+    queryKey: ["pipelines", subId],
+    enabled: !!subId && !!defaultQuery.data,
+    queryFn: () => listPipelines(subId!),
+  });
+
+  const pipelines = pipelinesQuery.data ?? [];
+  const pipelineId =
+    selectedPipelineId && pipelines.some((p) => p.id === selectedPipelineId)
+      ? selectedPipelineId
+      : pipelines[0]?.id ?? defaultQuery.data?.id ?? undefined;
+  const currentPipeline = pipelines.find((p) => p.id === pipelineId);
+
+  const boardQuery = useQuery({
+    queryKey: ["board", pipelineId],
+    enabled: !!pipelineId,
+    queryFn: () => fetchBoard(pipelineId!),
+  });
+
+  const stages = boardQuery.data?.stages ?? [];
+  const deals = boardQuery.data?.deals ?? [];
+
+  const filteredDeals = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? deals.filter((d) => d.title.toLowerCase().includes(q)) : deals;
+  }, [deals, search]);
+
+  const totalValue = useMemo(
+    () => filteredDeals.reduce((s, d) => s + Number(d.value), 0),
+    [filteredDeals],
+  );
+
+  const createDealMut = useMutation({
+    mutationFn: async (input: {
+      title: string;
+      value: number;
+      stage_id: string;
+      contact_id: string | null;
+    }) => {
+      if (!userId || !pipelineId || !subId) throw new Error("Not ready");
+      return createDeal({ ...input, pipeline_id: pipelineId, owner_id: userId, sub_account_id: subId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board", pipelineId] });
+      toast.success("Opportunity added");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const moveMut = useMutation({
+    mutationFn: ({ dealId, stageId, position }: { dealId: string; stageId: string; position: number }) =>
+      moveDeal(dealId, stageId, position),
+    onMutate: async ({ dealId, stageId, position }) => {
+      await queryClient.cancelQueries({ queryKey: ["board", pipelineId] });
+      const prev = queryClient.getQueryData<{ stages: typeof stages; deals: Deal[] }>([
+        "board",
+        pipelineId,
+      ]);
+      if (prev) {
+        const next = prev.deals.map((d) => ({ ...d }));
+        const moving = next.find((d) => d.id === dealId);
+        if (moving) {
+          moving.stage_id = stageId;
+          moving.position = position;
+        }
+        queryClient.setQueryData(["board", pipelineId], { ...prev, deals: next });
+      }
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["board", pipelineId], ctx.prev);
+      toast.error("Move failed");
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["board", pipelineId] }),
+  });
+
+  const loading = defaultQuery.isLoading || pipelinesQuery.isLoading || boardQuery.isLoading;
+  const totalDeals = filteredDeals.length;
+  const unreadInbox = 2;
+
+  const recentDeals = useMemo(
+    () => [...deals].sort((a, b) => b.position - a.position).slice(0, 6),
+    [deals],
+  );
+
+  return (
+    <AppShell
+      headerStatus={
+        <div className="flex items-center gap-1.5">
+          <span className="size-2 bg-accent rounded-full animate-pulse" />
+          <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+            {totalDeals} opportunities
+          </span>
+        </div>
+      }
+      headerActions={
+        <>
+          {activityMinimized && (
+            <button
+              onClick={() => setActivityMinimized(false)}
+              title="Show activity"
+              className="size-8 rounded-md hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+            >
+              <PanelRightOpen className="size-3.5" />
+            </button>
+          )}
+          <button
+            onClick={() => setNewDealOpen(true)}
+            disabled={!stages.length || tab !== "opportunities"}
+            className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            <Plus className="size-3.5" />
+            Add opportunity
+          </button>
+        </>
+      }
+      rightPane={
+        activityMinimized ? null : (
+          <>
+            <div className="h-14 border-b border-border px-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs font-bold uppercase tracking-wider">Activity</h2>
+                <span className="font-mono text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded">
+                  {unreadInbox} new
+                </span>
+              </div>
+              <button
+                onClick={() => setActivityMinimized(true)}
+                title="Minimize"
+                className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+              >
+                <PanelRightClose className="size-3.5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {recentDeals.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-xs text-muted-foreground">
+                    No activity yet. Add your first opportunity to get started.
+                  </p>
+                </div>
+              ) : (
+                recentDeals.map((d) => (
+                  <div key={d.id} className="p-4 border-b border-border">
+                    <p className="text-xs font-semibold mb-1">{d.title}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      ${Number(d.value).toLocaleString()} ·{" "}
+                      {stages.find((s) => s.id === d.stage_id)?.name ?? "—"}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )
+      }
+    >
+      <div className="h-full flex flex-col overflow-hidden">
+        {/* Page title + tabs */}
+        <div className="px-6 pt-5 border-b border-border">
+          <h1 className="text-xl font-bold mb-3">Opportunities</h1>
+          <div className="flex items-center gap-6">
+            {TABS.map((t) => {
+              const active = t.key === tab;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`relative py-3 text-sm transition-colors ${
+                    active
+                      ? "text-primary font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t.label}
+                  {active && (
+                    <span className="absolute inset-x-0 -bottom-px h-0.5 bg-primary rounded-full" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tab body */}
+        <div className="flex-1 min-h-0 overflow-auto p-6">
+          {tab === "opportunities" && (
+            <div className="flex flex-col gap-4 h-full min-h-0">
+              {/* Toolbar */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 h-9 px-3 rounded-md border border-border bg-card hover:bg-secondary text-sm font-medium min-w-[200px] justify-between">
+                      {currentPipeline?.name ?? "Select pipeline"}
+                      <ChevronDown className="size-3.5 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    {pipelines.map((p) => (
+                      <DropdownMenuItem
+                        key={p.id}
+                        onClick={() => setSelectedPipelineId(p.id)}
+                        className={p.id === pipelineId ? "font-semibold" : ""}
+                      >
+                        {p.name}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuItem onClick={() => setTab("pipelines")}>
+                      Manage pipelines…
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                  {totalDeals} opportunities · ${totalValue.toLocaleString()}
+                </span>
+
+                <div className="ml-auto flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search opportunities"
+                      className="h-9 w-[240px] pl-8 text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center border border-border rounded-md p-0.5 bg-card">
+                    <button
+                      onClick={() => setView("kanban")}
+                      title="Kanban view"
+                      className={`size-7 rounded flex items-center justify-center ${
+                        view === "kanban"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <LayoutGrid className="size-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setView("list")}
+                      title="List view"
+                      className={`size-7 rounded flex items-center justify-center ${
+                        view === "list"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <List className="size-3.5" />
+                    </button>
+                  </div>
+                  <button
+                    disabled
+                    title="Coming soon"
+                    className="hidden md:flex items-center gap-1.5 h-9 px-3 rounded-md border border-border text-xs font-medium text-muted-foreground disabled:opacity-60"
+                  >
+                    <Upload className="size-3.5" />
+                    Import
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-h-0 overflow-hidden">
+                {loading ? (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin mr-2" />
+                    <span className="text-xs">Loading your pipeline…</span>
+                  </div>
+                ) : view === "kanban" ? (
+                  <div className="h-full overflow-x-auto overflow-y-hidden">
+                    <KanbanBoard
+                      stages={stages}
+                      deals={filteredDeals}
+                      onMove={(dealId, stageId, position) =>
+                        moveMut.mutate({ dealId, stageId, position })
+                      }
+                      onOpenDeal={(id) => setOpenDealId(id)}
+                    />
+                  </div>
+                ) : (
+                  <OpportunitiesListView
+                    deals={filteredDeals}
+                    stages={stages}
+                    onOpen={(id) => setOpenDealId(id)}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {tab === "pipelines" && (
+            <div className="max-w-4xl">
+              {userId && subId ? (
+                <PipelinesManagerPanel
+                  subAccountId={subId}
+                  userId={userId}
+                  activePipelineId={pipelineId ?? null}
+                  onSelectPipeline={setSelectedPipelineId}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-40 text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === "bulk" && (
+            <div className="max-w-6xl">
+              {subId ? (
+                <BulkActionsPanel subAccountId={subId} />
+              ) : (
+                <div className="flex items-center justify-center h-40 text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <NewDealDialog
+        open={newDealOpen}
+        onOpenChange={setNewDealOpen}
+        stages={stages}
+        onCreate={async (input) => {
+          await createDealMut.mutateAsync(input);
+        }}
+      />
+
+      <Dialog open={!!openDealId} onOpenChange={(o) => !o && setOpenDealId(null)}>
+        <DialogContent className="max-w-3xl p-0 gap-0">
+          {openDealId && (
+            <>
+              <div className="flex justify-end px-4 pt-3">
+                <Link
+                  to="/deals/$id"
+                  params={{ id: openDealId }}
+                  onClick={() => setOpenDealId(null)}
+                  className="text-[11px] text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Open full page <ArrowUpRight className="size-3" />
+                </Link>
+              </div>
+              <DealDetailPanel
+                dealId={openDealId}
+                stages={stages}
+                onClose={() => setOpenDealId(null)}
+              />
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </AppShell>
+  );
+}
+
+function OpportunitiesListView({
+  deals,
+  stages,
+  onOpen,
+}: {
+  deals: Deal[];
+  stages: { id: string; name: string; color: string }[];
+  onOpen: (id: string) => void;
+}) {
+  const stageById = useMemo(() => new Map(stages.map((s) => [s.id, s])), [stages]);
+  if (deals.length === 0) {
+    return (
+      <div className="border border-border rounded-lg bg-card p-10 text-center text-sm text-muted-foreground">
+        No opportunities yet. Add your first one to get started.
+      </div>
+    );
+  }
+  return (
+    <div className="border border-border rounded-lg bg-card overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-secondary/40 text-muted-foreground uppercase text-[10px] tracking-wider">
+          <tr>
+            <th className="text-left p-3 font-mono">Title</th>
+            <th className="text-left p-3 font-mono">Stage</th>
+            <th className="text-right p-3 font-mono">Value</th>
+            <th className="text-left p-3 font-mono">Expected close</th>
+          </tr>
+        </thead>
+        <tbody>
+          {deals.map((d) => {
+            const stage = stageById.get(d.stage_id);
+            return (
+              <tr
+                key={d.id}
+                onClick={() => onOpen(d.id)}
+                className="border-t border-border hover:bg-secondary/40 cursor-pointer"
+              >
+                <td className="p-3 font-medium">{d.title}</td>
+                <td className="p-3">
+                  <span className="inline-flex items-center gap-1.5 text-xs">
+                    <span
+                      className="size-2 rounded-full"
+                      style={{ background: stage?.color ?? "#64748b" }}
+                    />
+                    {stage?.name ?? "—"}
+                  </span>
+                </td>
+                <td className="p-3 text-right font-mono">
+                  ${Number(d.value).toLocaleString()}
+                </td>
+                <td className="p-3 text-xs text-muted-foreground">
+                  {d.expected_close_date ?? "—"}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
