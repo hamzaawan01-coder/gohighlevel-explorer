@@ -79,9 +79,7 @@ export function AppShell({
           <div className="flex items-center gap-4">
             {headerStatus}
             <div className="h-4 w-px bg-border" />
-            <button className="size-8 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors">
-              <Bell className="size-3.5 text-muted-foreground" />
-            </button>
+            <NotificationBell />
             {headerActions}
           </div>
         </header>
