@@ -160,6 +160,28 @@ function Dashboard() {
               <PanelRightOpen className="size-3.5" />
             </button>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1.5 h-8 px-2.5 rounded-md hover:bg-secondary text-xs font-medium border border-border">
+                {currentPipeline?.name ?? "Pipeline"}
+                <ChevronDown className="size-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {pipelines.map((p) => (
+                <DropdownMenuItem
+                  key={p.id}
+                  onClick={() => setSelectedPipelineId(p.id)}
+                  className={p.id === pipelineId ? "font-semibold" : ""}
+                >
+                  {p.name}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuItem onClick={() => setManageOpen(true)}>
+                <Settings className="size-3.5 mr-2" /> Manage pipelines
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <button
             onClick={() => setNewDealOpen(true)}
             disabled={!stages.length}
