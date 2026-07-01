@@ -155,6 +155,38 @@ export const drainOutboundQueue = createServerFn({ method: "POST" })
     return drainAll();
   });
 
+// Retry a single failed outbound message from the UI.
+// RLS check: we look the row up as the caller first (so users can only retry
+// their own workspace's messages), then use the service-role processor to
+// actually resend.
+export const retryOutboundMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: row, error } = await supabase
+      .from("outbound_messages")
+      .select("id, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Message not found or not accessible");
+
+    // Reset failed → queued so processOne will pick it up
+    if (row.status === "failed") {
+      const { error: uErr } = await supabase
+        .from("outbound_messages")
+        .update({ status: "queued", next_attempt_at: null, error: null } as never)
+        .eq("id", row.id);
+      if (uErr) throw new Error(uErr.message);
+    }
+
+    const { processOne } = await import("./integrations.server-queue");
+    await processOne(row.id);
+    return { ok: true as const };
+  });
+
 // keep helper referenced so the file compiles cleanly
 void assertAdminAccess;
 void ({} as SupabaseLike);
+
