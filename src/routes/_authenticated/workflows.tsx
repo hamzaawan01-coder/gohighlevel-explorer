@@ -82,6 +82,11 @@ function WorkflowsPage() {
 
   const workflows = wfQ.data ?? [];
   const runs = runsQ.data ?? [];
+  const [runFilter, setRunFilter] = useState<"all" | "ok" | "error">("all");
+  const filteredRuns = runs.filter((r) =>
+    runFilter === "all" ? true : runFilter === "ok" ? r.status === "ok" : r.status !== "ok",
+  );
+  const errCount = runs.filter((r) => r.status !== "ok").length;
 
   return (
     <AppShell
