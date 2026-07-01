@@ -256,9 +256,13 @@ function ActionFields({
   if (action.type === "create_task") {
     return (
       <div className="grid grid-cols-2 gap-2">
-        <div className="col-span-2 space-y-1">
-          <Label className="text-[11px]">Task title</Label>
-          <Input value={action.title} onChange={(e) => onChange({ title: e.target.value } as Partial<WorkflowAction>)} />
+        <div className="col-span-2">
+          <MergeTagField
+            label="Task title"
+            value={action.title}
+            onChange={(v) => onChange({ title: v } as Partial<WorkflowAction>)}
+            showPreview={false}
+          />
         </div>
         <div className="space-y-1">
           <Label className="text-[11px]">Priority</Label>
