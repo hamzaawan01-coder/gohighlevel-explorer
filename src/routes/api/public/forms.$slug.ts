@@ -57,7 +57,7 @@ export const Route = createFileRoute("/api/public/forms/$slug")({
 
           if (existing?.id) {
             contactId = existing.id;
-            await supabaseAdmin.from("contacts").update(contactPatch).eq("id", existing.id);
+            await supabaseAdmin.from("contacts").update(contactPatch as never).eq("id", existing.id);
           } else {
             const { data: created, error: cErr } = await supabaseAdmin
               .from("contacts")
