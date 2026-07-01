@@ -1885,6 +1885,10 @@ export type Database = {
         Args: { _sub: string; _user: string }
         Returns: boolean
       }
+      is_subaccount_admin: {
+        Args: { _sub: string; _user: string }
+        Returns: boolean
+      }
       list_agency_members: {
         Args: { _agency: string }
         Returns: {
