@@ -182,6 +182,51 @@ export const Route = createFileRoute("/api/public/hooks/wordpress/$token")({
         });
         if (sErr) return new Response("Could not save submission", { status: 500 });
 
+        // Auto-create an opportunity (deal) so the lead appears in Opportunities.
+        let dealId: string | null = null;
+        if (contactId) {
+          const { data: pipeline } = await supabaseAdmin
+            .from("pipelines")
+            .select("id")
+            .eq("sub_account_id", hook.sub_account_id)
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+          if (pipeline?.id) {
+            const { data: firstStage } = await supabaseAdmin
+              .from("pipeline_stages")
+              .select("id")
+              .eq("pipeline_id", pipeline.id)
+              .order("position", { ascending: true })
+              .limit(1)
+              .maybeSingle();
+
+            if (firstStage?.id) {
+              const name =
+                [mapped.first_name, mapped.last_name].filter(Boolean).join(" ").trim() ||
+                mapped.email ||
+                mapped.company ||
+                "New WordPress lead";
+              const title = `${name} — ${hook.lead_source || "WordPress"}`;
+              const { data: createdDeal } = await supabaseAdmin
+                .from("deals")
+                .insert({
+                  pipeline_id: pipeline.id,
+                  stage_id: firstStage.id,
+                  sub_account_id: hook.sub_account_id,
+                  owner_id: form.owner_id,
+                  contact_id: contactId,
+                  title,
+                  value: 0,
+                })
+                .select("id")
+                .single();
+              dealId = createdDeal?.id ?? null;
+            }
+          }
+        }
+
         await supabaseAdmin
           .from("wordpress_webhooks")
           .update({
@@ -191,7 +236,7 @@ export const Route = createFileRoute("/api/public/hooks/wordpress/$token")({
           } as never)
           .eq("id", hook.id);
 
-        return Response.json({ ok: true, contact_id: contactId });
+        return Response.json({ ok: true, contact_id: contactId, deal_id: dealId });
       },
     },
   },
