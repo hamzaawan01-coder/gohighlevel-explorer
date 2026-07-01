@@ -24,6 +24,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedConversationsRouteImport } from './routes/_authenticated/conversations'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
+import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
@@ -106,6 +107,12 @@ const AuthenticatedContactsIndexRoute =
     path: '/contacts/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicProcessOutboundRoute =
+  ApiPublicProcessOutboundRouteImport.update({
+    id: '/api/public/process-outbound',
+    path: '/api/public/process-outbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedSettingsTeamRoute =
   AuthenticatedSettingsTeamRouteImport.update({
     id: '/settings/team',
@@ -152,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/deals/$id': typeof AuthenticatedDealsIdRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
+  '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts/': typeof AuthenticatedContactsIndexRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
 }
@@ -173,6 +181,7 @@ export interface FileRoutesByTo {
   '/deals/$id': typeof AuthenticatedDealsIdRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
+  '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts': typeof AuthenticatedContactsIndexRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
 }
@@ -196,6 +205,7 @@ export interface FileRoutesById {
   '/_authenticated/deals/$id': typeof AuthenticatedDealsIdRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
+  '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/_authenticated/contacts/': typeof AuthenticatedContactsIndexRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
 }
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/deals/$id'
     | '/settings/sub-accounts'
     | '/settings/team'
+    | '/api/public/process-outbound'
     | '/contacts/'
     | '/api/public/forms/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/deals/$id'
     | '/settings/sub-accounts'
     | '/settings/team'
+    | '/api/public/process-outbound'
     | '/contacts'
     | '/api/public/forms/$slug'
   id:
@@ -262,6 +274,7 @@ export interface FileRouteTypes {
     | '/_authenticated/deals/$id'
     | '/_authenticated/settings/sub-accounts'
     | '/_authenticated/settings/team'
+    | '/api/public/process-outbound'
     | '/_authenticated/contacts/'
     | '/api/public/forms/$slug'
   fileRoutesById: FileRoutesById
@@ -272,6 +285,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   FSlugRoute: typeof FSlugRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  ApiPublicProcessOutboundRoute: typeof ApiPublicProcessOutboundRoute
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
 }
 
@@ -382,6 +396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/process-outbound': {
+      id: '/api/public/process-outbound'
+      path: '/api/public/process-outbound'
+      fullPath: '/api/public/process-outbound'
+      preLoaderRoute: typeof ApiPublicProcessOutboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/settings/team': {
       id: '/_authenticated/settings/team'
       path: '/settings/team'
@@ -463,6 +484,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   FSlugRoute: FSlugRoute,
   InviteTokenRoute: InviteTokenRoute,
+  ApiPublicProcessOutboundRoute: ApiPublicProcessOutboundRoute,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
 }
 export const routeTree = rootRouteImport
