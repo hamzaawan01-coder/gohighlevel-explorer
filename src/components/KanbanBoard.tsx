@@ -191,7 +191,15 @@ function EmptyDropzone({ stageId }: { stageId: string }) {
   );
 }
 
-function DealCard({ deal, contact }: { deal: Deal; contact: Contact | null }) {
+function DealCard({
+  deal,
+  contact,
+  onOpen,
+}: {
+  deal: Deal;
+  contact: Contact | null;
+  onOpen?: (dealId: string) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: deal.id,
   });
@@ -201,11 +209,18 @@ function DealCard({ deal, contact }: { deal: Deal; contact: Contact | null }) {
     opacity: isDragging ? 0.4 : 1,
   };
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => onOpen?.(deal.id)}
+    >
       <DealCardView deal={deal} contact={contact} />
     </div>
   );
 }
+
 
 function contactLabel(c: Contact) {
   return (
