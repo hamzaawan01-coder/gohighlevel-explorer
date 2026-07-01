@@ -188,6 +188,7 @@ export function DealDetailPanel({
       <Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden min-h-0">
         <TabsList className="mx-6 mt-3 self-start">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="tasks">Tasks · {openTasks.length}</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="files">Files · {files.length}</TabsTrigger>
