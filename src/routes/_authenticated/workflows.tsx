@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
@@ -148,8 +148,8 @@ function WorkflowsPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      When {WORKFLOW_TRIGGERS.find((t) => t.value === w.trigger_type)?.label}
+                    <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                      {describeWorkflow(w)}
                     </p>
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {w.actions.map((a, i) => (
@@ -157,6 +157,21 @@ function WorkflowsPage() {
                       ))}
                     </div>
                   </div>
+                  <button
+                    onClick={() =>
+                      createMut.mutate({
+                        name: `${w.name} (copy)`,
+                        enabled: false,
+                        trigger_type: w.trigger_type,
+                        trigger_config: w.trigger_config,
+                        actions: w.actions,
+                      })
+                    }
+                    className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    title="Duplicate"
+                  >
+                    <Copy className="size-3" />
+                  </button>
                   <button
                     onClick={() => { setEditing(w); setDialogOpen(true); }}
                     className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
