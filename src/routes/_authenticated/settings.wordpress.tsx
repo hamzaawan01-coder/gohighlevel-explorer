@@ -8,8 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Copy, Trash2, Webhook, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Copy,
+  Trash2,
+  Webhook,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  ArrowRight,
+  Plus,
+  X,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenancy } from "@/lib/tenancy";
 import {
@@ -20,7 +31,15 @@ import {
   webhookUrl,
   type WordPressWebhook,
 } from "@/lib/wordpress-webhooks";
+import {
+  BUILTIN_ALIASES,
+  STANDARD_KEYS,
+  mapPayload,
+  type FieldMap,
+  type StandardKey,
+} from "@/lib/wordpress-field-map";
 import { formatDistanceToNow } from "date-fns";
+
 
 export const Route = createFileRoute("/_authenticated/settings/wordpress")({
   head: () => ({ meta: [{ title: "WordPress — Settings" }] }),
