@@ -461,6 +461,10 @@ function OpportunitiesPage() {
 
       <Dialog open={!!openDealId} onOpenChange={(o) => !o && setOpenDealId(null)}>
         <DialogContent className="max-w-3xl p-0 gap-0">
+          <VisuallyHidden>
+            <DialogTitle>Opportunity details</DialogTitle>
+            <DialogDescription>View and edit opportunity details</DialogDescription>
+          </VisuallyHidden>
           {openDealId && (
             <>
               <div className="flex justify-end px-4 pt-3">
