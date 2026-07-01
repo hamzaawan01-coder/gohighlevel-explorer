@@ -118,8 +118,24 @@ function OpportunitiesPage() {
 
   const filteredDeals = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return q ? deals.filter((d) => d.title.toLowerCase().includes(q)) : deals;
-  }, [deals, search]);
+    const now = Date.now();
+    const weekAhead = now + 7 * 24 * 60 * 60 * 1000;
+    const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
+    return deals.filter((d) => {
+      if (q && !d.title.toLowerCase().includes(q)) return false;
+      if (savedView === "mine" && d.owner_id !== userId) return false;
+      if (savedView === "closing_week") {
+        if (!d.expected_close_date) return false;
+        const t = new Date(d.expected_close_date).getTime();
+        if (isNaN(t) || t < now || t > weekAhead) return false;
+      }
+      if (savedView === "stale") {
+        const t = new Date(d.updated_at ?? d.created_at ?? 0).getTime();
+        if (!t || t > fourteenDaysAgo) return false;
+      }
+      return true;
+    });
+  }, [deals, search, savedView, userId]);
 
   const totalValue = useMemo(
     () => filteredDeals.reduce((s, d) => s + Number(d.value), 0),
