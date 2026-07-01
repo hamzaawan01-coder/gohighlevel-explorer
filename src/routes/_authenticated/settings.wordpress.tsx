@@ -311,7 +311,38 @@ function SetupInstructions({ url, secret }: { url: string; secret: string | null
           </p>
           <CodeBlock code={cf7Snippet} />
         </TabsContent>
-      </Tabs>
+
+        <TabsContent value="elementor" className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Elementor Pro Forms has a native <b>Webhook</b> action — no plugin or code needed.
+          </p>
+          <ol className="text-sm text-muted-foreground list-decimal ml-5 space-y-1">
+            <li>Edit your form widget → <b>Content → Actions After Submit</b> → add <b>Webhook</b>.</li>
+            <li>Open the new <b>Webhook</b> section below.</li>
+            <li>
+              Webhook URL: <code className="text-foreground break-all">{url}</code>
+            </li>
+            <li>Advanced Data: <b>On</b> (sends field IDs and meta as JSON).</li>
+            <li>
+              In each form field's <b>Advanced</b> tab, set the <b>ID</b> to one of the aliases
+              below (e.g. <code>email</code>, <code>first_name</code>, <code>phone</code>). Any
+              other field ID is kept on the submission record as-is.
+            </li>
+            {secret && (
+              <li>
+                Elementor's built-in webhook can't sign requests. Either delete the HMAC secret on
+                this webhook, or use the <b>functions.php</b> snippet instead (it signs the
+                payload).
+              </li>
+            )}
+          </ol>
+          <p className="text-xs text-muted-foreground">
+            Free Elementor doesn't include the Webhook action. If you're on the free version, use
+            the <b>functions.php</b> tab — it also catches Elementor form submissions via the{" "}
+            <code>elementor_pro/forms/new_record</code> hook when Pro is present, and via the
+            generic mail hook otherwise.
+          </p>
+        </TabsContent>
 
       <div className="mt-4 rounded-md border border-border p-4 text-xs space-y-1">
         <div className="font-medium text-foreground">Recognized field aliases</div>
