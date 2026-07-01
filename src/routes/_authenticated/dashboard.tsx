@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -38,6 +38,7 @@ function Dashboard() {
   const [userId, setUserId] = useState<string | null>(null);
   const [newDealOpen, setNewDealOpen] = useState(false);
   const [openDealId, setOpenDealId] = useState<string | null>(null);
+  const [activityMinimized, setActivityMinimized] = useState(false);
 
 
   useEffect(() => {
@@ -127,55 +128,78 @@ function Dashboard() {
         </div>
       }
       headerActions={
-        <button
-          onClick={() => setNewDealOpen(true)}
-          disabled={!stages.length}
-          className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-        >
-          <Plus className="size-3.5" />
-          New Deal
-        </button>
-      }
-      rightPane={
         <>
-          <div className="h-14 border-b border-border px-4 flex items-center justify-between shrink-0">
-            <h2 className="text-xs font-bold uppercase tracking-wider">Activity</h2>
-            <span className="font-mono text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded">
-              {unreadInbox} new
-            </span>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {recentDeals.length === 0 ? (
-              <div className="p-6 text-center">
-                <p className="text-xs text-muted-foreground">
-                  No activity yet. Add your first deal to get started.
-                </p>
-              </div>
-            ) : (
-              recentDeals.map((d) => (
-                <div key={d.id} className="p-4 border-b border-border">
-                  <p className="text-xs font-semibold mb-1">{d.title}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    ${Number(d.value).toLocaleString()} ·{" "}
-                    {stages.find((s) => s.id === d.stage_id)?.name ?? "—"}
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="p-4 bg-secondary/50 border-t border-border">
-            <div className="bg-card ring-1 ring-black/5 rounded p-3">
-              <p className="font-mono text-[10px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">
-                Quick Note
-              </p>
-              <textarea
-                placeholder="Draft internal note…"
-                className="w-full text-xs bg-transparent border-none resize-none focus:outline-none min-h-[60px]"
-              />
-            </div>
-          </div>
+          {activityMinimized && (
+            <button
+              onClick={() => setActivityMinimized(false)}
+              title="Show activity"
+              className="size-8 rounded-md hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+            >
+              <PanelRightOpen className="size-3.5" />
+            </button>
+          )}
+          <button
+            onClick={() => setNewDealOpen(true)}
+            disabled={!stages.length}
+            className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            <Plus className="size-3.5" />
+            New Deal
+          </button>
         </>
       }
+      rightPane={
+        activityMinimized ? null : (
+          <>
+            <div className="h-14 border-b border-border px-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs font-bold uppercase tracking-wider">Activity</h2>
+                <span className="font-mono text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded">
+                  {unreadInbox} new
+                </span>
+              </div>
+              <button
+                onClick={() => setActivityMinimized(true)}
+                title="Minimize"
+                className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+              >
+                <PanelRightClose className="size-3.5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {recentDeals.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-xs text-muted-foreground">
+                    No activity yet. Add your first deal to get started.
+                  </p>
+                </div>
+              ) : (
+                recentDeals.map((d) => (
+                  <div key={d.id} className="p-4 border-b border-border">
+                    <p className="text-xs font-semibold mb-1">{d.title}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      ${Number(d.value).toLocaleString()} ·{" "}
+                      {stages.find((s) => s.id === d.stage_id)?.name ?? "—"}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="p-4 bg-secondary/50 border-t border-border">
+              <div className="bg-card ring-1 ring-black/5 rounded p-3">
+                <p className="font-mono text-[10px] font-bold text-muted-foreground uppercase mb-2 tracking-widest">
+                  Quick Note
+                </p>
+                <textarea
+                  placeholder="Draft internal note…"
+                  className="w-full text-xs bg-transparent border-none resize-none focus:outline-none min-h-[60px]"
+                />
+              </div>
+            </div>
+          </>
+        )
+      }
+
     >
       <div className="h-full overflow-x-auto overflow-y-hidden p-6">
         {loading ? (
