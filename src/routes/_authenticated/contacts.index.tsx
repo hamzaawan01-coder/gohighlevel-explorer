@@ -320,6 +320,128 @@ function ContactsPage() {
           </div>
         </div>
 
+        {/* Saved views */}
+        <div className="px-6 py-2.5 border-b border-border flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mr-1">
+            Views
+          </span>
+          {views.length === 0 && (
+            <span className="text-[10px] text-muted-foreground italic">
+              Save a filter combination to reuse it later.
+            </span>
+          )}
+          {views.map((v) => (
+            <div key={v.id} className="inline-flex items-center rounded bg-secondary text-muted-foreground hover:text-foreground overflow-hidden">
+              <button
+                onClick={() => applyView(v)}
+                className="text-[10px] font-mono uppercase tracking-wider pl-2 pr-1 py-1 flex items-center gap-1"
+              >
+                <Bookmark className="size-2.5" /> {v.name}
+              </button>
+              <button
+                onClick={() => { if (confirm(`Delete view "${v.name}"?`)) deleteViewMut.mutate(v.id); }}
+                className="px-1 py-1 hover:text-destructive"
+                title="Delete view"
+              >
+                <X className="size-2.5" />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => setSaveViewOpen(true)}
+            className="ml-auto text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+          >
+            <BookmarkPlus className="size-2.5" /> Save view
+          </button>
+        </div>
+
+        {/* Bulk actions toolbar */}
+        {selectedIds.size > 0 && (
+          <div className="px-6 py-2 border-b border-border bg-primary/5 flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-medium">
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-[10px] text-muted-foreground hover:text-foreground uppercase font-mono tracking-wider"
+            >
+              Clear
+            </button>
+            <div className="h-4 w-px bg-border mx-1" />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
+                Set stage <ChevronDown className="size-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {LIFECYCLE_STAGES.map((s) => (
+                  <DropdownMenuItem
+                    key={s.value}
+                    onClick={() => bulkStageMut.mutate({ ids: selectedArr, stage: s.value })}
+                  >
+                    {s.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
+                <TagIcon className="size-3" /> Add tag <ChevronDown className="size-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel className="text-[10px]">Existing tags</DropdownMenuLabel>
+                {allTags.length === 0 && (
+                  <DropdownMenuItem disabled className="text-xs italic">
+                    No tags yet
+                  </DropdownMenuItem>
+                )}
+                {allTags.map((t) => (
+                  <DropdownMenuItem key={t} onClick={() => bulkTagMut.mutate({ ids: selectedArr, tag: t })}>
+                    {t}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    const tag = prompt("New tag name")?.trim();
+                    if (tag) bulkTagMut.mutate({ ids: selectedArr, tag });
+                  }}
+                >
+                  + New tag…
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {selectedTags.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
+                  Remove tag <ChevronDown className="size-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {selectedTags.map((t) => (
+                    <DropdownMenuItem key={t} onClick={() => bulkUntagMut.mutate({ ids: selectedArr, tag: t })}>
+                      {t}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            <button
+              onClick={() => {
+                if (confirm(`Delete ${selectedIds.size} contacts? This cannot be undone.`))
+                  bulkDeleteMut.mutate(selectedArr);
+              }}
+              className="text-[11px] px-2 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 inline-flex items-center gap-1"
+            >
+              <Trash2 className="size-3" /> Delete
+            </button>
+          </div>
+        )}
+
+
+
         <div className="flex-1 overflow-auto">
           {contactsQuery.isLoading ? (
             <div className="h-full flex items-center justify-center text-muted-foreground">
