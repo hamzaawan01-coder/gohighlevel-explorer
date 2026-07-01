@@ -2,7 +2,6 @@
  * Server-only send helpers. Dispatches to the tenant's configured provider.
  * Never import this file from route/component code — always via a server function.
  */
-import nodemailer from "nodemailer";
 import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig } from "./integrations";
 
 export type SendEmailArgs = {
@@ -20,21 +19,12 @@ export async function sendEmailViaProvider(args: SendEmailArgs): Promise<{ id: s
   const fromLine = args.fromName ? `${args.fromName} <${args.from}>` : args.from;
 
   if (args.provider === "smtp") {
-    const cfg = args.config as SmtpConfig;
-    const transport = nodemailer.createTransport({
-      host: cfg.host,
-      port: cfg.port,
-      secure: cfg.secure,
-      auth: { user: cfg.user, pass: cfg.password },
-    });
-    const info = await transport.sendMail({
-      from: fromLine,
-      to: args.to,
-      subject: args.subject,
-      text: args.text ?? undefined,
-      html: args.html ?? undefined,
-    });
-    return { id: info.messageId };
+    // SMTP (nodemailer) requires a Node.js runtime and does not run on the
+    // Cloudflare Workers server. Ask the user to switch this workspace to
+    // Resend or SendGrid, both of which use plain HTTPS and work everywhere.
+    throw new Error(
+      "SMTP is not supported on this deployment. Switch this workspace's email provider to Resend or SendGrid in Settings → Integrations.",
+    );
   }
 
   if (args.provider === "resend") {
