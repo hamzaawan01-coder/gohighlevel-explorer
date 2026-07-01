@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Loader2, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Plus, Loader2, PanelRightClose, PanelRightOpen, ArrowUpRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -229,11 +229,23 @@ function Dashboard() {
       <Dialog open={!!openDealId} onOpenChange={(o) => !o && setOpenDealId(null)}>
         <DialogContent className="max-w-3xl p-0 gap-0">
           {openDealId && (
-            <DealDetailPanel
-              dealId={openDealId}
-              stages={stages}
-              onClose={() => setOpenDealId(null)}
-            />
+            <>
+              <div className="flex justify-end px-4 pt-3">
+                <Link
+                  to="/deals/$id"
+                  params={{ id: openDealId }}
+                  onClick={() => setOpenDealId(null)}
+                  className="text-[11px] text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Open full page <ArrowUpRight className="size-3" />
+                </Link>
+              </div>
+              <DealDetailPanel
+                dealId={openDealId}
+                stages={stages}
+                onClose={() => setOpenDealId(null)}
+              />
+            </>
           )}
         </DialogContent>
       </Dialog>
