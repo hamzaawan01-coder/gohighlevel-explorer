@@ -29,6 +29,7 @@ import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/publi
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
+import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
@@ -139,6 +140,12 @@ const AuthenticatedSettingsIntegrationsRoute =
     path: '/settings/integrations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsBookingRoute =
+  AuthenticatedSettingsBookingRouteImport.update({
+    id: '/settings/booking',
+    path: '/settings/booking',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDealsIdRoute = AuthenticatedDealsIdRouteImport.update({
   id: '/deals/$id',
   path: '/deals/$id',
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
@@ -202,6 +210,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
@@ -229,6 +238,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/_authenticated/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/_authenticated/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/contacts/$id'
     | '/deals/$id'
+    | '/settings/booking'
     | '/settings/integrations'
     | '/settings/sub-accounts'
     | '/settings/team'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/contacts/$id'
     | '/deals/$id'
+    | '/settings/booking'
     | '/settings/integrations'
     | '/settings/sub-accounts'
     | '/settings/team'
@@ -307,6 +319,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_authenticated/contacts/$id'
     | '/_authenticated/deals/$id'
+    | '/_authenticated/settings/booking'
     | '/_authenticated/settings/integrations'
     | '/_authenticated/settings/sub-accounts'
     | '/_authenticated/settings/team'
@@ -470,6 +483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/booking': {
+      id: '/_authenticated/settings/booking'
+      path: '/settings/booking'
+      fullPath: '/settings/booking'
+      preLoaderRoute: typeof AuthenticatedSettingsBookingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/deals/$id': {
       id: '/_authenticated/deals/$id'
       path: '/deals/$id'
@@ -513,6 +533,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
   AuthenticatedContactsIdRoute: typeof AuthenticatedContactsIdRoute
   AuthenticatedDealsIdRoute: typeof AuthenticatedDealsIdRoute
+  AuthenticatedSettingsBookingRoute: typeof AuthenticatedSettingsBookingRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedSettingsSubAccountsRoute: typeof AuthenticatedSettingsSubAccountsRoute
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
@@ -531,6 +552,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
   AuthenticatedContactsIdRoute: AuthenticatedContactsIdRoute,
   AuthenticatedDealsIdRoute: AuthenticatedDealsIdRoute,
+  AuthenticatedSettingsBookingRoute: AuthenticatedSettingsBookingRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
   AuthenticatedSettingsSubAccountsRoute: AuthenticatedSettingsSubAccountsRoute,
