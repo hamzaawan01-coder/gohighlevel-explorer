@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
+import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AuthenticatedWorkflowsRouteImport } from './routes/_authenticated/workflows'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
@@ -31,6 +32,7 @@ import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
+import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -54,6 +56,11 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
 const FSlugRoute = FSlugRouteImport.update({
   id: '/f/$slug',
   path: '/f/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BSlugRoute = BSlugRouteImport.update({
+  id: '/b/$slug',
+  path: '/b/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedWorkflowsRoute = AuthenticatedWorkflowsRouteImport.update({
@@ -147,6 +154,11 @@ const ApiPublicFormsSlugRoute = ApiPublicFormsSlugRouteImport.update({
   path: '/api/public/forms/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBookingSlugRoute = ApiPublicBookingSlugRouteImport.update({
+  id: '/api/public/booking/$slug',
+  path: '/api/public/booking/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -160,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
+  '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
@@ -169,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts/': typeof AuthenticatedContactsIndexRoute
+  '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
 }
 export interface FileRoutesByTo {
@@ -183,6 +197,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
+  '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
@@ -192,6 +207,7 @@ export interface FileRoutesByTo {
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts': typeof AuthenticatedContactsIndexRoute
+  '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
 }
 export interface FileRoutesById {
@@ -208,6 +224,7 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/workflows': typeof AuthenticatedWorkflowsRoute
+  '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/contacts/$id': typeof AuthenticatedContactsIdRoute
@@ -217,6 +234,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/_authenticated/contacts/': typeof AuthenticatedContactsIndexRoute
+  '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
 }
 export interface FileRouteTypes {
@@ -233,6 +251,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/tasks'
     | '/workflows'
+    | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
     | '/contacts/$id'
@@ -242,6 +261,7 @@ export interface FileRouteTypes {
     | '/settings/team'
     | '/api/public/process-outbound'
     | '/contacts/'
+    | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -256,6 +276,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/tasks'
     | '/workflows'
+    | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
     | '/contacts/$id'
@@ -265,6 +286,7 @@ export interface FileRouteTypes {
     | '/settings/team'
     | '/api/public/process-outbound'
     | '/contacts'
+    | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
   id:
     | '__root__'
@@ -280,6 +302,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/tasks'
     | '/_authenticated/workflows'
+    | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
     | '/_authenticated/contacts/$id'
@@ -289,6 +312,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/team'
     | '/api/public/process-outbound'
     | '/_authenticated/contacts/'
+    | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -296,9 +320,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BSlugRoute: typeof BSlugRoute
   FSlugRoute: typeof FSlugRoute
   InviteTokenRoute: typeof InviteTokenRoute
   ApiPublicProcessOutboundRoute: typeof ApiPublicProcessOutboundRoute
+  ApiPublicBookingSlugRoute: typeof ApiPublicBookingSlugRoute
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
 }
 
@@ -337,6 +363,13 @@ declare module '@tanstack/react-router' {
       path: '/f/$slug'
       fullPath: '/f/$slug'
       preLoaderRoute: typeof FSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/b/$slug': {
+      id: '/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof BSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/workflows': {
@@ -458,6 +491,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFormsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/booking/$slug': {
+      id: '/api/public/booking/$slug'
+      path: '/api/public/booking/$slug'
+      fullPath: '/api/public/booking/$slug'
+      preLoaderRoute: typeof ApiPublicBookingSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -505,9 +545,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BSlugRoute: BSlugRoute,
   FSlugRoute: FSlugRoute,
   InviteTokenRoute: InviteTokenRoute,
   ApiPublicProcessOutboundRoute: ApiPublicProcessOutboundRoute,
+  ApiPublicBookingSlugRoute: ApiPublicBookingSlugRoute,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
 }
 export const routeTree = rootRouteImport
