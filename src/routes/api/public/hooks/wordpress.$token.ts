@@ -226,7 +226,7 @@ export const Route = createFileRoute("/api/public/hooks/wordpress/$token")({
           form_id: hook.form_id,
           sub_account_id: hook.sub_account_id,
           contact_id: contactId,
-          payload: payloadOut,
+          payload: payloadOut as never,
           source_url: typeof source_url === "string" ? source_url.slice(0, 500) : null,
         });
         if (sErr) return new Response("Could not save submission", { status: 500 });
@@ -234,14 +234,10 @@ export const Route = createFileRoute("/api/public/hooks/wordpress/$token")({
         await supabaseAdmin
           .from("wordpress_webhooks")
           .update({
-            total_received: 1,
             last_received_at: new Date().toISOString(),
             last_error: null,
           } as never)
           .eq("id", hook.id);
-
-        // Best-effort increment (Supabase JS doesn't have rpc-less increment; approximate)
-        await supabaseAdmin.rpc("run_workflows" as never, {} as never).catch(() => {});
 
         return Response.json({ ok: true, contact_id: contactId });
       },
