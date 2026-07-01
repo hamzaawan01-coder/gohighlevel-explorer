@@ -343,6 +343,8 @@ function SetupInstructions({ url, secret }: { url: string; secret: string | null
             generic mail hook otherwise.
           </p>
         </TabsContent>
+      </Tabs>
+
 
       <div className="mt-4 rounded-md border border-border p-4 text-xs space-y-1">
         <div className="font-medium text-foreground">Recognized field aliases</div>
