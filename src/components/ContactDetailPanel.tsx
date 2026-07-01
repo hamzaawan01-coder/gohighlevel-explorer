@@ -535,3 +535,207 @@ function EmptyState({ label, action }: { label: string; action?: React.ReactNode
     </div>
   );
 }
+
+function FilesTab({
+  contactId,
+  subId,
+  userId,
+  files,
+  loading,
+  onChanged,
+}: {
+  contactId: string;
+  subId: string | null;
+  userId: string | null;
+  files: ContactFile[];
+  loading: boolean;
+  onChanged: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const uploadFiles = async (fileList: FileList | File[]) => {
+    if (!subId || !userId) {
+      toast.error("Not ready");
+      return;
+    }
+    const arr = Array.from(fileList);
+    if (arr.length === 0) return;
+    setUploading(true);
+    try {
+      for (const f of arr) {
+        if (f.size > 25 * 1024 * 1024) {
+          toast.error(`${f.name} exceeds 25 MB limit`);
+          continue;
+        }
+        await uploadContactFile({ file: f, contactId, subAccountId: subId, userId });
+      }
+      toast.success(arr.length === 1 ? "File uploaded" : `${arr.length} files uploaded`);
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (f: ContactFile) => {
+    if (!confirm(`Delete "${f.name}"?`)) return;
+    try {
+      await deleteContactFile(f);
+      toast.success("File deleted");
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Delete failed");
+    }
+  };
+
+  const handleOpen = async (f: ContactFile) => {
+    try {
+      const url = await getContactFileUrl(f.storage_path);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not open file");
+    }
+  };
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files);
+        }}
+        className={
+          "mx-6 mt-4 mb-3 rounded-md border-2 border-dashed px-4 py-6 flex flex-col items-center justify-center gap-2 transition-colors " +
+          (dragOver ? "border-primary bg-primary/5" : "border-border")
+        }
+      >
+        <Upload className="size-5 text-muted-foreground" />
+        <p className="text-xs text-muted-foreground text-center">
+          Drop files here, or{" "}
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="text-primary hover:underline font-medium"
+            disabled={uploading}
+          >
+            browse
+          </button>
+        </p>
+        <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
+          Max 25 MB · Images, PDFs, docs
+        </p>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files?.length) uploadFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+        {uploading && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+            <Loader2 className="size-3 animate-spin" /> Uploading…
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-auto px-6 pb-4">
+        {loading ? (
+          <p className="text-xs text-muted-foreground">Loading…</p>
+        ) : files.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic text-center py-6">
+            No files attached yet.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border rounded-md border border-border">
+            {files.map((f) => (
+              <li
+                key={f.id}
+                className="px-4 py-2.5 flex items-center gap-3 hover:bg-secondary/40"
+              >
+                <FileThumb file={f} />
+                <button
+                  onClick={() => handleOpen(f)}
+                  className="flex-1 min-w-0 text-left"
+                >
+                  <p className="text-sm font-medium truncate hover:text-primary">
+                    {f.name}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {formatBytes(f.size)} ·{" "}
+                    {formatDistanceToNow(new Date(f.created_at), { addSuffix: true })}
+                  </p>
+                </button>
+                <button
+                  onClick={() => handleOpen(f)}
+                  className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  title="Open"
+                >
+                  <Download className="size-3.5" />
+                </button>
+                {f.uploaded_by === userId && (
+                  <button
+                    onClick={() => handleDelete(f)}
+                    className="size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive"
+                    title="Delete"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FileThumb({ file }: { file: ContactFile }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const image = isImage(file.content_type);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (image) {
+      getContactFileUrl(file.storage_path)
+        .then((u) => {
+          if (!cancelled) setUrl(u);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [file.storage_path, image]);
+
+  if (image && url) {
+    return (
+      <img
+        src={url}
+        alt={file.name}
+        className="size-10 rounded object-cover bg-secondary shrink-0"
+      />
+    );
+  }
+  return (
+    <span className="size-10 rounded bg-secondary flex items-center justify-center shrink-0">
+      {image ? (
+        <ImageIcon className="size-4 text-muted-foreground" />
+      ) : (
+        <FileIcon className="size-4 text-muted-foreground" />
+      )}
+    </span>
+  );
+}
