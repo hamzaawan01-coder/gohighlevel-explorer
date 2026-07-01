@@ -628,6 +628,7 @@ export type Database = {
       }
       conversations: {
         Row: {
+          channel: Database["public"]["Enums"]["message_channel"]
           contact_id: string
           created_at: string
           id: string
@@ -636,6 +637,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          channel?: Database["public"]["Enums"]["message_channel"]
           contact_id: string
           created_at?: string
           id?: string
@@ -644,6 +646,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          channel?: Database["public"]["Enums"]["message_channel"]
           contact_id?: string
           created_at?: string
           id?: string
@@ -1012,28 +1015,40 @@ export type Database = {
         Row: {
           author_user_id: string | null
           body: string
+          channel: Database["public"]["Enums"]["message_channel"]
           conversation_id: string
           created_at: string
+          direction: Database["public"]["Enums"]["message_direction"]
+          external_id: string | null
           id: string
           kind: Database["public"]["Enums"]["message_kind"]
+          sender_handle: string | null
           sub_account_id: string
         }
         Insert: {
           author_user_id?: string | null
           body: string
+          channel?: Database["public"]["Enums"]["message_channel"]
           conversation_id: string
           created_at?: string
+          direction?: Database["public"]["Enums"]["message_direction"]
+          external_id?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["message_kind"]
+          sender_handle?: string | null
           sub_account_id: string
         }
         Update: {
           author_user_id?: string | null
           body?: string
+          channel?: Database["public"]["Enums"]["message_channel"]
           conversation_id?: string
           created_at?: string
+          direction?: Database["public"]["Enums"]["message_direction"]
+          external_id?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["message_kind"]
+          sender_handle?: string | null
           sub_account_id?: string
         }
         Relationships: [
@@ -1841,6 +1856,16 @@ export type Database = {
       app_role: "admin" | "user"
       campaign_status: "draft" | "scheduled" | "sending" | "sent" | "failed"
       contact_lifecycle_stage: "lead" | "mql" | "sql" | "customer" | "lost"
+      message_channel:
+        | "note"
+        | "email"
+        | "sms"
+        | "whatsapp"
+        | "instagram"
+        | "messenger"
+        | "linkedin"
+        | "tiktok"
+      message_direction: "inbound" | "outbound"
       message_kind: "note" | "email_log" | "sms_log"
       outbound_channel: "email" | "sms"
       outbound_status: "queued" | "sending" | "sent" | "failed"
@@ -1992,6 +2017,17 @@ export const Constants = {
       app_role: ["admin", "user"],
       campaign_status: ["draft", "scheduled", "sending", "sent", "failed"],
       contact_lifecycle_stage: ["lead", "mql", "sql", "customer", "lost"],
+      message_channel: [
+        "note",
+        "email",
+        "sms",
+        "whatsapp",
+        "instagram",
+        "messenger",
+        "linkedin",
+        "tiktok",
+      ],
+      message_direction: ["inbound", "outbound"],
       message_kind: ["note", "email_log", "sms_log"],
       outbound_channel: ["email", "sms"],
       outbound_status: ["queued", "sending", "sent", "failed"],
