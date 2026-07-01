@@ -38,6 +38,7 @@ function Dashboard() {
   const [userId, setUserId] = useState<string | null>(null);
   const [newDealOpen, setNewDealOpen] = useState(false);
   const [openDealId, setOpenDealId] = useState<string | null>(null);
+  const [activityMinimized, setActivityMinimized] = useState(false);
 
 
   useEffect(() => {
