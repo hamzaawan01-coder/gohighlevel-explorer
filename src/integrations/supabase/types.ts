@@ -473,6 +473,61 @@ export type Database = {
           },
         ]
       }
+      form_submissions: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          form_id: string
+          id: string
+          ip_hash: string | null
+          payload: Json
+          source_url: string | null
+          sub_account_id: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          form_id: string
+          id?: string
+          ip_hash?: string | null
+          payload?: Json
+          source_url?: string | null
+          sub_account_id: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          form_id?: string
+          id?: string
+          ip_hash?: string | null
+          payload?: Json
+          source_url?: string | null
+          sub_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "lead_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invitations: {
         Row: {
           accepted_at: string | null
@@ -520,6 +575,59 @@ export type Database = {
           },
           {
             foreignKeyName: "invitations_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_forms: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          fields: Json
+          id: string
+          name: string
+          owner_id: string
+          redirect_url: string | null
+          slug: string
+          sub_account_id: string
+          success_message: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          fields?: Json
+          id?: string
+          name: string
+          owner_id: string
+          redirect_url?: string | null
+          slug: string
+          sub_account_id: string
+          success_message?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          fields?: Json
+          id?: string
+          name?: string
+          owner_id?: string
+          redirect_url?: string | null
+          slug?: string
+          sub_account_id?: string
+          success_message?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_forms_sub_account_id_fkey"
             columns: ["sub_account_id"]
             isOneToOne: false
             referencedRelation: "sub_accounts"
@@ -1072,6 +1180,7 @@ export type Database = {
         | "contact.stage_changed"
         | "deal.stage_changed"
         | "task.completed"
+        | "form.submitted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1211,6 +1320,7 @@ export const Constants = {
         "contact.stage_changed",
         "deal.stage_changed",
         "task.completed",
+        "form.submitted",
       ],
     },
   },
