@@ -293,6 +293,17 @@ function Dashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {userId && subId && (
+        <ManagePipelinesDialog
+          open={manageOpen}
+          onOpenChange={setManageOpen}
+          subAccountId={subId}
+          userId={userId}
+          activePipelineId={pipelineId ?? null}
+          onSelectPipeline={setSelectedPipelineId}
+        />
+      )}
     </AppShell>
   );
 }
