@@ -489,8 +489,21 @@ function ContactsPage() {
                 {filtered.map((c) => {
                   const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "—";
                   return (
-                    <tr key={c.id} className="border-b border-border hover:bg-secondary/40">
-                      <td className="px-6 py-2.5 font-medium">
+                    <tr
+                      key={c.id}
+                      className={
+                        "border-b border-border hover:bg-secondary/40 " +
+                        (selectedIds.has(c.id) ? "bg-primary/5" : "")
+                      }
+                    >
+                      <td className="pl-6 pr-2 py-2.5">
+                        <Checkbox
+                          checked={selectedIds.has(c.id)}
+                          onCheckedChange={() => toggleOne(c.id)}
+                          aria-label={`Select ${name}`}
+                        />
+                      </td>
+                      <td className="px-3 py-2.5 font-medium">
                         <button
                           type="button"
                           onClick={() => setSelectedId(c.id)}
