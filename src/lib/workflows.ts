@@ -30,8 +30,8 @@ export type WorkflowAction =
   | { type: "set_contact_stage"; stage: LifecycleStage }
   | { type: "add_contact_tag"; tag: string }
   | { type: "create_notification"; title: string; body?: string; link?: string }
-  | { type: "send_email"; to?: string; subject: string; body_html?: string; body_text?: string }
-  | { type: "send_sms"; to?: string; body: string };
+  | { type: "send_email"; to?: string; subject: string; body_html?: string; body_text?: string; delay_minutes?: number; respect_quiet_hours?: boolean }
+  | { type: "send_sms"; to?: string; body: string; delay_minutes?: number; respect_quiet_hours?: boolean };
 
 export const WORKFLOW_ACTION_TYPES: { value: WorkflowAction["type"]; label: string }[] = [
   { value: "create_task", label: "Create task" },
