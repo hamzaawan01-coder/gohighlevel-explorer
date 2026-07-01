@@ -814,8 +814,14 @@ function AdConnectionsPanel({ subId }: { subId: string }) {
                     </SelectContent>
                   </Select>
                 </div>
-              ) : (
+              ) : google.accessible_customers.length === 1 ? (
                 <p className="text-xs text-muted-foreground">Customer: {google.external_customer_id ?? "—"}</p>
+              ) : (
+                <ManualCustomerIdInput
+                  currentId={google.external_customer_id}
+                  onSave={(cid) => updateCust.mutate({ id: google.id, cid, name: null })}
+                  saving={updateCust.isPending}
+                />
               )}
               <p className="text-[11px] text-muted-foreground">
                 {google.last_synced_at
@@ -841,6 +847,34 @@ function AdConnectionsPanel({ subId }: { subId: string }) {
           <p className="mt-2 text-[11px] text-muted-foreground">Meta app review pending — will unlock the same one-click connect flow.</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ManualCustomerIdInput({ currentId, onSave, saving }: { currentId: string | null; onSave: (cid: string) => void; saving: boolean }) {
+  const [val, setVal] = useState(currentId ?? "");
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">Google Ads Customer ID</Label>
+      <div className="flex gap-2">
+        <Input
+          className="h-7 text-xs w-44"
+          placeholder="1234567890 (no dashes)"
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+        />
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={saving || !val.replace(/\D/g, "")}
+          onClick={() => onSave(val.replace(/\D/g, ""))}
+        >
+          {saving ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
+        </Button>
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        No accessible customers were returned. Enter your 10-digit Customer ID from Google Ads (top-right of the Ads UI).
+      </p>
     </div>
   );
 }
