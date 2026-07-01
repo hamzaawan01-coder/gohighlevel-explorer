@@ -16,7 +16,8 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Mail, MessageSquare, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { Mail, MessageSquare, CheckCircle2, AlertCircle, ExternalLink, Facebook } from "lucide-react";
+import { MetaConnectPanel } from "@/components/MetaConnectPanel";
 import { useTenancy } from "@/lib/tenancy";
 import {
   fetchIntegrations,
