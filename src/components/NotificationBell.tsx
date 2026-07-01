@@ -42,6 +42,9 @@ export function NotificationBell() {
 
   const notes = q.data ?? [];
   const unread = notes.filter((n) => !n.read_at).length;
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  const todayNotes = notes.filter((n) => new Date(n.created_at) >= startOfToday);
+  const earlierNotes = notes.filter((n) => new Date(n.created_at) < startOfToday);
 
   return (
     <DropdownMenu>
