@@ -18,6 +18,8 @@ export type TwilioConfig = {
   auth_token: string;
 };
 
+export type SmsProvider = "twilio" | "twilio_connector";
+
 export type IntegrationRow = {
   sub_account_id: string;
   email_provider: EmailProvider | null;
@@ -25,7 +27,7 @@ export type IntegrationRow = {
   email_from_address: string | null;
   email_from_name: string | null;
   email_verified_at: string | null;
-  sms_provider: "twilio" | null;
+  sms_provider: SmsProvider | null;
   sms_config: Record<string, unknown>;
   sms_from_number: string | null;
   sms_verified_at: string | null;
