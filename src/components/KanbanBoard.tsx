@@ -225,10 +225,11 @@ function DealCard({
       {...listeners}
       onClick={() => onOpen?.(deal.id)}
     >
-      <DealCardView deal={deal} contact={contact} />
+      <DealCardView deal={deal} contact={contact} onOpen={() => onOpen?.(deal.id)} />
     </div>
   );
 }
+
 
 
 function contactLabel(c: Contact) {
