@@ -327,6 +327,23 @@ function OpportunitiesPage() {
                   {totalDeals} opportunities · ${totalValue.toLocaleString()}
                 </span>
 
+                <div className="flex items-center gap-1 border border-border rounded-md p-0.5 bg-card">
+                  {SAVED_VIEWS.map((v) => (
+                    <button
+                      key={v.key}
+                      onClick={() => setSavedView(v.key)}
+                      className={`h-7 px-2.5 rounded text-[11px] font-medium transition-colors ${
+                        savedView === v.key
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+
+
                 <div className="ml-auto flex items-center gap-2">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
