@@ -152,6 +152,57 @@ export type Database = {
           },
         ]
       }
+      contact_files: {
+        Row: {
+          contact_id: string
+          content_type: string | null
+          created_at: string
+          id: string
+          name: string
+          size: number
+          storage_path: string
+          sub_account_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          contact_id: string
+          content_type?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          size?: number
+          storage_path: string
+          sub_account_id: string
+          uploaded_by: string
+        }
+        Update: {
+          contact_id?: string
+          content_type?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          size?: number
+          storage_path?: string
+          sub_account_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_files_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_files_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           company: string | null
