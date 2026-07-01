@@ -77,9 +77,9 @@ export async function createTask(
 }
 
 export async function updateTask(id: string, input: Partial<TaskInput>): Promise<Task> {
-  const patch: Record<string, unknown> = { ...input };
+  const patch = { ...input } as Partial<TaskInput> & { completed_at?: string | null };
   if (input.status === "done") patch.completed_at = new Date().toISOString();
-  if (input.status && input.status !== "done") patch.completed_at = null;
+  else if (input.status) patch.completed_at = null;
   const { data, error } = await supabase
     .from("tasks")
     .update(patch)
