@@ -721,6 +721,91 @@ export type Database = {
           },
         ]
       }
+      outbound_messages: {
+        Row: {
+          attempts: number
+          body_html: string | null
+          body_text: string | null
+          channel: Database["public"]["Enums"]["outbound_channel"]
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          error: string | null
+          id: string
+          next_attempt_at: string
+          provider: string | null
+          provider_message_id: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["outbound_status"]
+          sub_account_id: string
+          subject: string | null
+          to_address: string
+          workflow_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          body_html?: string | null
+          body_text?: string | null
+          channel: Database["public"]["Enums"]["outbound_channel"]
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          next_attempt_at?: string
+          provider?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["outbound_status"]
+          sub_account_id: string
+          subject?: string | null
+          to_address: string
+          workflow_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          body_html?: string | null
+          body_text?: string | null
+          channel?: Database["public"]["Enums"]["outbound_channel"]
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          next_attempt_at?: string
+          provider?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["outbound_status"]
+          sub_account_id?: string
+          subject?: string | null
+          to_address?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_stages: {
         Row: {
           color: string
@@ -830,6 +915,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sub_account_integrations: {
+        Row: {
+          email_config: Json
+          email_from_address: string | null
+          email_from_name: string | null
+          email_provider: string | null
+          email_verified_at: string | null
+          sms_config: Json
+          sms_from_number: string | null
+          sms_provider: string | null
+          sms_verified_at: string | null
+          sub_account_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          email_config?: Json
+          email_from_address?: string | null
+          email_from_name?: string | null
+          email_provider?: string | null
+          email_verified_at?: string | null
+          sms_config?: Json
+          sms_from_number?: string | null
+          sms_provider?: string | null
+          sms_verified_at?: string | null
+          sub_account_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          email_config?: Json
+          email_from_address?: string | null
+          email_from_name?: string | null
+          email_provider?: string | null
+          email_verified_at?: string | null
+          sms_config?: Json
+          sms_from_number?: string | null
+          sms_provider?: string | null
+          sms_verified_at?: string | null
+          sub_account_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_account_integrations_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: true
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sub_account_memberships: {
         Row: {
@@ -1173,6 +1311,8 @@ export type Database = {
       app_role: "admin" | "user"
       contact_lifecycle_stage: "lead" | "mql" | "sql" | "customer" | "lost"
       message_kind: "note" | "email_log" | "sms_log"
+      outbound_channel: "email" | "sms"
+      outbound_status: "queued" | "sending" | "sent" | "failed"
       sub_account_role: "member" | "client"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "open" | "in_progress" | "done" | "cancelled"
@@ -1315,6 +1455,8 @@ export const Constants = {
       app_role: ["admin", "user"],
       contact_lifecycle_stage: ["lead", "mql", "sql", "customer", "lost"],
       message_kind: ["note", "email_log", "sms_log"],
+      outbound_channel: ["email", "sms"],
+      outbound_status: ["queued", "sending", "sent", "failed"],
       sub_account_role: ["member", "client"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["open", "in_progress", "done", "cancelled"],
