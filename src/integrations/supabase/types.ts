@@ -849,13 +849,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "form_submissions_form_id_fkey"
-            columns: ["form_id"]
-            isOneToOne: false
-            referencedRelation: "lead_forms_public"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "form_submissions_sub_account_id_fkey"
             columns: ["sub_account_id"]
             isOneToOne: false
@@ -1753,13 +1746,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "wordpress_webhooks_form_id_fkey"
-            columns: ["form_id"]
-            isOneToOne: false
-            referencedRelation: "lead_forms_public"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "wordpress_webhooks_sub_account_id_fkey"
             columns: ["sub_account_id"]
             isOneToOne: false
@@ -1865,39 +1851,7 @@ export type Database = {
       }
     }
     Views: {
-      lead_forms_public: {
-        Row: {
-          description: string | null
-          enabled: boolean | null
-          fields: Json | null
-          id: string | null
-          name: string | null
-          redirect_url: string | null
-          slug: string | null
-          success_message: string | null
-        }
-        Insert: {
-          description?: string | null
-          enabled?: boolean | null
-          fields?: Json | null
-          id?: string | null
-          name?: string | null
-          redirect_url?: string | null
-          slug?: string | null
-          success_message?: string | null
-        }
-        Update: {
-          description?: string | null
-          enabled?: boolean | null
-          fields?: Json | null
-          id?: string | null
-          name?: string | null
-          redirect_url?: string | null
-          slug?: string | null
-          success_message?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       accept_invitation: {
