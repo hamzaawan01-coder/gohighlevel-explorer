@@ -72,14 +72,14 @@ export async function fetchForm(id: string): Promise<LeadForm> {
 }
 
 export async function fetchFormBySlug(slug: string): Promise<LeadForm | null> {
-  const { data, error } = await supabase
-    .from("lead_forms")
-    .select("*")
-    .eq("slug", slug)
-    .eq("enabled", true)
-    .maybeSingle();
-  if (error) throw error;
-  return (data as unknown as LeadForm) ?? null;
+  // Goes through the public API route so the lead_forms table can stay
+  // closed to anonymous PostgREST reads. Only safe columns are returned.
+  const res = await fetch(`/api/public/forms/${encodeURIComponent(slug)}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Failed to load form (${res.status})`);
+  return (await res.json()) as LeadForm;
 }
 
 export async function createForm(input: {
