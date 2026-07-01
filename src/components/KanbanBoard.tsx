@@ -31,11 +31,14 @@ export function KanbanBoard({
   stages,
   deals,
   onMove,
+  onOpenDeal,
 }: {
   stages: Stage[];
   deals: Deal[];
   onMove: (dealId: string, stageId: string, position: number) => void;
+  onOpenDeal?: (dealId: string) => void;
 }) {
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -120,10 +123,12 @@ export function KanbanBoard({
                         key={deal.id}
                         deal={deal}
                         contact={deal.contact_id ? contactsById.get(deal.contact_id) ?? null : null}
+                        onOpen={onOpenDeal}
                       />
                     ))}
                   </div>
                 )}
+
               </SortableContext>
             </Column>
           );
@@ -186,7 +191,15 @@ function EmptyDropzone({ stageId }: { stageId: string }) {
   );
 }
 
-function DealCard({ deal, contact }: { deal: Deal; contact: Contact | null }) {
+function DealCard({
+  deal,
+  contact,
+  onOpen,
+}: {
+  deal: Deal;
+  contact: Contact | null;
+  onOpen?: (dealId: string) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: deal.id,
   });
@@ -196,11 +209,18 @@ function DealCard({ deal, contact }: { deal: Deal; contact: Contact | null }) {
     opacity: isDragging ? 0.4 : 1,
   };
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => onOpen?.(deal.id)}
+    >
       <DealCardView deal={deal} contact={contact} />
     </div>
   );
 }
+
 
 function contactLabel(c: Contact) {
   return (

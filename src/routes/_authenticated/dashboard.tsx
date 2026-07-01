@@ -13,8 +13,11 @@ import {
 import { useTenancy } from "@/lib/tenancy";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { NewDealDialog } from "@/components/NewDealDialog";
+import { DealDetailPanel } from "@/components/DealDetailPanel";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -34,6 +37,8 @@ function Dashboard() {
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [newDealOpen, setNewDealOpen] = useState(false);
+  const [openDealId, setOpenDealId] = useState<string | null>(null);
+
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -183,6 +188,7 @@ function Dashboard() {
             stages={stages}
             deals={deals}
             onMove={(dealId, stageId, position) => moveMut.mutate({ dealId, stageId, position })}
+            onOpenDeal={(id) => setOpenDealId(id)}
           />
         )}
       </div>
@@ -195,6 +201,19 @@ function Dashboard() {
           await createDealMut.mutateAsync(input);
         }}
       />
+
+      <Dialog open={!!openDealId} onOpenChange={(o) => !o && setOpenDealId(null)}>
+        <DialogContent className="max-w-3xl p-0 gap-0">
+          {openDealId && (
+            <DealDetailPanel
+              dealId={openDealId}
+              stages={stages}
+              onClose={() => setOpenDealId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
+

@@ -123,3 +123,39 @@ export async function moveDeal(dealId: string, stageId: string, position: number
     .eq("id", dealId);
   if (error) throw error;
 }
+
+export async function fetchDeal(dealId: string): Promise<Deal> {
+  const { data, error } = await supabase
+    .from("deals")
+    .select("*")
+    .eq("id", dealId)
+    .single();
+  if (error) throw error;
+  return data as Deal;
+}
+
+export type DealUpdate = Partial<{
+  title: string;
+  value: number;
+  stage_id: string;
+  notes: string | null;
+  contact_id: string | null;
+  expected_close_date: string | null;
+}>;
+
+export async function updateDeal(dealId: string, patch: DealUpdate): Promise<Deal> {
+  const { data, error } = await supabase
+    .from("deals")
+    .update(patch)
+    .eq("id", dealId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as Deal;
+}
+
+export async function deleteDeal(dealId: string): Promise<void> {
+  const { error } = await supabase.from("deals").delete().eq("id", dealId);
+  if (error) throw error;
+}
+
