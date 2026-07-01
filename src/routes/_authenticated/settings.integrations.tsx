@@ -349,8 +349,24 @@ function SmsPanel({ subId }: { subId: string }) {
 
 // ============ History panel ============
 function HistoryPanel({ subId }: { subId: string }) {
+  const qc = useQueryClient();
   const q = useQuery({ queryKey: ["outbound", subId], queryFn: () => fetchOutbound(subId) });
   const rows = q.data ?? [];
+  const retryFn = useServerFn(
+    // Lazy require avoids adding a static import to the top of this file
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    (require("@/lib/integrations.functions") as typeof import("@/lib/integrations.functions"))
+      .retryOutboundMessage,
+  );
+  const retry = useMutation({
+    mutationFn: (id: string) => retryFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Retrying…");
+      qc.invalidateQueries({ queryKey: ["outbound", subId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="mt-4 rounded-md border border-border overflow-hidden">
       <table className="w-full text-sm">
@@ -361,22 +377,45 @@ function HistoryPanel({ subId }: { subId: string }) {
             <th className="text-left p-2 font-medium">To</th>
             <th className="text-left p-2 font-medium">Subject / body</th>
             <th className="text-left p-2 font-medium">Status</th>
+            <th className="text-left p-2 font-medium w-[80px]"></th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
-            <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">No sends yet.</td></tr>
+            <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">No sends yet.</td></tr>
           ) : rows.map((r) => (
-            <tr key={r.id} className="border-t border-border">
-              <td className="p-2 text-xs text-muted-foreground">{formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}</td>
+            <tr key={r.id} className="border-t border-border align-top">
+              <td className="p-2 text-xs text-muted-foreground whitespace-nowrap">{formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}</td>
               <td className="p-2"><Badge variant="outline">{r.channel}</Badge></td>
               <td className="p-2">{r.to_address}</td>
               <td className="p-2 truncate max-w-[240px]">{r.subject ?? r.body_text ?? "—"}</td>
               <td className="p-2">
-                <Badge variant={r.status === "sent" ? "secondary" : r.status === "failed" ? "destructive" : "outline"}>
-                  {r.status}
-                </Badge>
-                {r.error && <div className="text-[10px] text-red-500 mt-1 truncate max-w-[200px]">{r.error}</div>}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Badge variant={r.status === "sent" ? "secondary" : r.status === "failed" ? "destructive" : "outline"}>
+                    {r.status}
+                  </Badge>
+                  {r.attempts > 0 && (
+                    <span className="text-[10px] text-muted-foreground">×{r.attempts}</span>
+                  )}
+                </div>
+                {r.error && (
+                  <div className="text-[10px] text-red-500 mt-1 max-w-[240px] break-words" title={r.error}>
+                    {r.error}
+                  </div>
+                )}
+              </td>
+              <td className="p-2 text-right">
+                {r.status === "failed" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-xs"
+                    disabled={retry.isPending}
+                    onClick={() => retry.mutate(r.id)}
+                  >
+                    Retry
+                  </Button>
+                )}
               </td>
             </tr>
           ))}
@@ -385,3 +424,4 @@ function HistoryPanel({ subId }: { subId: string }) {
     </div>
   );
 }
+
