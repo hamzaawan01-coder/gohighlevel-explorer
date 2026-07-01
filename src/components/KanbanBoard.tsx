@@ -242,13 +242,30 @@ function DealCardView({
   deal,
   dragging,
   contact,
+  onOpen,
 }: {
   deal: Deal;
   dragging?: boolean;
   contact?: Contact | null;
+  onOpen?: () => void;
 }) {
   const source = contact?.lead_source ?? "—";
   const business = contact?.company ?? "—";
+  const phone = contact?.phone ?? null;
+  const email = contact?.email ?? null;
+
+  const stop = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+  };
+  const act = (e: React.MouseEvent, fn: () => void) => {
+    e.stopPropagation();
+    e.preventDefault();
+    fn();
+  };
+
+  const iconBtn =
+    "size-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground transition-colors";
+
   return (
     <div
       className={`bg-card p-3.5 rounded-xl ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] cursor-grab active:cursor-grabbing ${
@@ -282,14 +299,62 @@ function DealCardView({
         </div>
       </dl>
 
-      <div className="flex items-center gap-3 pt-2 border-t border-border/60 text-muted-foreground">
-        <Phone className="size-3.5" />
-        <MessageSquare className="size-3.5" />
-        <Heart className="size-3.5" />
-        <StickyNote className="size-3.5" />
-        <CheckSquare className="size-3.5" />
-        <CalendarDays className="size-3.5" />
+      <div
+        className="flex items-center gap-1 pt-2 border-t border-border/60"
+        onPointerDown={stop}
+      >
+        <a
+          href={phone ? `tel:${phone}` : undefined}
+          onClick={phone ? stop : (e) => act(e, () => onOpen?.())}
+          aria-disabled={!phone}
+          title={phone ? `Call ${phone}` : "No phone on contact"}
+          className={iconBtn}
+        >
+          <Phone className="size-3.5" />
+        </a>
+        <a
+          href={email ? `mailto:${email}` : phone ? `sms:${phone}` : undefined}
+          onClick={email || phone ? stop : (e) => act(e, () => onOpen?.())}
+          aria-disabled={!email && !phone}
+          title={email ? `Email ${email}` : phone ? `Text ${phone}` : "No contact info"}
+          className={iconBtn}
+        >
+          <MessageSquare className="size-3.5" />
+        </a>
+        <button
+          type="button"
+          onClick={(e) => act(e, () => onOpen?.())}
+          title="Open deal"
+          className={iconBtn}
+        >
+          <Heart className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => act(e, () => onOpen?.())}
+          title="Notes"
+          className={iconBtn}
+        >
+          <StickyNote className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => act(e, () => onOpen?.())}
+          title="Tasks"
+          className={iconBtn}
+        >
+          <CheckSquare className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => act(e, () => onOpen?.())}
+          title="Schedule"
+          className={iconBtn}
+        >
+          <CalendarDays className="size-3.5" />
+        </button>
       </div>
     </div>
   );
 }
+
