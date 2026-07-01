@@ -24,8 +24,10 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedConversationsRouteImport } from './routes/_authenticated/conversations'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
+import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
+import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
@@ -106,6 +108,12 @@ const AuthenticatedContactsIndexRoute =
     path: '/contacts/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicProcessOutboundRoute =
+  ApiPublicProcessOutboundRouteImport.update({
+    id: '/api/public/process-outbound',
+    path: '/api/public/process-outbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedSettingsTeamRoute =
   AuthenticatedSettingsTeamRouteImport.update({
     id: '/settings/team',
@@ -116,6 +124,12 @@ const AuthenticatedSettingsSubAccountsRoute =
   AuthenticatedSettingsSubAccountsRouteImport.update({
     id: '/settings/sub-accounts',
     path: '/settings/sub-accounts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsIntegrationsRoute =
+  AuthenticatedSettingsIntegrationsRouteImport.update({
+    id: '/settings/integrations',
+    path: '/settings/integrations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDealsIdRoute = AuthenticatedDealsIdRouteImport.update({
@@ -150,8 +164,10 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
+  '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts/': typeof AuthenticatedContactsIndexRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
 }
@@ -171,8 +187,10 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
+  '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts': typeof AuthenticatedContactsIndexRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
 }
@@ -194,8 +212,10 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/_authenticated/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
+  '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/_authenticated/contacts/': typeof AuthenticatedContactsIndexRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
 }
@@ -217,8 +237,10 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/contacts/$id'
     | '/deals/$id'
+    | '/settings/integrations'
     | '/settings/sub-accounts'
     | '/settings/team'
+    | '/api/public/process-outbound'
     | '/contacts/'
     | '/api/public/forms/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -238,8 +260,10 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/contacts/$id'
     | '/deals/$id'
+    | '/settings/integrations'
     | '/settings/sub-accounts'
     | '/settings/team'
+    | '/api/public/process-outbound'
     | '/contacts'
     | '/api/public/forms/$slug'
   id:
@@ -260,8 +284,10 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_authenticated/contacts/$id'
     | '/_authenticated/deals/$id'
+    | '/_authenticated/settings/integrations'
     | '/_authenticated/settings/sub-accounts'
     | '/_authenticated/settings/team'
+    | '/api/public/process-outbound'
     | '/_authenticated/contacts/'
     | '/api/public/forms/$slug'
   fileRoutesById: FileRoutesById
@@ -272,6 +298,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   FSlugRoute: typeof FSlugRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  ApiPublicProcessOutboundRoute: typeof ApiPublicProcessOutboundRoute
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
 }
 
@@ -382,6 +409,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/process-outbound': {
+      id: '/api/public/process-outbound'
+      path: '/api/public/process-outbound'
+      fullPath: '/api/public/process-outbound'
+      preLoaderRoute: typeof ApiPublicProcessOutboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/settings/team': {
       id: '/_authenticated/settings/team'
       path: '/settings/team'
@@ -394,6 +428,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/sub-accounts'
       fullPath: '/settings/sub-accounts'
       preLoaderRoute: typeof AuthenticatedSettingsSubAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/integrations': {
+      id: '/_authenticated/settings/integrations'
+      path: '/settings/integrations'
+      fullPath: '/settings/integrations'
+      preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/deals/$id': {
@@ -432,6 +473,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
   AuthenticatedContactsIdRoute: typeof AuthenticatedContactsIdRoute
   AuthenticatedDealsIdRoute: typeof AuthenticatedDealsIdRoute
+  AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedSettingsSubAccountsRoute: typeof AuthenticatedSettingsSubAccountsRoute
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
   AuthenticatedContactsIndexRoute: typeof AuthenticatedContactsIndexRoute
@@ -449,6 +491,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
   AuthenticatedContactsIdRoute: AuthenticatedContactsIdRoute,
   AuthenticatedDealsIdRoute: AuthenticatedDealsIdRoute,
+  AuthenticatedSettingsIntegrationsRoute:
+    AuthenticatedSettingsIntegrationsRoute,
   AuthenticatedSettingsSubAccountsRoute: AuthenticatedSettingsSubAccountsRoute,
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
   AuthenticatedContactsIndexRoute: AuthenticatedContactsIndexRoute,
@@ -463,6 +507,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   FSlugRoute: FSlugRoute,
   InviteTokenRoute: InviteTokenRoute,
+  ApiPublicProcessOutboundRoute: ApiPublicProcessOutboundRoute,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
 }
 export const routeTree = rootRouteImport

@@ -294,17 +294,51 @@ function ActionFields({
       </div>
     );
   }
-  // create_notification
-  return (
-    <div className="space-y-2">
-      <div className="space-y-1">
-        <Label className="text-[11px]">Title</Label>
-        <Input value={action.title} onChange={(e) => onChange({ title: e.target.value } as Partial<WorkflowAction>)} />
+  if (action.type === "create_notification") {
+    return (
+      <div className="space-y-2">
+        <div className="space-y-1">
+          <Label className="text-[11px]">Title</Label>
+          <Input value={action.title} onChange={(e) => onChange({ title: e.target.value } as Partial<WorkflowAction>)} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px]">Body</Label>
+          <Input value={action.body ?? ""} onChange={(e) => onChange({ body: e.target.value } as Partial<WorkflowAction>)} />
+        </div>
       </div>
-      <div className="space-y-1">
-        <Label className="text-[11px]">Body</Label>
-        <Input value={action.body ?? ""} onChange={(e) => onChange({ body: e.target.value } as Partial<WorkflowAction>)} />
+    );
+  }
+  if (action.type === "send_email") {
+    return (
+      <div className="space-y-2">
+        <div className="space-y-1">
+          <Label className="text-[11px]">To (optional — defaults to contact email)</Label>
+          <Input value={action.to ?? ""} onChange={(e) => onChange({ to: e.target.value } as Partial<WorkflowAction>)} placeholder="leave blank for contact email" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px]">Subject</Label>
+          <Input value={action.subject} onChange={(e) => onChange({ subject: e.target.value } as Partial<WorkflowAction>)} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px]">Body (plain text)</Label>
+          <Input value={action.body_text ?? ""} onChange={(e) => onChange({ body_text: e.target.value } as Partial<WorkflowAction>)} />
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+  if (action.type === "send_sms") {
+    return (
+      <div className="space-y-2">
+        <div className="space-y-1">
+          <Label className="text-[11px]">To (optional — defaults to contact phone)</Label>
+          <Input value={action.to ?? ""} onChange={(e) => onChange({ to: e.target.value } as Partial<WorkflowAction>)} placeholder="leave blank for contact phone" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px]">Message</Label>
+          <Input value={action.body} onChange={(e) => onChange({ body: e.target.value } as Partial<WorkflowAction>)} />
+        </div>
+      </div>
+    );
+  }
+  return null;
 }

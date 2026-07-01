@@ -45,7 +45,7 @@ const salesNav: NavItem[] = [
 const automationNav: NavItem[] = [
   { label: "Workflows", icon: Workflow, to: "/workflows" },
   { label: "Forms", icon: FileText, to: "/forms" },
-  { label: "Settings", icon: Settings, to: "/settings" },
+  { label: "Integrations", icon: Settings, to: "/settings/integrations" },
 ];
 
 export function AppShell({
