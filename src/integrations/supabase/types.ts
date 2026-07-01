@@ -342,6 +342,57 @@ export type Database = {
           },
         ]
       }
+      deal_files: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          deal_id: string
+          id: string
+          name: string
+          size: number
+          storage_path: string
+          sub_account_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          deal_id: string
+          id?: string
+          name: string
+          size?: number
+          storage_path: string
+          sub_account_id: string
+          uploaded_by: string
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          deal_id?: string
+          id?: string
+          name?: string
+          size?: number
+          storage_path?: string
+          sub_account_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_files_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_files_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           contact_id: string | null
