@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -14,7 +14,20 @@ import {
   Circle,
   Calendar as CalendarIcon,
   DollarSign,
+  Upload,
+  File as FileIcon,
+  ImageIcon,
+  Download,
 } from "lucide-react";
+import {
+  fetchContactFiles,
+  uploadContactFile,
+  deleteContactFile,
+  getContactFileUrl,
+  formatBytes,
+  isImage,
+  type ContactFile,
+} from "@/lib/contact-files";
 import { ContactDialog } from "@/components/ContactDialog";
 import {
   fetchContact,
