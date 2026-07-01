@@ -263,7 +263,204 @@ function WebhookRow({ hook, subId }: { hook: WordPressWebhook; subId: string }) 
         </div>
       )}
 
+      <LabelMapper hook={hook} subId={subId} />
+
       <FieldMappingPreview hook={hook} subId={subId} />
+
+      <SetupInstructions url={url} secret={hook.secret} />
+    </div>
+  );
+}
+
+function LabelMapper({ hook, subId }: { hook: WordPressWebhook; subId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<FieldMap>(() => (hook.field_map ?? {}) as FieldMap);
+
+  useEffect(() => {
+    setDraft((hook.field_map ?? {}) as FieldMap);
+  }, [hook.field_map]);
+
+  const submissionsQ = useQuery({
+    queryKey: ["wp-webhook-submissions", hook.form_id],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("form_submissions")
+        .select("payload, created_at")
+        .eq("form_id", hook.form_id)
+        .order("created_at", { ascending: false })
+        .limit(25);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Aggregate all unique keys seen recently, with a sample value.
+  const seenKeys = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const row of submissionsQ.data ?? []) {
+      const p = (row.payload ?? {}) as Record<string, unknown>;
+      for (const [k, v] of Object.entries(p)) {
+        if (!map.has(k)) {
+          const s = typeof v === "string" ? v : v == null ? "" : JSON.stringify(v);
+          map.set(k, s.slice(0, 60));
+        }
+      }
+    }
+    return Array.from(map.entries()).map(([key, sample]) => ({ key, sample }));
+  }, [submissionsQ.data]);
+
+  // Build alias → std lookup from BUILTIN + current draft.
+  const currentTargetFor = (key: string): StandardKey | "extra" => {
+    const nk = key.toLowerCase().replace(/[\s\-_.]+/g, "_");
+    for (const std of STANDARD_KEYS) {
+      if (nk === std.toLowerCase().replace(/[\s\-_.]+/g, "_")) return std;
+      for (const a of BUILTIN_ALIASES[std]) {
+        if (nk === a.toLowerCase().replace(/[\s\-_.]+/g, "_")) return std;
+      }
+      for (const a of draft[std] ?? []) {
+        if (nk === a.toLowerCase().replace(/[\s\-_.]+/g, "_")) return std;
+      }
+    }
+    return "extra";
+  };
+
+  const assign = (rawKey: string, target: StandardKey | "extra") => {
+    setDraft((d) => {
+      const next: FieldMap = { ...d };
+      // Remove this key from every list first.
+      for (const std of STANDARD_KEYS) {
+        const list = (next[std] ?? []).filter((a) => a !== rawKey);
+        next[std] = list;
+      }
+      if (target !== "extra") {
+        const list = next[target] ?? [];
+        if (!list.includes(rawKey)) list.push(rawKey);
+        next[target] = list;
+      }
+      return next;
+    });
+  };
+
+  const hasChanges = useMemo(() => {
+    const current = (hook.field_map ?? {}) as FieldMap;
+    return JSON.stringify(normalizeMap(current)) !== JSON.stringify(normalizeMap(draft));
+  }, [hook.field_map, draft]);
+
+  const save = useMutation({
+    mutationFn: () =>
+      updateWebhook(hook.id, { field_map: normalizeMap(draft) as Record<string, string[]> }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wp-webhooks", subId] });
+      toast.success("Label mappings saved");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to save"),
+  });
+
+  if (!open) {
+    return (
+      <div className="pt-2">
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+          <Wand2 className="size-3 mr-1" /> Map form labels
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-border p-4 space-y-4 bg-muted/30">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="font-medium text-sm flex items-center gap-2">
+            <Wand2 className="size-4" /> Form label mappings
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Detected from the last 25 submissions. Assign each label to a contact field — no code
+            required. Labels marked <b>payload extra</b> stay on the submission record.
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+          <X className="size-4" />
+        </Button>
+      </div>
+
+      {submissionsQ.isLoading ? (
+        <div className="text-xs text-muted-foreground">Loading recent submissions…</div>
+      ) : seenKeys.length === 0 ? (
+        <div className="text-xs text-muted-foreground">
+          No submissions received yet. Submit the WordPress form once so labels appear here, then
+          come back to map them.
+        </div>
+      ) : (
+        <div className="rounded-md border border-border bg-background divide-y divide-border text-xs">
+          {seenKeys.map(({ key, sample }) => {
+            const target = currentTargetFor(key);
+            return (
+              <div
+                key={key}
+                className="grid grid-cols-[1fr_auto_180px] items-center gap-2 p-2"
+              >
+                <div className="min-w-0">
+                  <div className="font-mono truncate">{key}</div>
+                  <div className="text-muted-foreground truncate">{sample || "—"}</div>
+                </div>
+                <ArrowRight className="size-3 text-muted-foreground" />
+                <Select
+                  value={target}
+                  onValueChange={(v) => assign(key, v as StandardKey | "extra")}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STANDARD_KEYS.map((k) => (
+                      <SelectItem key={k} value={k} className="text-xs">
+                        {k}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="extra" className="text-xs">
+                      payload extra
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="flex justify-between items-center pt-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7"
+          onClick={() => submissionsQ.refetch()}
+          disabled={submissionsQ.isFetching}
+        >
+          <RefreshCw className="size-3 mr-1" /> Refresh labels
+        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={!hasChanges || save.isPending}
+            onClick={() => setDraft((hook.field_map ?? {}) as FieldMap)}
+          >
+            Discard
+          </Button>
+          <Button
+            size="sm"
+            disabled={!hasChanges || save.isPending}
+            onClick={() => save.mutate()}
+          >
+            {save.isPending ? "Saving…" : "Save mappings"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
       <SetupInstructions url={url} secret={hook.secret} />
     </div>
