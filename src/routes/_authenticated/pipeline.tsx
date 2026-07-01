@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Loader2, PanelRightClose, PanelRightOpen, ArrowUpRight } from "lucide-react";
+import { Plus, Loader2, PanelRightClose, PanelRightOpen, ArrowUpRight, Settings, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,13 +8,21 @@ import {
   fetchBoard,
   createDeal,
   moveDeal,
+  listPipelines,
   type Deal,
 } from "@/lib/pipeline";
 import { useTenancy } from "@/lib/tenancy";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { NewDealDialog } from "@/components/NewDealDialog";
 import { DealDetailPanel } from "@/components/DealDetailPanel";
+import { ManagePipelinesDialog } from "@/components/ManagePipelinesDialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 
