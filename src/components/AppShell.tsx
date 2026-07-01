@@ -96,6 +96,7 @@ export function AppShell({
       {rightPane ? (
         <aside className="w-80 border-l border-border bg-card flex flex-col shrink-0">{rightPane}</aside>
       ) : null}
+      <CommandPalette />
     </div>
   );
 }
