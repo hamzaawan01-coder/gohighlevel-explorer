@@ -94,7 +94,7 @@ export const Route = createFileRoute("/api/public/hooks/wordpress/$token")({
 
         const { data: hook, error: hErr } = await supabaseAdmin
           .from("wordpress_webhooks")
-          .select("id, sub_account_id, form_id, secret, field_map, default_tags, lead_source, enabled")
+          .select("id, sub_account_id, form_id, secret, field_map, default_tags, lead_source, enabled, total_received")
           .eq("token", token)
           .maybeSingle();
 
