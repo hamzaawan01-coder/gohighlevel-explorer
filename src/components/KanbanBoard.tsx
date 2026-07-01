@@ -133,6 +133,7 @@ export function KanbanBoard({
                         contact={deal.contact_id ? contactsById.get(deal.contact_id) ?? null : null}
                         onOpen={onOpenDeal}
                       />
+
                     ))}
                   </div>
                 )}
