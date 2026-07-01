@@ -100,7 +100,7 @@ export async function deleteWebhook(id: string): Promise<void> {
 
 export function webhookUrl(token: string): string {
   const previewOrigin = typeof window !== "undefined" ? window.location.origin : "";
-  const origin = previewOrigin.includes("lovable.app")
+  const origin = previewOrigin.includes("lovableproject.com") || previewOrigin.includes("id-preview--")
     ? "https://gohighlevel-explorer.lovable.app"
     : previewOrigin;
   return `${origin}/api/public/hooks/wordpress/${token}`;
