@@ -126,6 +126,34 @@ function ContactsPage() {
       }
     >
       <div className="h-full flex flex-col">
+        <div className="px-6 py-3 border-b border-border flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mr-1">
+            Stage
+          </span>
+          <button
+            onClick={() => setActiveStage("all")}
+            className={
+              activeStage === "all"
+                ? "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-primary text-primary-foreground"
+                : "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
+            }
+          >
+            All
+          </button>
+          {LIFECYCLE_STAGES.map((s) => (
+            <button
+              key={s.value}
+              onClick={() => setActiveStage(s.value)}
+              className={
+                activeStage === s.value
+                  ? "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-primary text-primary-foreground"
+                  : "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
+              }
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
         <div className="px-6 py-4 border-b border-border flex items-center gap-3 flex-wrap">
           <input
             type="text"
@@ -143,7 +171,7 @@ function ContactsPage() {
                   : "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
               }
             >
-              All
+              All tags
             </button>
             {allTags.map((t) => (
               <button
