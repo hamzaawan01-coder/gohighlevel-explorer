@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Send, MessageSquare } from "lucide-react";
+import { Loader2, Send, MessageSquare, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useTenancy } from "@/lib/tenancy";
@@ -14,9 +14,11 @@ import {
   type Conversation,
 } from "@/lib/conversations";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { initials, stringHue } from "@/lib/initials";
 
 export const Route = createFileRoute("/_authenticated/conversations")({
   head: () => ({
@@ -34,6 +36,8 @@ function ConversationsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [body, setBody] = useState("");
+  const [search, setSearch] = useState("");
+  const threadRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -56,6 +60,17 @@ function ConversationsPage() {
     () => new Map(convos.map((c) => [c.contact_id, c])),
     [convos],
   );
+
+  const filteredContacts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const withActivity = [...contacts].sort((a, b) => {
+      const at = convoByContact.get(a.id)?.last_message_at ?? "";
+      const bt = convoByContact.get(b.id)?.last_message_at ?? "";
+      return bt.localeCompare(at);
+    });
+    if (!q) return withActivity;
+    return withActivity.filter((c) => displayName(c).toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q));
+  }, [contacts, convoByContact, search]);
 
   const selectedContact = contacts.find((c) => c.id === selectedContactId) ?? null;
   const selectedConvoId = selectedContactId ? convoByContact.get(selectedContactId)?.id ?? null : null;
@@ -94,30 +109,50 @@ function ConversationsPage() {
       setBody("");
       qc.invalidateQueries({ queryKey: ["conversations"] });
       qc.invalidateQueries({ queryKey: ["messages"] });
+      requestAnimationFrame(() => {
+        threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
+      });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  useEffect(() => {
+    if (!msgsQ.data) return;
+    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
+  }, [msgsQ.data]);
 
   return (
     <AppShell>
       <div className="h-full flex">
         <aside className="w-72 border-r border-border bg-card flex flex-col">
-          <div className="px-4 py-3 border-b border-border">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          <div className="px-3 py-2.5 border-b border-border space-y-2">
+            <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground px-1">
               Contacts
             </p>
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search"
+                className="h-7 pl-7 text-xs"
+              />
+            </div>
           </div>
           <div className="flex-1 overflow-auto">
             {contactsQ.isLoading ? (
               <div className="p-4 text-xs text-muted-foreground">Loading…</div>
-            ) : contacts.length === 0 ? (
-              <div className="p-4 text-xs text-muted-foreground">No contacts yet.</div>
+            ) : filteredContacts.length === 0 ? (
+              <div className="p-4 text-xs text-muted-foreground italic">
+                {contacts.length === 0 ? "No contacts yet." : "No matches."}
+              </div>
             ) : (
               <ul>
-                {contacts.map((c) => {
+                {filteredContacts.map((c) => {
                   const name = displayName(c);
                   const convo = convoByContact.get(c.id);
                   const active = c.id === selectedContactId;
+                  const hue = stringHue(c.id);
                   return (
                     <li key={c.id}>
                       <button
@@ -126,16 +161,24 @@ function ConversationsPage() {
                           if (!convo) ensureMut.mutate();
                         }}
                         className={
-                          "w-full text-left px-4 py-2.5 flex flex-col gap-0.5 border-b border-border " +
+                          "w-full text-left px-3 py-2.5 flex items-center gap-2.5 border-b border-border transition-colors " +
                           (active ? "bg-secondary" : "hover:bg-secondary/50")
                         }
                       >
-                        <span className="text-xs font-medium truncate">{name}</span>
-                        <span className="text-[10px] text-muted-foreground truncate">
-                          {convo?.last_message_at
-                            ? formatDistanceToNow(new Date(convo.last_message_at), { addSuffix: true })
-                            : "No notes yet"}
+                        <span
+                          className="size-7 shrink-0 rounded-full flex items-center justify-center text-[10px] font-semibold text-white"
+                          style={{ backgroundColor: `hsl(${hue} 60% 45%)` }}
+                        >
+                          {initials(name)}
                         </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate">{name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {convo?.last_message_at
+                              ? formatDistanceToNow(new Date(convo.last_message_at), { addSuffix: true })
+                              : "No notes yet"}
+                          </p>
+                        </div>
                       </button>
                     </li>
                   );
@@ -153,13 +196,21 @@ function ConversationsPage() {
             </div>
           ) : (
             <>
-              <div className="px-6 py-3 border-b border-border">
-                <p className="text-sm font-semibold">{displayName(selectedContact)}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  Internal notes · {selectedContact.email ?? "no email"}
-                </p>
+              <div className="px-6 py-3 border-b border-border flex items-center gap-3">
+                <span
+                  className="size-8 shrink-0 rounded-full flex items-center justify-center text-[11px] font-semibold text-white"
+                  style={{ backgroundColor: `hsl(${stringHue(selectedContact.id)} 60% 45%)` }}
+                >
+                  {initials(displayName(selectedContact))}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate">{displayName(selectedContact)}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    Internal notes · {selectedContact.email ?? "no email"}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 overflow-auto px-6 py-4 space-y-3">
+              <div ref={threadRef} className="flex-1 overflow-auto px-6 py-4 space-y-3">
                 {msgsQ.isLoading ? (
                   <div className="flex items-center justify-center text-muted-foreground">
                     <Loader2 className="size-4 animate-spin mr-2" />

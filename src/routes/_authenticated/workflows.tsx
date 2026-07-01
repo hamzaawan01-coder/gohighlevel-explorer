@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
@@ -14,6 +14,7 @@ import {
   deleteWorkflow,
   WORKFLOW_TRIGGERS,
   type Workflow,
+  type WorkflowAction,
   type WorkflowInput,
 } from "@/lib/workflows";
 import { Switch } from "@/components/ui/switch";
@@ -81,6 +82,11 @@ function WorkflowsPage() {
 
   const workflows = wfQ.data ?? [];
   const runs = runsQ.data ?? [];
+  const [runFilter, setRunFilter] = useState<"all" | "ok" | "error">("all");
+  const filteredRuns = runs.filter((r) =>
+    runFilter === "all" ? true : runFilter === "ok" ? r.status === "ok" : r.status !== "ok",
+  );
+  const errCount = runs.filter((r) => r.status !== "ok").length;
 
   return (
     <AppShell
@@ -127,12 +133,22 @@ function WorkflowsPage() {
                     onCheckedChange={(v) => updateMut.mutate({ id: w.id, input: { enabled: v } })}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{w.name}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium truncate">{w.name}</p>
+                      {!w.enabled && (
+                        <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          paused
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
                       When {WORKFLOW_TRIGGERS.find((t) => t.value === w.trigger_type)?.label}
-                      {" • "}
-                      {w.actions.length} action{w.actions.length === 1 ? "" : "s"}
                     </p>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {w.actions.map((a, i) => (
+                        <ActionChip key={i} action={a} />
+                      ))}
+                    </div>
                   </div>
                   <button
                     onClick={() => { setEditing(w); setDialogOpen(true); }}
@@ -155,17 +171,40 @@ function WorkflowsPage() {
         </div>
 
         <aside className="w-80 border-l border-border bg-card flex flex-col">
-          <div className="px-4 py-3 border-b border-border">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-              Recent runs
-            </p>
+          <div className="px-4 py-3 border-b border-border space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                Recent runs
+              </p>
+              {errCount > 0 && (
+                <span className="text-[10px] font-mono text-destructive">{errCount} error{errCount === 1 ? "" : "s"}</span>
+              )}
+            </div>
+            <div className="flex gap-1">
+              {(["all", "ok", "error"] as const).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => setRunFilter(k)}
+                  className={
+                    "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded transition-colors " +
+                    (runFilter === k
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:text-foreground")
+                  }
+                >
+                  {k}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex-1 overflow-auto">
-            {runs.length === 0 ? (
-              <div className="p-4 text-[11px] text-muted-foreground italic">No runs yet.</div>
+            {filteredRuns.length === 0 ? (
+              <div className="p-4 text-[11px] text-muted-foreground italic">
+                {runs.length === 0 ? "No runs yet." : "No runs match this filter."}
+              </div>
             ) : (
               <ul className="divide-y divide-border">
-                {runs.map((r) => {
+                {filteredRuns.map((r) => {
                   const wf = workflows.find((w) => w.id === r.workflow_id);
                   return (
                     <li key={r.id} className="px-4 py-2.5">
@@ -198,5 +237,27 @@ function WorkflowsPage() {
         }}
       />
     </AppShell>
+  );
+}
+
+function ActionChip({ action }: { action: WorkflowAction }) {
+  const config = (() => {
+    switch (action.type) {
+      case "create_task":
+        return { icon: ListChecks, label: action.title || "Task", tone: "bg-primary/10 text-primary" };
+      case "set_contact_stage":
+        return { icon: ArrowRightCircle, label: `→ ${action.stage}`, tone: "bg-accent/15 text-accent" };
+      case "add_contact_tag":
+        return { icon: Tag, label: action.tag || "tag", tone: "bg-amber-500/10 text-amber-600 dark:text-amber-400" };
+      case "create_notification":
+        return { icon: BellRing, label: action.title || "Notify", tone: "bg-secondary text-foreground" };
+    }
+  })();
+  const Icon = config.icon;
+  return (
+    <span className={"inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded max-w-[160px] " + config.tone}>
+      <Icon className="size-2.5 shrink-0" />
+      <span className="truncate">{config.label}</span>
+    </span>
   );
 }

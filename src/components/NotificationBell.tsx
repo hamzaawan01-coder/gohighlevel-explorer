@@ -42,6 +42,9 @@ export function NotificationBell() {
 
   const notes = q.data ?? [];
   const unread = notes.filter((n) => !n.read_at).length;
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  const todayNotes = notes.filter((n) => new Date(n.created_at) >= startOfToday);
+  const earlierNotes = notes.filter((n) => new Date(n.created_at) < startOfToday);
 
   return (
     <DropdownMenu>
@@ -71,43 +74,71 @@ export function NotificationBell() {
         </div>
         <div className="max-h-96 overflow-auto">
           {notes.length === 0 ? (
-            <div className="px-3 py-6 text-center text-xs text-muted-foreground">
-              You're all caught up.
+            <div className="px-3 py-8 text-center flex flex-col items-center gap-2 text-muted-foreground">
+              <Bell className="size-6 opacity-30" />
+              <span className="text-xs">You're all caught up.</span>
             </div>
           ) : (
-            <ul className="divide-y divide-border">
-              {notes.map((n) => (
-                <li
-                  key={n.id}
-                  className={
-                    "px-3 py-2.5 flex gap-2 items-start " +
-                    (n.read_at ? "opacity-60" : "bg-accent/5")
-                  }
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{n.title}</p>
-                    {n.body && (
-                      <p className="text-[11px] text-muted-foreground line-clamp-2">{n.body}</p>
-                    )}
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-                    </p>
-                  </div>
-                  {!n.read_at && (
-                    <button
-                      onClick={() => readOne.mutate(n.id)}
-                      className="text-muted-foreground hover:text-foreground shrink-0"
-                      title="Mark read"
-                    >
-                      <Check className="size-3" />
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <>
+              {todayNotes.length > 0 && (
+                <NoteGroup label="Today" notes={todayNotes} onRead={(id) => readOne.mutate(id)} />
+              )}
+              {earlierNotes.length > 0 && (
+                <NoteGroup label="Earlier" notes={earlierNotes} onRead={(id) => readOne.mutate(id)} />
+              )}
+            </>
           )}
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function NoteGroup({
+  label,
+  notes,
+  onRead,
+}: {
+  label: string;
+  notes: { id: string; title: string; body: string | null; read_at: string | null; created_at: string }[];
+  onRead: (id: string) => void;
+}) {
+  return (
+    <div>
+      <div className="px-3 py-1.5 bg-muted/50 border-b border-border">
+        <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">{label}</span>
+      </div>
+      <ul className="divide-y divide-border">
+        {notes.map((n) => (
+          <li
+            key={n.id}
+            className={
+              "px-3 py-2.5 flex gap-2 items-start " +
+              (n.read_at ? "opacity-60" : "bg-accent/5")
+            }
+          >
+            {!n.read_at && <span className="mt-1 size-1.5 rounded-full bg-accent shrink-0" />}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium truncate">{n.title}</p>
+              {n.body && (
+                <p className="text-[11px] text-muted-foreground line-clamp-2">{n.body}</p>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+              </p>
+            </div>
+            {!n.read_at && (
+              <button
+                onClick={() => onRead(n.id)}
+                className="text-muted-foreground hover:text-foreground shrink-0"
+                title="Mark read"
+              >
+                <Check className="size-3" />
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

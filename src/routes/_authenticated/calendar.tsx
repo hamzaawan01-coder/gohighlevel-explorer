@@ -187,6 +187,7 @@ function CalendarPage() {
                 const inMonth = d.getMonth() === cursor.getMonth();
                 const isToday = isSameDay(d, new Date());
                 const isSelected = isSameDay(d, selected);
+                const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                 const items = itemsByDay.get(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`) ?? [];
                 return (
                   <button
@@ -194,18 +195,25 @@ function CalendarPage() {
                     onClick={() => setSelected(d)}
                     className={
                       "border-b border-r border-border p-1.5 text-left flex flex-col gap-1 transition-colors " +
-                      (isSelected ? "bg-accent/10 " : "hover:bg-secondary/40 ") +
+                      (isSelected ? "bg-accent/10 " : isWeekend ? "bg-secondary/20 hover:bg-secondary/40 " : "hover:bg-secondary/40 ") +
                       (inMonth ? "" : "opacity-40")
                     }
                   >
-                    <span
-                      className={
-                        "text-[11px] font-semibold self-end " +
-                        (isToday ? "bg-primary text-primary-foreground rounded-full size-5 flex items-center justify-center" : "")
-                      }
-                    >
-                      {d.getDate()}
-                    </span>
+                    <div className="flex items-center justify-between w-full">
+                      {items.length > 0 ? (
+                        <span className="text-[9px] font-mono text-muted-foreground">{items.length}</span>
+                      ) : (
+                        <span />
+                      )}
+                      <span
+                        className={
+                          "text-[11px] font-semibold " +
+                          (isToday ? "bg-primary text-primary-foreground rounded-full size-5 flex items-center justify-center" : "")
+                        }
+                      >
+                        {d.getDate()}
+                      </span>
+                    </div>
                     <div className="flex flex-col gap-0.5 overflow-hidden">
                       {items.slice(0, 3).map((it) => (
                         <span
@@ -227,6 +235,14 @@ function CalendarPage() {
                   </button>
                 );
               })}
+            </div>
+            <div className="flex items-center gap-4 px-6 py-2 border-t border-border text-[10px] font-mono text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="size-2 rounded-sm bg-accent/40" /> Event
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="size-2 rounded-sm bg-amber-500/40" /> Task due
+              </span>
             </div>
           </div>
         </div>
