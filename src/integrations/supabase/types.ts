@@ -79,6 +79,68 @@ export type Database = {
           },
         ]
       }
+      booking_pages: {
+        Row: {
+          advance_days: number
+          availability: Json
+          buffer_minutes: number
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          enabled: boolean
+          id: string
+          min_notice_minutes: number
+          name: string
+          owner_user_id: string
+          slug: string
+          sub_account_id: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          advance_days?: number
+          availability?: Json
+          buffer_minutes?: number
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          enabled?: boolean
+          id?: string
+          min_notice_minutes?: number
+          name: string
+          owner_user_id: string
+          slug: string
+          sub_account_id: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          advance_days?: number
+          availability?: Json
+          buffer_minutes?: number
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          enabled?: boolean
+          id?: string
+          min_notice_minutes?: number
+          name?: string
+          owner_user_id?: string
+          slug?: string
+          sub_account_id?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_pages_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           all_day: boolean
