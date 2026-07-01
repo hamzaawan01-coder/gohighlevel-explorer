@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_campaigns: {
+        Row: {
+          budget: number | null
+          clicks: number | null
+          conversions: number | null
+          created_at: string
+          created_by: string
+          end_date: string | null
+          external_id: string | null
+          id: string
+          impressions: number | null
+          name: string
+          notes: string | null
+          platform: Database["public"]["Enums"]["ad_platform"]
+          spend: number | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["ad_campaign_status"]
+          sub_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: number | null
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string
+          created_by: string
+          end_date?: string | null
+          external_id?: string | null
+          id?: string
+          impressions?: number | null
+          name: string
+          notes?: string | null
+          platform: Database["public"]["Enums"]["ad_platform"]
+          spend?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["ad_campaign_status"]
+          sub_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: number | null
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string
+          created_by?: string
+          end_date?: string | null
+          external_id?: string | null
+          id?: string
+          impressions?: number | null
+          name?: string
+          notes?: string | null
+          platform?: Database["public"]["Enums"]["ad_platform"]
+          spend?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["ad_campaign_status"]
+          sub_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_campaigns_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agencies: {
         Row: {
           created_at: string
@@ -210,6 +278,149 @@ export type Database = {
             columns: ["sub_account_id"]
             isOneToOne: false
             referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_recipients: {
+        Row: {
+          campaign_id: string
+          contact_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          outbound_message_id: string | null
+          status: string
+          sub_account_id: string
+          to_address: string
+        }
+        Insert: {
+          campaign_id: string
+          contact_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          outbound_message_id?: string | null
+          status?: string
+          sub_account_id: string
+          to_address: string
+        }
+        Update: {
+          campaign_id?: string
+          contact_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          outbound_message_id?: string | null
+          status?: string
+          sub_account_id?: string
+          to_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_recipients_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_recipients_outbound_message_id_fkey"
+            columns: ["outbound_message_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_recipients_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          body_html: string | null
+          body_text: string | null
+          channel: Database["public"]["Enums"]["template_channel"]
+          created_at: string
+          created_by: string
+          failed_count: number
+          id: string
+          name: string
+          scheduled_at: string | null
+          segment: Json
+          sent_at: string | null
+          sent_count: number
+          status: Database["public"]["Enums"]["campaign_status"]
+          sub_account_id: string
+          subject: string | null
+          template_id: string | null
+          total_recipients: number
+          updated_at: string
+        }
+        Insert: {
+          body_html?: string | null
+          body_text?: string | null
+          channel: Database["public"]["Enums"]["template_channel"]
+          created_at?: string
+          created_by: string
+          failed_count?: number
+          id?: string
+          name: string
+          scheduled_at?: string | null
+          segment?: Json
+          sent_at?: string | null
+          sent_count?: number
+          status?: Database["public"]["Enums"]["campaign_status"]
+          sub_account_id: string
+          subject?: string | null
+          template_id?: string | null
+          total_recipients?: number
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string | null
+          body_text?: string | null
+          channel?: Database["public"]["Enums"]["template_channel"]
+          created_at?: string
+          created_by?: string
+          failed_count?: number
+          id?: string
+          name?: string
+          scheduled_at?: string | null
+          segment?: Json
+          sent_at?: string | null
+          sent_count?: number
+          status?: Database["public"]["Enums"]["campaign_status"]
+          sub_account_id?: string
+          subject?: string | null
+          template_id?: string | null
+          total_recipients?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "message_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -697,6 +908,53 @@ export type Database = {
           },
         ]
       }
+      message_templates: {
+        Row: {
+          body_html: string | null
+          body_text: string | null
+          channel: Database["public"]["Enums"]["template_channel"]
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          sub_account_id: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          body_html?: string | null
+          body_text?: string | null
+          channel: Database["public"]["Enums"]["template_channel"]
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          sub_account_id: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string | null
+          body_text?: string | null
+          channel?: Database["public"]["Enums"]["template_channel"]
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          sub_account_id?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           author_user_id: string | null
@@ -978,6 +1236,62 @@ export type Database = {
         }
         Relationships: []
       }
+      social_posts: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string
+          error: string | null
+          external_id: string | null
+          id: string
+          media_url: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          published_at: string | null
+          scheduled_at: string | null
+          status: Database["public"]["Enums"]["social_post_status"]
+          sub_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by: string
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          media_url?: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: Database["public"]["Enums"]["social_post_status"]
+          sub_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          media_url?: string | null
+          platform?: Database["public"]["Enums"]["social_platform"]
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: Database["public"]["Enums"]["social_post_status"]
+          sub_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sub_account_integrations: {
         Row: {
           email_config: Json
@@ -1180,6 +1494,105 @@ export type Database = {
           },
         ]
       }
+      trigger_link_clicks: {
+        Row: {
+          clicked_at: string
+          contact_id: string | null
+          id: string
+          ip_address: string | null
+          link_id: string
+          sub_account_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          contact_id?: string | null
+          id?: string
+          ip_address?: string | null
+          link_id: string
+          sub_account_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          contact_id?: string | null
+          id?: string
+          ip_address?: string | null
+          link_id?: string
+          sub_account_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trigger_link_clicks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trigger_link_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "trigger_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trigger_link_clicks_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trigger_links: {
+        Row: {
+          click_count: number
+          created_at: string
+          created_by: string
+          enabled: boolean
+          id: string
+          name: string
+          slug: string
+          sub_account_id: string
+          target_url: string
+          updated_at: string
+        }
+        Insert: {
+          click_count?: number
+          created_at?: string
+          created_by: string
+          enabled?: boolean
+          id?: string
+          name: string
+          slug: string
+          sub_account_id: string
+          target_url: string
+          updated_at?: string
+        }
+        Update: {
+          click_count?: number
+          created_at?: string
+          created_by?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          slug?: string
+          sub_account_id?: string
+          target_url?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trigger_links_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1369,15 +1782,21 @@ export type Database = {
       scan_time_workflows: { Args: never; Returns: undefined }
     }
     Enums: {
+      ad_campaign_status: "draft" | "active" | "paused" | "completed"
+      ad_platform: "google" | "meta" | "linkedin" | "tiktok" | "other"
       agency_role: "owner" | "admin"
       app_role: "admin" | "user"
+      campaign_status: "draft" | "scheduled" | "sending" | "sent" | "failed"
       contact_lifecycle_stage: "lead" | "mql" | "sql" | "customer" | "lost"
       message_kind: "note" | "email_log" | "sms_log"
       outbound_channel: "email" | "sms"
       outbound_status: "queued" | "sending" | "sent" | "failed"
+      social_platform: "facebook" | "instagram" | "linkedin" | "twitter"
+      social_post_status: "draft" | "scheduled" | "published" | "failed"
       sub_account_role: "member" | "client"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "open" | "in_progress" | "done" | "cancelled"
+      template_channel: "email" | "sms"
       workflow_trigger:
         | "contact.created"
         | "contact.stage_changed"
@@ -1386,6 +1805,7 @@ export type Database = {
         | "form.submitted"
         | "task.due_soon"
         | "contact.stale"
+        | "link.clicked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1513,15 +1933,21 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ad_campaign_status: ["draft", "active", "paused", "completed"],
+      ad_platform: ["google", "meta", "linkedin", "tiktok", "other"],
       agency_role: ["owner", "admin"],
       app_role: ["admin", "user"],
+      campaign_status: ["draft", "scheduled", "sending", "sent", "failed"],
       contact_lifecycle_stage: ["lead", "mql", "sql", "customer", "lost"],
       message_kind: ["note", "email_log", "sms_log"],
       outbound_channel: ["email", "sms"],
       outbound_status: ["queued", "sending", "sent", "failed"],
+      social_platform: ["facebook", "instagram", "linkedin", "twitter"],
+      social_post_status: ["draft", "scheduled", "published", "failed"],
       sub_account_role: ["member", "client"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["open", "in_progress", "done", "cancelled"],
+      template_channel: ["email", "sms"],
       workflow_trigger: [
         "contact.created",
         "contact.stage_changed",
@@ -1530,6 +1956,7 @@ export const Constants = {
         "form.submitted",
         "task.due_soon",
         "contact.stale",
+        "link.clicked",
       ],
     },
   },

@@ -15,6 +15,7 @@ import {
   FileText,
   Inbox,
   CalendarClock,
+  Megaphone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -44,6 +45,7 @@ const salesNav: NavItem[] = [
 ];
 
 const automationNav: NavItem[] = [
+  { label: "Marketing", icon: Megaphone, to: "/marketing" },
   { label: "Workflows", icon: Workflow, to: "/workflows" },
   { label: "Forms", icon: FileText, to: "/forms" },
   { label: "Booking pages", icon: CalendarClock, to: "/settings/booking" },
