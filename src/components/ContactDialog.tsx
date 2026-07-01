@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { Contact, ContactInput } from "@/lib/contacts";
+import { LIFECYCLE_STAGES, type Contact, type ContactInput, type LifecycleStage } from "@/lib/contacts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
 
 export function ContactDialog({
@@ -32,6 +33,8 @@ export function ContactDialog({
         company: initial?.company ?? "",
         tags: initial?.tags ?? [],
         notes: initial?.notes ?? "",
+        lifecycle_stage: initial?.lifecycle_stage ?? "lead",
+        lead_source: initial?.lead_source ?? "",
       });
       setTagInput("");
     }
@@ -64,6 +67,8 @@ export function ContactDialog({
         phone: form.phone?.toString().trim() || null,
         company: form.company?.toString().trim() || null,
         notes: form.notes?.toString().trim() || null,
+        lead_source: form.lead_source?.toString().trim() || null,
+        lifecycle_stage: form.lifecycle_stage ?? "lead",
       });
       onOpenChange(false);
     } finally {
@@ -123,6 +128,35 @@ export function ContactDialog({
               value={form.company ?? ""}
               onChange={(e) => setForm({ ...form, company: e.target.value })}
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="lifecycle_stage">Lifecycle stage</Label>
+              <Select
+                value={form.lifecycle_stage ?? "lead"}
+                onValueChange={(v) => setForm({ ...form, lifecycle_stage: v as LifecycleStage })}
+              >
+                <SelectTrigger id="lifecycle_stage">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LIFECYCLE_STAGES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lead_source">Lead source</Label>
+              <Input
+                id="lead_source"
+                placeholder="Referral, Website, Ad…"
+                value={form.lead_source ?? ""}
+                onChange={(e) => setForm({ ...form, lead_source: e.target.value })}
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Tags</Label>

@@ -87,6 +87,8 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          lead_source: string | null
+          lifecycle_stage: Database["public"]["Enums"]["contact_lifecycle_stage"]
           notes: string | null
           owner_id: string
           phone: string | null
@@ -101,6 +103,8 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          lead_source?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
           notes?: string | null
           owner_id: string
           phone?: string | null
@@ -115,6 +119,8 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          lead_source?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
           notes?: string | null
           owner_id?: string
           phone?: string | null
@@ -452,6 +458,79 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string
+          deal_id: string | null
+          description: string | null
+          due_at: string | null
+          id: string
+          priority: Database["public"]["Enums"]["task_priority"]
+          status: Database["public"]["Enums"]["task_status"]
+          sub_account_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by: string
+          deal_id?: string | null
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          status?: Database["public"]["Enums"]["task_status"]
+          sub_account_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string
+          deal_id?: string | null
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          status?: Database["public"]["Enums"]["task_status"]
+          sub_account_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -538,7 +617,10 @@ export type Database = {
     Enums: {
       agency_role: "owner" | "admin"
       app_role: "admin" | "user"
+      contact_lifecycle_stage: "lead" | "mql" | "sql" | "customer" | "lost"
       sub_account_role: "member" | "client"
+      task_priority: "low" | "medium" | "high" | "urgent"
+      task_status: "open" | "in_progress" | "done" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -668,7 +750,10 @@ export const Constants = {
     Enums: {
       agency_role: ["owner", "admin"],
       app_role: ["admin", "user"],
+      contact_lifecycle_stage: ["lead", "mql", "sql", "customer", "lost"],
       sub_account_role: ["member", "client"],
+      task_priority: ["low", "medium", "high", "urgent"],
+      task_status: ["open", "in_progress", "done", "cancelled"],
     },
   },
 } as const

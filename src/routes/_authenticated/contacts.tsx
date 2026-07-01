@@ -10,8 +10,10 @@ import {
   createContact,
   updateContact,
   deleteContact,
+  LIFECYCLE_STAGES,
   type Contact,
   type ContactInput,
+  type LifecycleStage,
 } from "@/lib/contacts";
 import { useTenancy } from "@/lib/tenancy";
 import { toast } from "sonner";
@@ -33,6 +35,7 @@ function ContactsPage() {
   const [editing, setEditing] = useState<Contact | null>(null);
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [activeStage, setActiveStage] = useState<LifecycleStage | "all">("all");
   const subId = useTenancy((s) => s.currentSubAccountId);
 
   useEffect(() => {
@@ -55,6 +58,7 @@ function ContactsPage() {
 
   const filtered = useMemo(() => {
     return contacts.filter((c) => {
+      if (activeStage !== "all" && c.lifecycle_stage !== activeStage) return false;
       if (activeTag && !(c.tags ?? []).includes(activeTag)) return false;
       if (!search.trim()) return true;
       const q = search.toLowerCase();
@@ -66,7 +70,7 @@ function ContactsPage() {
         (c.phone ?? "").toLowerCase().includes(q)
       );
     });
-  }, [contacts, search, activeTag]);
+  }, [contacts, search, activeTag, activeStage]);
 
   const createMut = useMutation({
     mutationFn: (input: ContactInput) => {
@@ -122,6 +126,34 @@ function ContactsPage() {
       }
     >
       <div className="h-full flex flex-col">
+        <div className="px-6 py-3 border-b border-border flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mr-1">
+            Stage
+          </span>
+          <button
+            onClick={() => setActiveStage("all")}
+            className={
+              activeStage === "all"
+                ? "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-primary text-primary-foreground"
+                : "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
+            }
+          >
+            All
+          </button>
+          {LIFECYCLE_STAGES.map((s) => (
+            <button
+              key={s.value}
+              onClick={() => setActiveStage(s.value)}
+              className={
+                activeStage === s.value
+                  ? "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-primary text-primary-foreground"
+                  : "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
+              }
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
         <div className="px-6 py-4 border-b border-border flex items-center gap-3 flex-wrap">
           <input
             type="text"
@@ -139,7 +171,7 @@ function ContactsPage() {
                   : "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
               }
             >
-              All
+              All tags
             </button>
             {allTags.map((t) => (
               <button
@@ -185,6 +217,7 @@ function ContactsPage() {
               <thead className="sticky top-0 bg-card border-b border-border z-10">
                 <tr className="text-left font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="px-6 py-2 font-bold">Name</th>
+                  <th className="px-3 py-2 font-bold">Stage</th>
                   <th className="px-3 py-2 font-bold">Email</th>
                   <th className="px-3 py-2 font-bold">Phone</th>
                   <th className="px-3 py-2 font-bold">Company</th>
@@ -198,7 +231,13 @@ function ContactsPage() {
                   return (
                     <tr key={c.id} className="border-b border-border hover:bg-secondary/40">
                       <td className="px-6 py-2.5 font-medium">{name}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="inline-block bg-accent/10 text-accent rounded px-1.5 py-0.5 text-[10px] font-mono uppercase">
+                          {c.lifecycle_stage}
+                        </span>
+                      </td>
                       <td className="px-3 py-2.5 text-muted-foreground">
+
                         {c.email ? (
                           <span className="inline-flex items-center gap-1.5">
                             <Mail className="size-3" />

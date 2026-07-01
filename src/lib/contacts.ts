@@ -1,5 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type LifecycleStage = "lead" | "mql" | "sql" | "customer" | "lost";
+
+export const LIFECYCLE_STAGES: { value: LifecycleStage; label: string }[] = [
+  { value: "lead", label: "Lead" },
+  { value: "mql", label: "MQL" },
+  { value: "sql", label: "SQL" },
+  { value: "customer", label: "Customer" },
+  { value: "lost", label: "Lost" },
+];
+
 export type Contact = {
   id: string;
   owner_id: string;
@@ -11,6 +21,8 @@ export type Contact = {
   company: string | null;
   tags: string[];
   notes: string | null;
+  lifecycle_stage: LifecycleStage;
+  lead_source: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -33,6 +45,8 @@ export type ContactInput = {
   company?: string | null;
   tags?: string[];
   notes?: string | null;
+  lifecycle_stage?: LifecycleStage;
+  lead_source?: string | null;
 };
 
 export async function createContact(
@@ -47,6 +61,7 @@ export async function createContact(
       owner_id: ownerId,
       sub_account_id: subAccountId,
       tags: input.tags ?? [],
+      lifecycle_stage: input.lifecycle_stage ?? "lead",
     })
     .select("*")
     .single();
