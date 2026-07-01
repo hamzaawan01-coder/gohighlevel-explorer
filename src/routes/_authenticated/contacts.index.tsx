@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Plus, Loader2, Pencil, Trash2, Mail, Phone, Building2,
   Bookmark, BookmarkPlus, X, Tag as TagIcon, ChevronDown,
-  Download, Upload,
+  Download, Upload, ArrowUpRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
