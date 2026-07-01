@@ -814,8 +814,14 @@ function AdConnectionsPanel({ subId }: { subId: string }) {
                     </SelectContent>
                   </Select>
                 </div>
-              ) : (
+              ) : google.accessible_customers.length === 1 ? (
                 <p className="text-xs text-muted-foreground">Customer: {google.external_customer_id ?? "—"}</p>
+              ) : (
+                <ManualCustomerIdInput
+                  currentId={google.external_customer_id}
+                  onSave={(cid) => updateCust.mutate({ id: google.id, cid, name: null })}
+                  saving={updateCust.isPending}
+                />
               )}
               <p className="text-[11px] text-muted-foreground">
                 {google.last_synced_at
