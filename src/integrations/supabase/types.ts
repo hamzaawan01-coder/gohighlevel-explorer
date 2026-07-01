@@ -2020,6 +2020,7 @@ export type Database = {
         | "task.due_soon"
         | "contact.stale"
         | "link.clicked"
+        | "deal.created"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2182,6 +2183,7 @@ export const Constants = {
         "task.due_soon",
         "contact.stale",
         "link.clicked",
+        "deal.created",
       ],
     },
   },
