@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
@@ -148,8 +148,8 @@ function WorkflowsPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      When {WORKFLOW_TRIGGERS.find((t) => t.value === w.trigger_type)?.label}
+                    <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                      {describeWorkflow(w)}
                     </p>
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {w.actions.map((a, i) => (
@@ -157,6 +157,21 @@ function WorkflowsPage() {
                       ))}
                     </div>
                   </div>
+                  <button
+                    onClick={() =>
+                      createMut.mutate({
+                        name: `${w.name} (copy)`,
+                        enabled: false,
+                        trigger_type: w.trigger_type,
+                        trigger_config: w.trigger_config,
+                        actions: w.actions,
+                      })
+                    }
+                    className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    title="Duplicate"
+                  >
+                    <Copy className="size-3" />
+                  </button>
                   <button
                     onClick={() => { setEditing(w); setDialogOpen(true); }}
                     className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
@@ -274,6 +289,41 @@ function ActionChip({ action }: { action: WorkflowAction }) {
     </span>
   );
 }
+
+function describeWorkflow(w: Workflow): string {
+  const trig = WORKFLOW_TRIGGERS.find((t) => t.value === w.trigger_type)?.label ?? w.trigger_type;
+  const cfg = w.trigger_config as Record<string, string>;
+  let when = `When ${trig.toLowerCase()}`;
+  if (w.trigger_type === "contact.stage_changed" && cfg.to_stage) when += ` to “${cfg.to_stage}”`;
+  if (w.trigger_type === "task.due_soon" && cfg.hours) when += ` (within ${cfg.hours}h)`;
+  if (w.trigger_type === "contact.stale" && cfg.days) when += ` (after ${cfg.days} days)`;
+  const parts: string[] = w.actions.map((a) => {
+    switch (a.type) {
+      case "create_task":
+        return `create a task “${a.title}”`;
+      case "set_contact_stage":
+        return `move contact to ${a.stage}`;
+      case "add_contact_tag":
+        return `tag contact “${a.tag}”`;
+      case "create_notification":
+        return `send an in-app notification`;
+      case "send_email":
+        return `email the contact “${a.subject}”`;
+      case "send_sms":
+        return `text the contact`;
+      default:
+        return "run an action";
+    }
+  });
+  const then = parts.length === 0
+    ? "do nothing yet."
+    : parts.length === 1
+    ? parts[0] + "."
+    : parts.slice(0, -1).join(", ") + ", and " + parts[parts.length - 1] + ".";
+  return `${when}, ${then}`;
+}
+
+
 
 const QUICK_TEMPLATES: { key: string; label: string; description: string; input: WorkflowInput }[] = [
   {

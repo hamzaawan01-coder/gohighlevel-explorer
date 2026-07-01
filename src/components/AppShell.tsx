@@ -48,6 +48,7 @@ const salesNav: NavItem[] = [
 const automationNav: NavItem[] = [
   { label: "Marketing", icon: Megaphone, to: "/marketing" },
   { label: "Workflows", icon: Workflow, to: "/workflows" },
+  { label: "Templates", icon: FileText, to: "/templates" },
   { label: "Forms", icon: FileText, to: "/forms" },
   { label: "WordPress", icon: Webhook, to: "/settings/wordpress" },
   { label: "Booking pages", icon: CalendarClock, to: "/settings/booking" },

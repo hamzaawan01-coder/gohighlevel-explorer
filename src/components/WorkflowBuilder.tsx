@@ -16,6 +16,7 @@ import {
 } from "@/lib/workflows";
 import { LIFECYCLE_STAGES, type LifecycleStage } from "@/lib/contacts";
 import { TASK_PRIORITIES, type TaskPriority } from "@/lib/tasks";
+import { MergeTagField } from "@/components/MergeTagField";
 
 export function WorkflowBuilder({
   open,
@@ -48,7 +49,7 @@ export function WorkflowBuilder({
     let a: WorkflowAction;
     switch (type) {
       case "create_task":
-        a = { type, title: "Follow up", priority: "medium", due_in_days: 1 };
+        a = { type, title: "Follow up with {{contact.first_name}}", priority: "medium", due_in_days: 1 };
         break;
       case "set_contact_stage":
         a = { type, stage: "mql" };
@@ -58,6 +59,19 @@ export function WorkflowBuilder({
         break;
       case "create_notification":
         a = { type, title: name || "Workflow ran" };
+        break;
+      case "send_email":
+        a = {
+          type,
+          subject: "Hi {{contact.first_name}}",
+          body_text: "Hi {{contact.first_name}},\n\nThanks for your interest — we'll be in touch shortly.",
+        };
+        break;
+      case "send_sms":
+        a = {
+          type,
+          body: "Hi {{contact.first_name}}, thanks for your interest! We'll be in touch shortly.",
+        };
         break;
     }
     setActions((cur) => [...cur, a]);
@@ -242,9 +256,13 @@ function ActionFields({
   if (action.type === "create_task") {
     return (
       <div className="grid grid-cols-2 gap-2">
-        <div className="col-span-2 space-y-1">
-          <Label className="text-[11px]">Task title</Label>
-          <Input value={action.title} onChange={(e) => onChange({ title: e.target.value } as Partial<WorkflowAction>)} />
+        <div className="col-span-2">
+          <MergeTagField
+            label="Task title"
+            value={action.title}
+            onChange={(v) => onChange({ title: v } as Partial<WorkflowAction>)}
+            showPreview={false}
+          />
         </div>
         <div className="space-y-1">
           <Label className="text-[11px]">Priority</Label>
@@ -297,14 +315,18 @@ function ActionFields({
   if (action.type === "create_notification") {
     return (
       <div className="space-y-2">
-        <div className="space-y-1">
-          <Label className="text-[11px]">Title</Label>
-          <Input value={action.title} onChange={(e) => onChange({ title: e.target.value } as Partial<WorkflowAction>)} />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-[11px]">Body</Label>
-          <Input value={action.body ?? ""} onChange={(e) => onChange({ body: e.target.value } as Partial<WorkflowAction>)} />
-        </div>
+        <MergeTagField
+          label="Title"
+          value={action.title}
+          onChange={(v) => onChange({ title: v } as Partial<WorkflowAction>)}
+          showPreview={false}
+        />
+        <MergeTagField
+          label="Body"
+          value={action.body ?? ""}
+          onChange={(v) => onChange({ body: v } as Partial<WorkflowAction>)}
+          multiline
+        />
       </div>
     );
   }
@@ -315,14 +337,17 @@ function ActionFields({
           <Label className="text-[11px]">To (optional — defaults to contact email)</Label>
           <Input value={action.to ?? ""} onChange={(e) => onChange({ to: e.target.value } as Partial<WorkflowAction>)} placeholder="leave blank for contact email" />
         </div>
-        <div className="space-y-1">
-          <Label className="text-[11px]">Subject</Label>
-          <Input value={action.subject} onChange={(e) => onChange({ subject: e.target.value } as Partial<WorkflowAction>)} />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-[11px]">Body (plain text)</Label>
-          <Input value={action.body_text ?? ""} onChange={(e) => onChange({ body_text: e.target.value } as Partial<WorkflowAction>)} />
-        </div>
+        <MergeTagField
+          label="Subject"
+          value={action.subject}
+          onChange={(v) => onChange({ subject: v } as Partial<WorkflowAction>)}
+        />
+        <MergeTagField
+          label="Body"
+          value={action.body_text ?? ""}
+          onChange={(v) => onChange({ body_text: v } as Partial<WorkflowAction>)}
+          multiline
+        />
       </div>
     );
   }
@@ -333,10 +358,12 @@ function ActionFields({
           <Label className="text-[11px]">To (optional — defaults to contact phone)</Label>
           <Input value={action.to ?? ""} onChange={(e) => onChange({ to: e.target.value } as Partial<WorkflowAction>)} placeholder="leave blank for contact phone" />
         </div>
-        <div className="space-y-1">
-          <Label className="text-[11px]">Message</Label>
-          <Input value={action.body} onChange={(e) => onChange({ body: e.target.value } as Partial<WorkflowAction>)} />
-        </div>
+        <MergeTagField
+          label="Message"
+          value={action.body}
+          onChange={(v) => onChange({ body: v } as Partial<WorkflowAction>)}
+          multiline
+        />
       </div>
     );
   }
