@@ -280,11 +280,13 @@ export async function drainAll(): Promise<{
   errors: { id: string; error: string }[];
 }> {
   const sb = await admin();
+  const nowIso = new Date().toISOString();
   const { data, error } = await sb
     .from("outbound_messages")
     .select("id")
     .eq("status", "queued")
-    .or(`next_attempt_at.is.null,next_attempt_at.lte.${new Date().toISOString()}`)
+    .or(`next_attempt_at.is.null,next_attempt_at.lte.${nowIso}`)
+    .or(`scheduled_at.is.null,scheduled_at.lte.${nowIso}`)
     .order("created_at", { ascending: true })
     .limit(25);
   if (error) throw new Error(error.message);
