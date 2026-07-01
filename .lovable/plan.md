@@ -1,103 +1,107 @@
+# Plan: Workflows, Conversations, Calendar (v1)
 
-## Multi-tenant model
+Three placeholders in the sidebar become real, in-app features. All data is scoped to the current sub-account and gated by the existing `has_subaccount_access` RLS helper. No external SMS/email/Google Calendar integrations in v1 — those are a follow-up.
 
-Two-level tenancy, GHL-style:
+## Scope
+
+### C1. Workflows (automation engine)
+Trigger → Action rules that fire from database events.
+
+- **Triggers (v1):**
+  - `contact.created`
+  - `contact.stage_changed` (lifecycle_stage transitions to a chosen stage)
+  - `deal.stage_changed` (moved into a chosen pipeline stage)
+  - `task.completed`
+- **Actions (v1):**
+  - `create_task` (title, priority, due-in-N-days, assignee = trigger's owner)
+  - `set_contact_stage` (change lifecycle_stage)
+  - `add_contact_tag`
+  - `create_notification` (in-app bell)
+- Execution model: Postgres `AFTER INSERT/UPDATE` triggers on `contacts`, `deals`, `tasks` call a SECURITY DEFINER dispatcher that reads matching enabled workflows for the row's `sub_account_id` and performs the actions in the same transaction. Fast, no polling, no external HTTP.
+- Every run is logged in `workflow_runs` (workflow_id, trigger_row, status, error, ran_at) so the UI can show recent activity.
+- UI: `/workflows` list + a builder dialog (name, trigger dropdown + condition, ordered actions).
+
+### C2. Notifications (dependency of Workflows)
+- `notifications` table (user_id, sub_account_id, title, body, link, read_at).
+- Bell in the header shows unread count and a dropdown of recent items.
+- Realtime subscription so a workflow-created notification pops instantly.
+
+### D1. Conversations (internal activity thread per contact)
+- `conversations` table: one thread per contact.
+- `messages` table: author_user_id, body, kind (`note` | `email_log` | `sms_log` — only `note` is user-writable in v1; the others exist so future integrations slot in without a migration).
+- `/conversations` route: left pane = contacts with unread/latest snippet, right pane = thread + composer.
+- Contact drawer/detail page gets an "Activity" tab reusing the same thread.
+
+### D2. Calendar
+- `calendar_events` table: title, description, starts_at, ends_at, all_day, location, contact_id (optional), deal_id (optional), owner_user_id.
+- `/calendar` route: month + agenda view using shadcn Calendar + a day-panel list. Create/edit dialog.
+- Tasks with a `due_at` are surfaced on the calendar read-only (union query) so the agenda shows both.
+- Google Calendar sync is explicitly out of scope; hook point (an `external_id` column) is included for later.
+
+## Explicitly deferred
+- Email/SMS sending, WhatsApp, phone/voice.
+- Google Calendar two-way sync.
+- Time-based / cron triggers ("3 days after created"). Only immediate DB-event triggers in v1.
+- Client portal (B) stays on hold.
+
+## Technical outline
+
+### New tables (all `sub_account_id` scoped, RLS via `has_subaccount_access`)
 
 ```text
-Agency (top-level tenant, e.g. "Acme Marketing")
- ├── Sub-account A  (client business "Joe's HVAC")
- ├── Sub-account B  (client business "Bright Dental")
- └── Sub-account C  (client business "City Auto")
-
-Users belong to an Agency, and are granted access to one or many Sub-accounts.
-Clients are scoped to a single Sub-account only.
+workflows(id, sub_account_id, name, enabled, trigger_type,
+          trigger_config jsonb, actions jsonb, created_by, timestamps)
+workflow_runs(id, workflow_id, sub_account_id, trigger_row_id,
+              status, error, ran_at)
+notifications(id, user_id, sub_account_id, title, body, link,
+              read_at, created_at)
+conversations(id, sub_account_id, contact_id UNIQUE, last_message_at)
+messages(id, conversation_id, sub_account_id, author_user_id,
+         kind, body, created_at)
+calendar_events(id, sub_account_id, owner_user_id, title, description,
+                starts_at, ends_at, all_day, location,
+                contact_id, deal_id, external_id, timestamps)
 ```
 
-### Roles (per scope)
+Grants: `authenticated` + `service_role` on every table. RLS policies gate by `has_subaccount_access(auth.uid(), sub_account_id)`; notifications additionally scope select/update to `user_id = auth.uid()`.
 
-| Role        | Scope               | Can                                                     |
-| ----------- | ------------------- | ------------------------------------------------------- |
-| `owner`     | Agency              | Everything in the agency, including billing & deletion  |
-| `admin`     | Agency              | Manage users, sub-accounts, all data; no billing/delete |
-| `member`    | Sub-account(s)      | CRUD CRM data in granted sub-accounts                   |
-| `client`    | One sub-account     | Portal only — see own tickets/invoices/appointments     |
+### Workflow dispatcher
 
-### Data tables to add
+- `public.run_workflows(_trigger text, _row_id uuid, _sub uuid, _payload jsonb)` — SECURITY DEFINER, locked search_path, loops matching enabled workflows and applies actions.
+- Row triggers on `contacts` / `deals` / `tasks` compute the trigger event and payload, then call the dispatcher. Actions run in the same transaction.
+- Errors captured into `workflow_runs.error`; never abort the parent insert/update.
 
-- `agencies` — name, slug, logo, plan, owner_user_id
-- `sub_accounts` — agency_id, name, slug, industry, timezone, archived_at
-- `agency_memberships` — agency_id, user_id, role (`owner`/`admin`)
-- `sub_account_memberships` — sub_account_id, user_id, role (`member`/`client`)
-- `invitations` — email, agency_id, sub_account_id (nullable), role, token, expires_at, accepted_at
+### Files to add / edit
 
-### Tables to refactor (add `sub_account_id`)
-
-`contacts`, `deals`, `pipelines`, `pipeline_stages` — every CRM table from now on carries `sub_account_id NOT NULL`. RLS rewrites from `auth.uid() = owner_id` to `has_subaccount_access(auth.uid(), sub_account_id)`.
-
-`owner_id` stays as **assignment** (which staff member owns the record), not as the access gate.
-
-### Security helpers (security definer, prevent RLS recursion)
-
-```sql
-has_agency_access(_user uuid, _agency uuid) returns boolean
-has_agency_role  (_user uuid, _agency uuid, _role agency_role) returns boolean
-has_subaccount_access(_user uuid, _sub uuid) returns boolean
-current_agency_id() returns uuid           -- reads agency from a "current" GUC or memberships
+```text
+supabase/migrations/<new>.sql          workflows, workflow_runs, notifications,
+                                        conversations, messages, calendar_events,
+                                        dispatcher + row triggers
+src/lib/workflows.ts                    CRUD + types + trigger/action registry
+src/lib/notifications.ts                fetch, mark read, realtime hook
+src/lib/conversations.ts                fetch threads, send note
+src/lib/calendar.ts                     fetch events (+task union), CRUD
+src/routes/_authenticated/workflows.tsx list + builder dialog
+src/routes/_authenticated/conversations.tsx
+src/routes/_authenticated/calendar.tsx
+src/components/NotificationBell.tsx     replaces the static Bell in AppShell
+src/components/WorkflowBuilder.tsx      trigger + ordered actions form
+src/components/EventDialog.tsx          create/edit calendar events
+src/components/AppShell.tsx             wire NotificationBell, keep nav items
 ```
 
-`has_subaccount_access` returns true if the user is an agency owner/admin of the parent agency **or** has an explicit `sub_account_memberships` row.
+## Rollout order
 
-### Onboarding flows
+1. Migration + shared libs.
+2. Notifications (bell + realtime) — small, unlocks workflow output.
+3. Workflows list + builder + dispatcher end-to-end.
+4. Conversations (notes thread).
+5. Calendar (events + task overlay).
 
-1. **Self-serve signup** — creates user → creates a new agency → user becomes `owner` → prompts to create first sub-account.
-2. **Invite link** — Owner/Admin generates `invitations` row; recipient hits `/invite/:token`, signs up or signs in, the trigger consumes the token and creates the membership row.
+## Risks
 
-### App-level "current sub-account"
+- Workflow triggers run in the write's transaction, so a buggy action rolls back the user's write. Mitigation: dispatcher wraps each action in `BEGIN ... EXCEPTION WHEN OTHERS THEN log to workflow_runs`.
+- No time-based triggers means "remind me in 3 days" isn't possible until we add pg_cron. Called out as deferred.
+- Conversations table looks like a messaging surface but is note-only in v1. UI copy makes that explicit ("Internal notes").
 
-A small `useCurrentSubAccount()` store (Zustand) + a top-bar **sub-account switcher** populated from `sub_account_memberships` (plus all sub-accounts under any agency the user is owner/admin of). All queries filter by `sub_account_id = current`.
-
-### Routes added
-
-- `/onboarding` — first-time agency + sub-account setup
-- `/invite/$token` — accept invitation
-- `/_authenticated/settings/agency` — agency profile, billing placeholder
-- `/_authenticated/settings/team` — invite/manage users, role per sub-account
-- `/_authenticated/settings/sub-accounts` — list, create, archive sub-accounts
-
-The existing Dashboard, Contacts, Pipeline pages all gain a `sub_account_id` filter from the active sub-account in context.
-
-### Migration approach
-
-One big migration that:
-
-1. Creates `agencies`, `sub_accounts`, memberships, invitations, role enums, GRANTs, RLS, helper functions.
-2. Adds nullable `sub_account_id` to `contacts`, `deals`, `pipelines`, `pipeline_stages`.
-3. Backfills: for every existing user with data, creates a default `agency` + default `sub_account`, links them via memberships, sets `sub_account_id` on their existing rows.
-4. Sets `sub_account_id NOT NULL`.
-5. Drops old `owner_id`-based RLS policies and replaces with `has_subaccount_access`-based policies.
-6. Updates `handle_new_user` trigger to also auto-create a personal agency + sub-account (so the existing dashboard keeps working on first login for new sign-ups).
-
-### Code changes (after migration is approved)
-
-- `src/lib/tenancy.ts` — `useCurrentSubAccount` store, `fetchMySubAccounts`, `setCurrentSubAccount`
-- `src/components/SubAccountSwitcher.tsx` — top-bar dropdown
-- Update `src/lib/pipeline.ts`, `src/lib/contacts.ts` to pass `sub_account_id` on insert and filter on select
-- Update `NewDealDialog`, `ContactDialog`, dashboard, contacts page to read current sub-account
-- `_authenticated/onboarding.tsx`, `invite.$token.tsx`, `settings.*` routes
-- Update `_authenticated/route.tsx` flow: if user has no agency membership → redirect to `/onboarding`
-
-### What stays the same
-
-- Auth provider (Supabase email + Google) — no change.
-- All existing UI/components — only their data layer changes.
-- The Leads/Tasks/Inbox/etc. modules I port next will be built on this model from day one.
-
-### Out of scope for this step
-
-- Billing / Stripe (placeholder UI only).
-- Cross-sub-account reporting (Agency-wide dashboards) — can add later.
-- White-labeling per agency (custom domain, branding) — later.
-
----
-
-After you approve, I'll run the migration first (you'll see it for approval), then push the code changes in the follow-up.
+Approve and I'll start with the migration, then Notifications → Workflows → Conversations → Calendar.

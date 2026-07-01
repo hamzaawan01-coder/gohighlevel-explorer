@@ -79,6 +79,79 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          contact_id: string | null
+          created_at: string
+          deal_id: string | null
+          description: string | null
+          ends_at: string
+          external_id: string | null
+          id: string
+          location: string | null
+          owner_user_id: string
+          starts_at: string
+          sub_account_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          description?: string | null
+          ends_at: string
+          external_id?: string | null
+          id?: string
+          location?: string | null
+          owner_user_id: string
+          starts_at: string
+          sub_account_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          description?: string | null
+          ends_at?: string
+          external_id?: string | null
+          id?: string
+          location?: string | null
+          owner_user_id?: string
+          starts_at?: string
+          sub_account_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           company: string | null
@@ -131,6 +204,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "contacts_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          last_message_at: string | null
+          sub_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          sub_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          sub_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: true
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_sub_account_id_fkey"
             columns: ["sub_account_id"]
             isOneToOne: false
             referencedRelation: "sub_accounts"
@@ -265,6 +380,92 @@ export type Database = {
           },
           {
             foreignKeyName: "invitations_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          author_user_id: string | null
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["message_kind"]
+          sub_account_id: string
+        }
+        Insert: {
+          author_user_id?: string | null
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["message_kind"]
+          sub_account_id: string
+        }
+        Update: {
+          author_user_id?: string | null
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["message_kind"]
+          sub_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          sub_account_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          sub_account_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          sub_account_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_sub_account_id_fkey"
             columns: ["sub_account_id"]
             isOneToOne: false
             referencedRelation: "sub_accounts"
@@ -552,6 +753,101 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_runs: {
+        Row: {
+          error: string | null
+          id: string
+          payload: Json | null
+          ran_at: string
+          status: string
+          sub_account_id: string
+          trigger_row_id: string | null
+          workflow_id: string
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          ran_at?: string
+          status?: string
+          sub_account_id: string
+          trigger_row_id?: string | null
+          workflow_id: string
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          ran_at?: string
+          status?: string
+          sub_account_id?: string
+          trigger_row_id?: string | null
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_runs_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflows: {
+        Row: {
+          actions: Json
+          created_at: string
+          created_by: string
+          enabled: boolean
+          id: string
+          name: string
+          sub_account_id: string
+          trigger_config: Json
+          trigger_type: Database["public"]["Enums"]["workflow_trigger"]
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          created_at?: string
+          created_by: string
+          enabled?: boolean
+          id?: string
+          name: string
+          sub_account_id: string
+          trigger_config?: Json
+          trigger_type: Database["public"]["Enums"]["workflow_trigger"]
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          created_at?: string
+          created_by?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          sub_account_id?: string
+          trigger_config?: Json
+          trigger_type?: Database["public"]["Enums"]["workflow_trigger"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflows_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -613,14 +909,29 @@ export type Database = {
           sub_account_name: string
         }[]
       }
+      run_workflows: {
+        Args: {
+          _payload: Json
+          _row_id: string
+          _sub: string
+          _trigger: Database["public"]["Enums"]["workflow_trigger"]
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       agency_role: "owner" | "admin"
       app_role: "admin" | "user"
       contact_lifecycle_stage: "lead" | "mql" | "sql" | "customer" | "lost"
+      message_kind: "note" | "email_log" | "sms_log"
       sub_account_role: "member" | "client"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "open" | "in_progress" | "done" | "cancelled"
+      workflow_trigger:
+        | "contact.created"
+        | "contact.stage_changed"
+        | "deal.stage_changed"
+        | "task.completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -751,9 +1062,16 @@ export const Constants = {
       agency_role: ["owner", "admin"],
       app_role: ["admin", "user"],
       contact_lifecycle_stage: ["lead", "mql", "sql", "customer", "lost"],
+      message_kind: ["note", "email_log", "sms_log"],
       sub_account_role: ["member", "client"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["open", "in_progress", "done", "cancelled"],
+      workflow_trigger: [
+        "contact.created",
+        "contact.stage_changed",
+        "deal.stage_changed",
+        "task.completed",
+      ],
     },
   },
 } as const
