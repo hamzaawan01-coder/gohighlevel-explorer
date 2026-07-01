@@ -396,6 +396,17 @@ export function ContactDetailPanel({
             </ul>
           )}
         </TabsContent>
+
+        <TabsContent value="files" className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <FilesTab
+            contactId={contactId}
+            subId={subId}
+            userId={userId}
+            files={files}
+            loading={filesQ.isLoading}
+            onChanged={() => qc.invalidateQueries({ queryKey: ["contact-files", contactId] })}
+          />
+        </TabsContent>
       </Tabs>
 
       <ContactDialog
