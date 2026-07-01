@@ -147,7 +147,7 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
                   last_name: last,
                   email,
                   phone,
-                  source: "meta_lead_ads",
+                  lead_source: "meta_lead_ads",
                   lifecycle_stage: "lead",
                 },
                 { onConflict: "sub_account_id,meta_lead_id" },
