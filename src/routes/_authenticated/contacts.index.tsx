@@ -616,6 +616,48 @@ function ContactsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={saveViewOpen} onOpenChange={setSaveViewOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>Save view</DialogTitle>
+          <DialogDescription>
+            Save the current filter combination so you can jump back to it later.
+          </DialogDescription>
+          <div className="space-y-3 mt-2">
+            <input
+              autoFocus
+              type="text"
+              value={newViewName}
+              onChange={(e) => setNewViewName(e.target.value)}
+              placeholder="e.g. MQLs I own"
+              className="w-full bg-secondary border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newViewName.trim()) saveViewMut.mutate(newViewName.trim());
+              }}
+            />
+            <div className="text-[11px] text-muted-foreground space-y-1 rounded-md bg-secondary/60 p-3">
+              <div>Stage: <span className="font-mono uppercase">{activeStage}</span></div>
+              <div>Tag: <span className="font-mono">{activeTag ?? "any"}</span></div>
+              <div>Search: <span className="font-mono">{search || "—"}</span></div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setSaveViewOpen(false)}
+                className="text-xs px-3 py-1.5 rounded-md hover:bg-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => saveViewMut.mutate(newViewName.trim())}
+                disabled={!newViewName.trim() || saveViewMut.isPending}
+                className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
