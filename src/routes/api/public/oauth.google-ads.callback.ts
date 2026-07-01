@@ -52,6 +52,7 @@ export const Route = createFileRoute("/api/public/oauth/google-ads/callback")({
 
         // List accessible customers
         let accessible: { id: string; name?: string }[] = [];
+        let listError: string | null = null;
         try {
           const listRes = await fetch(`${GOOGLE_ADS_API}/customers:listAccessibleCustomers`, {
             headers: { Authorization: `Bearer ${tok.access_token}`, "developer-token": devToken },
@@ -59,8 +60,12 @@ export const Route = createFileRoute("/api/public/oauth/google-ads/callback")({
           if (listRes.ok) {
             const j = await listRes.json() as { resourceNames?: string[] };
             accessible = (j.resourceNames ?? []).map((rn) => ({ id: rn.replace("customers/", "") }));
+          } else {
+            listError = `listAccessibleCustomers ${listRes.status}: ${(await listRes.text()).slice(0, 300)}`;
           }
-        } catch { /* non-fatal */ }
+        } catch (e) {
+          listError = e instanceof Error ? e.message : String(e);
+        }
 
         const first = accessible[0]?.id ?? null;
 
