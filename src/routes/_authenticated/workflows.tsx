@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing, Copy } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing, Copy, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
+import { WorkflowTestDialog } from "@/components/WorkflowTestDialog";
 import { useTenancy } from "@/lib/tenancy";
 import {
   fetchWorkflows,
@@ -37,6 +38,8 @@ function WorkflowsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Workflow | null>(null);
+  const [testing, setTesting] = useState<Workflow | null>(null);
+
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
