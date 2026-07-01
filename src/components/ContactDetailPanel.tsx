@@ -300,7 +300,7 @@ export function ContactDetailPanel({
                       {Number(d.value).toLocaleString()}
                     </span>
                     <Link
-                      to="/pipeline"
+                      to="/opportunities"
                       className="text-muted-foreground hover:text-foreground"
                       title="Open in pipeline"
                     >

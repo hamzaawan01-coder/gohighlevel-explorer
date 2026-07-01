@@ -35,7 +35,7 @@ type NavItem = {
 
 const salesNav: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-  { label: "Pipeline", icon: LayoutGrid, to: "/pipeline" },
+  { label: "Opportunities", icon: LayoutGrid, to: "/opportunities" },
   { label: "Contacts", icon: Users, to: "/contacts" },
   { label: "Tasks", icon: CheckSquare, to: "/tasks" },
   { label: "Calendar", icon: Calendar, to: "/calendar" },

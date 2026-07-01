@@ -40,7 +40,7 @@ function DealDetailPage() {
     <AppShell
       headerActions={
         <Link
-          to="/pipeline"
+          to="/opportunities"
           className="flex items-center gap-1.5 border border-border rounded-md py-1.5 px-2.5 text-xs font-medium hover:bg-secondary transition-colors"
         >
           <ArrowLeft className="size-3.5" /> Back to pipeline
@@ -58,7 +58,7 @@ function DealDetailPage() {
           <DealDetailPanel
             dealId={id}
             stages={stagesQ.data ?? []}
-            onClose={() => navigate({ to: "/pipeline" })}
+            onClose={() => navigate({ to: "/opportunities" })}
           />
         )}
       </div>
