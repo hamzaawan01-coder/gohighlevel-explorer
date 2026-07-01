@@ -188,6 +188,7 @@ function Dashboard() {
             stages={stages}
             deals={deals}
             onMove={(dealId, stageId, position) => moveMut.mutate({ dealId, stageId, position })}
+            onOpenDeal={(id) => setOpenDealId(id)}
           />
         )}
       </div>
@@ -200,6 +201,19 @@ function Dashboard() {
           await createDealMut.mutateAsync(input);
         }}
       />
+
+      <Dialog open={!!openDealId} onOpenChange={(o) => !o && setOpenDealId(null)}>
+        <DialogContent className="max-w-3xl p-0 gap-0">
+          {openDealId && (
+            <DealDetailPanel
+              dealId={openDealId}
+              stages={stages}
+              onClose={() => setOpenDealId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
+
