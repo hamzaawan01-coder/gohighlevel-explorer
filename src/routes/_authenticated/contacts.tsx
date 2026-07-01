@@ -217,6 +217,7 @@ function ContactsPage() {
               <thead className="sticky top-0 bg-card border-b border-border z-10">
                 <tr className="text-left font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="px-6 py-2 font-bold">Name</th>
+                  <th className="px-3 py-2 font-bold">Stage</th>
                   <th className="px-3 py-2 font-bold">Email</th>
                   <th className="px-3 py-2 font-bold">Phone</th>
                   <th className="px-3 py-2 font-bold">Company</th>
@@ -230,7 +231,13 @@ function ContactsPage() {
                   return (
                     <tr key={c.id} className="border-b border-border hover:bg-secondary/40">
                       <td className="px-6 py-2.5 font-medium">{name}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="inline-block bg-accent/10 text-accent rounded px-1.5 py-0.5 text-[10px] font-mono uppercase">
+                          {c.lifecycle_stage}
+                        </span>
+                      </td>
                       <td className="px-3 py-2.5 text-muted-foreground">
+
                         {c.email ? (
                           <span className="inline-flex items-center gap-1.5">
                             <Mail className="size-3" />
