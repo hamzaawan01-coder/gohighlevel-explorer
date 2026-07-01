@@ -198,11 +198,13 @@ function WorkflowsPage() {
             </div>
           </div>
           <div className="flex-1 overflow-auto">
-            {runs.length === 0 ? (
-              <div className="p-4 text-[11px] text-muted-foreground italic">No runs yet.</div>
+            {filteredRuns.length === 0 ? (
+              <div className="p-4 text-[11px] text-muted-foreground italic">
+                {runs.length === 0 ? "No runs yet." : "No runs match this filter."}
+              </div>
             ) : (
               <ul className="divide-y divide-border">
-                {runs.map((r) => {
+                {filteredRuns.map((r) => {
                   const wf = workflows.find((w) => w.id === r.workflow_id);
                   return (
                     <li key={r.id} className="px-4 py-2.5">
