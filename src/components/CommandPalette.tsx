@@ -41,7 +41,7 @@ export function CommandPalette() {
     setOpen(false);
     setQ("");
     if (h.kind === "contact") navigate({ to: "/contacts", search: { open: h.id } as never });
-    else if (h.kind === "deal") navigate({ to: "/dashboard", search: { open: h.id } as never });
+    else if (h.kind === "deal") navigate({ to: "/pipeline", search: { open: h.id } as never });
     else if (h.kind === "task") navigate({ to: "/tasks" });
     else if (h.kind === "event") navigate({ to: "/calendar" });
   }
