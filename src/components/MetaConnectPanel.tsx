@@ -248,7 +248,6 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         </>
       )}
 
-      {!process.env && null}
       <Alert>
         <AlertCircle className="size-4" />
         <AlertTitle className="text-sm">Meta App Review</AlertTitle>
