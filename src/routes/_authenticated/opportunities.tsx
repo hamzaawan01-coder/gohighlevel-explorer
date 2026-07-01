@@ -61,12 +61,22 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "bulk", label: "Bulk Actions" },
 ];
 
+type SavedView = "all" | "mine" | "closing_week" | "stale";
+
+const SAVED_VIEWS: { key: SavedView; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "mine", label: "My deals" },
+  { key: "closing_week", label: "Closing this week" },
+  { key: "stale", label: "Stale > 14d" },
+];
+
 function OpportunitiesPage() {
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("opportunities");
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [search, setSearch] = useState("");
+  const [savedView, setSavedView] = useState<SavedView>("all");
   const [newDealOpen, setNewDealOpen] = useState(false);
   const [openDealId, setOpenDealId] = useState<string | null>(null);
   const [activityMinimized, setActivityMinimized] = useState(false);
