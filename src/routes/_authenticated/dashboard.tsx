@@ -37,6 +37,8 @@ function Dashboard() {
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [newDealOpen, setNewDealOpen] = useState(false);
+  const [openDealId, setOpenDealId] = useState<string | null>(null);
+
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
