@@ -268,6 +268,11 @@ function WorkflowsPage() {
           else await createMut.mutateAsync(input);
         }}
       />
+      <WorkflowTestDialog
+        open={!!testing}
+        onOpenChange={(o) => { if (!o) setTesting(null); }}
+        workflow={testing}
+      />
     </AppShell>
   );
 }
