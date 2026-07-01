@@ -1974,6 +1974,7 @@ export type Database = {
           sub_account_name: string
         }[]
       }
+      render_merge_tags: { Args: { _ctx: Json; _tpl: string }; Returns: string }
       run_workflows: {
         Args: {
           _payload: Json
