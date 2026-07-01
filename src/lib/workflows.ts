@@ -9,7 +9,8 @@ export type WorkflowTrigger =
   | "task.completed"
   | "form.submitted"
   | "task.due_soon"
-  | "contact.stale";
+  | "contact.stale"
+  | "link.clicked";
 
 export const WORKFLOW_TRIGGERS: { value: WorkflowTrigger; label: string }[] = [
   { value: "contact.created", label: "Contact created" },
@@ -19,6 +20,7 @@ export const WORKFLOW_TRIGGERS: { value: WorkflowTrigger; label: string }[] = [
   { value: "form.submitted", label: "Form submitted" },
   { value: "task.due_soon", label: "Task due soon (scheduled)" },
   { value: "contact.stale", label: "Contact went stale (scheduled)" },
+  { value: "link.clicked", label: "Trigger link clicked" },
 ];
 
 export type WorkflowAction =
