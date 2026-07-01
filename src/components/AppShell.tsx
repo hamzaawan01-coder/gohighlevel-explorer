@@ -39,6 +39,7 @@ const salesNav: NavItem[] = [
   { label: "Calendar", icon: Calendar, to: "/calendar" },
   { label: "Conversations", icon: MessageSquare, to: "/conversations" },
   { label: "Reports", icon: BarChart3, to: "/reports" },
+  { label: "Inbox", icon: Inbox, to: "/inbox" },
 ];
 
 const automationNav: NavItem[] = [
