@@ -12,6 +12,7 @@ import {
   LogOut,
   CheckSquare,
   BarChart3,
+  FileText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,6 +42,7 @@ const salesNav: NavItem[] = [
 
 const automationNav: NavItem[] = [
   { label: "Workflows", icon: Workflow, to: "/workflows" },
+  { label: "Forms", icon: FileText, to: "/forms" },
   { label: "Settings", icon: Settings, to: "/settings" },
 ];
 
