@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import {
   Loader2,
   Trash2,
   DollarSign,
   Calendar as CalendarIcon,
   User,
-  Plus,
   Check,
   Circle,
   Upload,
@@ -14,6 +14,8 @@ import {
   ImageIcon,
   Download,
   Save,
+  MessageSquare,
+  ArrowUpRight,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -22,6 +24,8 @@ import { useTenancy } from "@/lib/tenancy";
 import { fetchDeal, updateDeal, deleteDeal, type Deal, type Stage } from "@/lib/pipeline";
 import { fetchTasks, updateTask, type Task } from "@/lib/tasks";
 import { fetchContacts, type Contact } from "@/lib/contacts";
+import { fetchContactMessages } from "@/lib/contact-messages";
+import { CHANNEL_BY_KEY } from "@/lib/channels";
 import {
   fetchDealFiles,
   uploadDealFile,
