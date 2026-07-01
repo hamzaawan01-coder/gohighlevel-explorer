@@ -290,6 +290,38 @@ function ActionChip({ action }: { action: WorkflowAction }) {
   );
 }
 
+function describeWorkflow(w: Workflow): string {
+  const trig = WORKFLOW_TRIGGERS.find((t) => t.value === w.trigger_type)?.label ?? w.trigger_type;
+  const cfg = w.trigger_config as Record<string, string>;
+  let when = `When ${trig.toLowerCase()}`;
+  if (w.trigger_type === "contact.stage_changed" && cfg.to_stage) when += ` to “${cfg.to_stage}”`;
+  if (w.trigger_type === "task.due_soon" && cfg.hours) when += ` (within ${cfg.hours}h)`;
+  if (w.trigger_type === "contact.stale" && cfg.days) when += ` (after ${cfg.days} days)`;
+  const parts: string[] = w.actions.map((a) => {
+    switch (a.type) {
+      case "create_task":
+        return `create a task “${a.title}”`;
+      case "set_contact_stage":
+        return `move contact to ${a.stage}`;
+      case "add_contact_tag":
+        return `tag contact “${a.tag}”`;
+      case "create_notification":
+        return `send an in-app notification`;
+      case "send_email":
+        return `email the contact “${a.subject}”`;
+      case "send_sms":
+        return `text the contact`;
+      default:
+        return "run an action";
+    }
+  });
+  const then = parts.length === 0
+    ? "do nothing yet."
+    : parts.length === 1
+    ? parts[0] + "."
+    : parts.slice(0, -1).join(", ") + ", and " + parts[parts.length - 1] + ".";
+  return `${when}, ${then}`;
+
 const QUICK_TEMPLATES: { key: string; label: string; description: string; input: WorkflowInput }[] = [
   {
     key: "new-lead-sms",
