@@ -34,6 +34,7 @@ import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_auth
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
 import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
+import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
 import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/api/public/oauth.google-ads.callback'
@@ -169,6 +170,12 @@ const ApiPublicLSlugRoute = ApiPublicLSlugRouteImport.update({
   path: '/api/public/l/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSyncGoogleAdsRoute =
+  ApiPublicHooksSyncGoogleAdsRouteImport.update({
+    id: '/api/public/hooks/sync-google-ads',
+    path: '/api/public/hooks/sync-google-ads',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicFormsSlugRoute = ApiPublicFormsSlugRouteImport.update({
   id: '/api/public/forms/$slug',
   path: '/api/public/forms/$slug',
@@ -212,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/contacts/': typeof AuthenticatedContactsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
+  '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
@@ -241,6 +249,7 @@ export interface FileRoutesByTo {
   '/contacts': typeof AuthenticatedContactsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
+  '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
@@ -272,6 +281,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts/': typeof AuthenticatedContactsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
+  '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/contacts/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
+    | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/oauth/google-ads/callback'
   fileRoutesByTo: FileRoutesByTo
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
+    | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/oauth/google-ads/callback'
   id:
@@ -362,6 +374,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
+    | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/oauth/google-ads/callback'
   fileRoutesById: FileRoutesById
@@ -376,6 +389,7 @@ export interface RootRouteChildren {
   ApiPublicProcessOutboundRoute: typeof ApiPublicProcessOutboundRoute
   ApiPublicBookingSlugRoute: typeof ApiPublicBookingSlugRoute
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
+  ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
   ApiPublicOauthGoogleAdsCallbackRoute: typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
@@ -557,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sync-google-ads': {
+      id: '/api/public/hooks/sync-google-ads'
+      path: '/api/public/hooks/sync-google-ads'
+      fullPath: '/api/public/hooks/sync-google-ads'
+      preLoaderRoute: typeof ApiPublicHooksSyncGoogleAdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/forms/$slug': {
       id: '/api/public/forms/$slug'
       path: '/api/public/forms/$slug'
@@ -635,6 +656,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicProcessOutboundRoute: ApiPublicProcessOutboundRoute,
   ApiPublicBookingSlugRoute: ApiPublicBookingSlugRoute,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
+  ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
   ApiPublicOauthGoogleAdsCallbackRoute: ApiPublicOauthGoogleAdsCallbackRoute,
 }

@@ -19,7 +19,7 @@ async function getAccessToken(refreshToken: string) {
 }
 
 async function syncOne(
-  sb: Awaited<ReturnType<typeof import("@/integrations/supabase/client.server").getSupabaseAdmin>> | any,
+  sb: any,
   conn: { id: string; sub_account_id: string; refresh_token: string; external_customer_id: string | null; connected_by: string },
   devToken: string,
 ) {
