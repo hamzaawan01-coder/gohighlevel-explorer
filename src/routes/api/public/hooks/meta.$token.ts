@@ -102,7 +102,6 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
                   sub_account_id: conn.sub_account_id,
                   channel,
                   external_thread_id: externalKey,
-                  subject: `${channel === "instagram" ? "Instagram DM" : "Messenger"} from ${senderId}`,
                   last_message_at: new Date((m.timestamp ?? Date.now())).toISOString(),
                 })
                 .select("id").single();
@@ -115,10 +114,10 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
               sub_account_id: conn.sub_account_id,
               direction: "inbound",
               channel,
-              body_text: m.message.text,
-              external_message_id: m.message.mid,
-              from_address: senderId,
-              to_address: pageId,
+              kind: channel === "instagram" ? "instagram_log" : "messenger_log",
+              body: m.message.text,
+              external_id: m.message.mid,
+              sender_handle: senderId,
             });
           }
 
