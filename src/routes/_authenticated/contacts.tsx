@@ -10,8 +10,10 @@ import {
   createContact,
   updateContact,
   deleteContact,
+  LIFECYCLE_STAGES,
   type Contact,
   type ContactInput,
+  type LifecycleStage,
 } from "@/lib/contacts";
 import { useTenancy } from "@/lib/tenancy";
 import { toast } from "sonner";
@@ -33,6 +35,7 @@ function ContactsPage() {
   const [editing, setEditing] = useState<Contact | null>(null);
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [activeStage, setActiveStage] = useState<LifecycleStage | "all">("all");
   const subId = useTenancy((s) => s.currentSubAccountId);
 
   useEffect(() => {
