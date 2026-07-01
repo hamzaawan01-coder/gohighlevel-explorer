@@ -73,7 +73,8 @@ function WordPressPage() {
 
   return (
     <AppShell>
-      <div className="max-w-4xl mx-auto p-8 space-y-6">
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-4xl mx-auto p-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
             <Webhook className="size-6" /> WordPress
@@ -92,6 +93,7 @@ function WordPressPage() {
         ) : (
           <WebhooksPanel subId={subId} userId={userId} />
         )}
+        </div>
       </div>
     </AppShell>
   );
