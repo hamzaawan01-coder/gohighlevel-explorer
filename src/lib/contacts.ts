@@ -37,6 +37,16 @@ export async function fetchContacts(subAccountId: string): Promise<Contact[]> {
   return (data ?? []) as Contact[];
 }
 
+export async function fetchContact(id: string): Promise<Contact> {
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data as Contact;
+}
+
 export type ContactInput = {
   first_name?: string | null;
   last_name?: string | null;
