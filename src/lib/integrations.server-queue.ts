@@ -243,7 +243,7 @@ export async function processOne(id: string): Promise<void> {
         provider_message_id: outcome.providerId ?? null,
         error: null,
         next_attempt_at: null,
-      })
+      } as never)
       .eq("id", row.id);
     return;
   }
@@ -261,8 +261,9 @@ export async function processOne(id: string): Promise<void> {
       next_attempt_at: finalFailure
         ? null
         : new Date(Date.now() + backoffMs(nextAttempt)).toISOString(),
-    })
+    } as never)
     .eq("id", row.id);
+
 }
 
 export async function drainAll(): Promise<{
