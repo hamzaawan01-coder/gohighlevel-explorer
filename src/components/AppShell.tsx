@@ -53,6 +53,7 @@ const automationNav: NavItem[] = [
   { label: "WordPress", icon: Webhook, to: "/settings/wordpress" },
   { label: "Booking pages", icon: CalendarClock, to: "/settings/booking" },
   { label: "Integrations", icon: Settings, to: "/settings/integrations" },
+  { label: "Quiet hours", icon: Settings, to: "/settings/messaging" },
 ];
 
 export function AppShell({

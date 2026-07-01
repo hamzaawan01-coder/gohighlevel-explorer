@@ -1183,6 +1183,8 @@ export type Database = {
           next_attempt_at: string
           provider: string | null
           provider_message_id: string | null
+          scheduled_at: string | null
+          send_after_quiet_hours: boolean
           sent_at: string | null
           status: Database["public"]["Enums"]["outbound_status"]
           sub_account_id: string
@@ -1203,6 +1205,8 @@ export type Database = {
           next_attempt_at?: string
           provider?: string | null
           provider_message_id?: string | null
+          scheduled_at?: string | null
+          send_after_quiet_hours?: boolean
           sent_at?: string | null
           status?: Database["public"]["Enums"]["outbound_status"]
           sub_account_id: string
@@ -1223,6 +1227,8 @@ export type Database = {
           next_attempt_at?: string
           provider?: string | null
           provider_message_id?: string | null
+          scheduled_at?: string | null
+          send_after_quiet_hours?: boolean
           sent_at?: string | null
           status?: Database["public"]["Enums"]["outbound_status"]
           sub_account_id?: string
@@ -1513,6 +1519,10 @@ export type Database = {
           id: string
           industry: string | null
           name: string
+          quiet_hours_enabled: boolean
+          quiet_hours_end: number
+          quiet_hours_start: number
+          quiet_hours_timezone: string
           slug: string | null
           timezone: string
           updated_at: string
@@ -1524,6 +1534,10 @@ export type Database = {
           id?: string
           industry?: string | null
           name: string
+          quiet_hours_enabled?: boolean
+          quiet_hours_end?: number
+          quiet_hours_start?: number
+          quiet_hours_timezone?: string
           slug?: string | null
           timezone?: string
           updated_at?: string
@@ -1535,6 +1549,10 @@ export type Database = {
           id?: string
           industry?: string | null
           name?: string
+          quiet_hours_enabled?: boolean
+          quiet_hours_end?: number
+          quiet_hours_start?: number
+          quiet_hours_timezone?: string
           slug?: string | null
           timezone?: string
           updated_at?: string
@@ -1945,6 +1963,7 @@ export type Database = {
         Args: { _sub: string; _user: string }
         Returns: boolean
       }
+      in_quiet_hours: { Args: { _at: string; _sub: string }; Returns: boolean }
       is_subaccount_admin: {
         Args: { _sub: string; _user: string }
         Returns: boolean
@@ -1961,6 +1980,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      next_send_time: { Args: { _at: string; _sub: string }; Returns: string }
       preview_invitation: {
         Args: { _token: string }
         Returns: {
