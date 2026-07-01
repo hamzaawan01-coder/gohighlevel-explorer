@@ -251,6 +251,12 @@ function ActionChip({ action }: { action: WorkflowAction }) {
         return { icon: Tag, label: action.tag || "tag", tone: "bg-amber-500/10 text-amber-600 dark:text-amber-400" };
       case "create_notification":
         return { icon: BellRing, label: action.title || "Notify", tone: "bg-secondary text-foreground" };
+      case "send_email":
+        return { icon: BellRing, label: action.subject || "Email", tone: "bg-blue-500/10 text-blue-600 dark:text-blue-400" };
+      case "send_sms":
+        return { icon: BellRing, label: (action.body ?? "SMS").slice(0, 20), tone: "bg-green-500/10 text-green-600 dark:text-green-400" };
+      default:
+        return { icon: BellRing, label: "Action", tone: "bg-secondary text-foreground" };
     }
   })();
   const Icon = config.icon;
