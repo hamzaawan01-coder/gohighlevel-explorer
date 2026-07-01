@@ -24,6 +24,8 @@ import {
   fetchAdCampaigns, upsertAdCampaign, deleteAdCampaign, type AdCampaign, type AdPlatform, type AdCampaignStatus,
 } from "@/lib/marketing";
 import { sendCampaign } from "@/lib/marketing.functions";
+import { startGoogleAdsConnect, syncGoogleAds } from "@/lib/ads-integrations.functions";
+import { fetchAdConnections, deleteAdConnection, updateAdConnectionCustomer, type AdPlatformConnection } from "@/lib/ads-integrations";
 import { LIFECYCLE_STAGES } from "@/lib/contacts";
 
 export const Route = createFileRoute("/_authenticated/marketing")({
@@ -575,8 +577,10 @@ function AdsTab({ subId, userId }: { subId: string; userId: string }) {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <p className="text-xs text-muted-foreground">Track ad spend across platforms. Enter numbers manually or wire up an API later.</p>
+      <AdConnectionsPanel subId={subId} />
+
+      <div className="flex justify-between items-center mb-4 mt-6">
+        <p className="text-xs text-muted-foreground">Track ad spend across platforms. Connected platforms sync automatically; other platforms can be entered manually.</p>
         <Button size="sm" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-3.5 mr-1.5" />New campaign</Button>
       </div>
 
