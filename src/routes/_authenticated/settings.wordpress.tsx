@@ -8,8 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Copy, Trash2, Webhook, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Copy,
+  Trash2,
+  Webhook,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  ArrowRight,
+  Plus,
+  X,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenancy } from "@/lib/tenancy";
 import {
@@ -20,7 +31,15 @@ import {
   webhookUrl,
   type WordPressWebhook,
 } from "@/lib/wordpress-webhooks";
+import {
+  BUILTIN_ALIASES,
+  STANDARD_KEYS,
+  mapPayload,
+  type FieldMap,
+  type StandardKey,
+} from "@/lib/wordpress-field-map";
 import { formatDistanceToNow } from "date-fns";
+
 
 export const Route = createFileRoute("/_authenticated/settings/wordpress")({
   head: () => ({ meta: [{ title: "WordPress — Settings" }] }),
@@ -236,6 +255,8 @@ function WebhookRow({ hook, subId }: { hook: WordPressWebhook; subId: string }) 
         </div>
       )}
 
+      <FieldMappingPreview hook={hook} subId={subId} />
+
       <SetupInstructions url={url} secret={hook.secret} />
     </div>
   );
@@ -447,3 +468,307 @@ add_action('wpcf7_mail_sent', function ($contact_form) {
     ]);
 });`;
 }
+
+const SAMPLE_JSON = `{
+  "your-name": "Jane Doe",
+  "your-email": "jane@example.com",
+  "your-phone": "+1 415 555 0134",
+  "budget": "$5,000",
+  "service": "Website redesign",
+  "your-message": "Hi, please call me back."
+}`;
+
+function parseTestPayload(input: string): { data: Record<string, unknown> | null; error: string | null } {
+  const text = input.trim();
+  if (!text) return { data: null, error: "Paste a sample payload to preview." };
+  // JSON
+  if (text.startsWith("{") || text.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return { data: parsed as Record<string, unknown>, error: null };
+      }
+      return { data: null, error: "JSON must be an object, not an array." };
+    } catch (e) {
+      return { data: null, error: e instanceof Error ? e.message : "Invalid JSON" };
+    }
+  }
+  // key=value & querystring
+  try {
+    const params = new URLSearchParams(text.replace(/\n+/g, "&"));
+    const out: Record<string, unknown> = {};
+    params.forEach((v, k) => {
+      if (k) out[k] = v;
+    });
+    if (Object.keys(out).length === 0) return { data: null, error: "No key=value pairs found." };
+    return { data: out, error: null };
+  } catch {
+    return { data: null, error: "Could not parse payload." };
+  }
+}
+
+function FieldMappingPreview({ hook, subId }: { hook: WordPressWebhook; subId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState(SAMPLE_JSON);
+  const [draft, setDraft] = useState<FieldMap>(() => (hook.field_map ?? {}) as FieldMap);
+
+  useEffect(() => {
+    setDraft((hook.field_map ?? {}) as FieldMap);
+  }, [hook.field_map]);
+
+  const parsed = useMemo(() => parseTestPayload(input), [input]);
+  const preview = useMemo(
+    () => (parsed.data ? mapPayload(parsed.data, draft) : null),
+    [parsed.data, draft],
+  );
+
+  const hasChanges = useMemo(() => {
+    const current = (hook.field_map ?? {}) as FieldMap;
+    return JSON.stringify(normalizeMap(current)) !== JSON.stringify(normalizeMap(draft));
+  }, [hook.field_map, draft]);
+
+  const save = useMutation({
+    mutationFn: () => updateWebhook(hook.id, { field_map: normalizeMap(draft) as Record<string, string[]> }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wp-webhooks", subId] });
+      toast.success("Field mapping saved");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to save"),
+  });
+
+  if (!open) {
+    return (
+      <div className="pt-2">
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+          Preview field mapping
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-border p-4 space-y-4 bg-muted/30">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="font-medium text-sm">Field mapping preview</div>
+          <p className="text-xs text-muted-foreground">
+            Paste a sample submission (JSON or <code>key=value</code>) to see exactly what will
+            happen. Add custom aliases below and re-check.
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+          <X className="size-4" />
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Sample payload</Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs"
+              onClick={() => setInput(SAMPLE_JSON)}
+            >
+              Reset to sample
+            </Button>
+          </div>
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            rows={12}
+            className="font-mono text-xs"
+            spellCheck={false}
+          />
+          {parsed.error && (
+            <div className="text-xs text-destructive flex items-center gap-1">
+              <AlertCircle className="size-3" /> {parsed.error}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs">Result</Label>
+          <div className="rounded-md border border-border bg-background text-xs">
+            {!preview ? (
+              <div className="p-4 text-muted-foreground">No preview yet.</div>
+            ) : preview.rows.length === 0 ? (
+              <div className="p-4 text-muted-foreground">Payload has no fields.</div>
+            ) : (
+              <div className="divide-y divide-border">
+                {preview.rows.map((r, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 p-2">
+                    <div className="min-w-0">
+                      <div className="font-mono truncate">{r.rawKey}</div>
+                      <div className="text-muted-foreground truncate">{r.value || "—"}</div>
+                    </div>
+                    <ArrowRight className="size-3 text-muted-foreground" />
+                    <div className="min-w-0">
+                      <TargetBadge target={r.target} />
+                      <div className="text-muted-foreground text-[10px] mt-0.5 truncate">
+                        {r.reason}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {preview && preview.splitFullName && (
+            <div className="text-xs text-muted-foreground">
+              Full name detected — split into first and last name automatically.
+            </div>
+          )}
+
+          {preview && (
+            <div className="text-xs text-muted-foreground pt-1">
+              Contact fields:{" "}
+              {STANDARD_KEYS.filter((k) => preview.mapped[k]).map((k) => (
+                <Badge key={k} variant="secondary" className="mr-1 mb-1 font-normal">
+                  {k}: {(preview.mapped[k] ?? "").slice(0, 24)}
+                </Badge>
+              ))}
+              {STANDARD_KEYS.every((k) => !preview.mapped[k]) && (
+                <span className="italic">nothing mapped — no contact would be created.</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-3 pt-2 border-t border-border">
+        <div>
+          <div className="font-medium text-sm">Custom field aliases</div>
+          <p className="text-xs text-muted-foreground">
+            Add your form's actual field names so they map to the right contact field. Built-in
+            aliases always apply too.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {STANDARD_KEYS.map((k) => (
+            <AliasEditor
+              key={k}
+              stdKey={k}
+              custom={draft[k] ?? []}
+              onChange={(next) => setDraft((d) => ({ ...d, [k]: next }))}
+            />
+          ))}
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={!hasChanges || save.isPending}
+            onClick={() => setDraft((hook.field_map ?? {}) as FieldMap)}
+          >
+            Discard
+          </Button>
+          <Button size="sm" disabled={!hasChanges || save.isPending} onClick={() => save.mutate()}>
+            {save.isPending ? "Saving…" : "Save mapping"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function normalizeMap(m: FieldMap): FieldMap {
+  const out: FieldMap = {};
+  for (const k of STANDARD_KEYS) {
+    const arr = (m[k] ?? []).map((s) => s.trim()).filter(Boolean);
+    if (arr.length) out[k] = Array.from(new Set(arr));
+  }
+  return out;
+}
+
+function TargetBadge({ target }: { target: StandardKey | "extra" | "ignored" }) {
+  if (target === "extra") {
+    return (
+      <Badge variant="outline" className="font-normal">
+        payload extra
+      </Badge>
+    );
+  }
+  if (target === "ignored") {
+    return (
+      <Badge variant="outline" className="font-normal text-muted-foreground">
+        ignored
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="secondary" className="font-normal gap-1">
+      <CheckCircle2 className="size-3 text-green-500" /> {target}
+    </Badge>
+  );
+}
+
+function AliasEditor({
+  stdKey,
+  custom,
+  onChange,
+}: {
+  stdKey: StandardKey;
+  custom: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [val, setVal] = useState("");
+  const add = () => {
+    const v = val.trim();
+    if (!v) return;
+    if (custom.includes(v)) {
+      setVal("");
+      return;
+    }
+    onChange([...custom, v]);
+    setVal("");
+  };
+  return (
+    <div className="rounded-md border border-border bg-background p-3 space-y-2">
+      <div className="text-xs font-medium">{stdKey}</div>
+      <div className="text-[10px] text-muted-foreground">
+        Built-in: {BUILTIN_ALIASES[stdKey].join(", ")}
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {custom.length === 0 ? (
+          <span className="text-[10px] text-muted-foreground italic">No custom aliases</span>
+        ) : (
+          custom.map((a) => (
+            <Badge key={a} variant="secondary" className="gap-1 font-normal">
+              {a}
+              <button
+                type="button"
+                onClick={() => onChange(custom.filter((x) => x !== a))}
+                className="hover:text-destructive"
+                aria-label={`Remove ${a}`}
+              >
+                <X className="size-3" />
+              </button>
+            </Badge>
+          ))
+        )}
+      </div>
+      <div className="flex gap-1">
+        <Input
+          value={val}
+          placeholder="e.g. form_field_abc123"
+          onChange={(e) => setVal(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+          className="h-7 text-xs"
+        />
+        <Button variant="outline" size="sm" className="h-7" onClick={add} disabled={!val.trim()}>
+          <Plus className="size-3" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
