@@ -1166,6 +1166,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      scan_time_workflows: { Args: never; Returns: undefined }
     }
     Enums: {
       agency_role: "owner" | "admin"
@@ -1181,6 +1182,8 @@ export type Database = {
         | "deal.stage_changed"
         | "task.completed"
         | "form.submitted"
+        | "task.due_soon"
+        | "contact.stale"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1321,6 +1324,8 @@ export const Constants = {
         "deal.stage_changed",
         "task.completed",
         "form.submitted",
+        "task.due_soon",
+        "contact.stale",
       ],
     },
   },

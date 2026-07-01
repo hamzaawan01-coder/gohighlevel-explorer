@@ -144,6 +144,30 @@ export function WorkflowBuilder({
                 </Select>
               </div>
             )}
+            {trigger === "task.due_soon" && (
+              <div className="space-y-1">
+                <Label className="text-[11px]">Hours before due</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={triggerConfig.hours ?? "24"}
+                  onChange={(e) => setTriggerConfig({ hours: e.target.value })}
+                />
+                <p className="text-[10px] text-muted-foreground">Scanned every 15 minutes. Fires once per task per window.</p>
+              </div>
+            )}
+            {trigger === "contact.stale" && (
+              <div className="space-y-1">
+                <Label className="text-[11px]">Days without activity</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={triggerConfig.days ?? "30"}
+                  onChange={(e) => setTriggerConfig({ days: e.target.value })}
+                />
+                <p className="text-[10px] text-muted-foreground">Scanned every 15 minutes. Fires once per contact per window.</p>
+              </div>
+            )}
           </div>
 
           <div className="rounded-md border border-border p-3 space-y-3">
