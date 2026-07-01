@@ -38,7 +38,6 @@ function DealDetailPage() {
 
   return (
     <AppShell
-      title="Deal"
       headerActions={
         <Link
           to="/pipeline"
