@@ -577,6 +577,7 @@ export type Database = {
           last_name: string | null
           lead_source: string | null
           lifecycle_stage: Database["public"]["Enums"]["contact_lifecycle_stage"]
+          meta_lead_id: string | null
           notes: string | null
           owner_id: string
           phone: string | null
@@ -593,6 +594,7 @@ export type Database = {
           last_name?: string | null
           lead_source?: string | null
           lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
+          meta_lead_id?: string | null
           notes?: string | null
           owner_id: string
           phone?: string | null
@@ -609,6 +611,7 @@ export type Database = {
           last_name?: string | null
           lead_source?: string | null
           lifecycle_stage?: Database["public"]["Enums"]["contact_lifecycle_stage"]
+          meta_lead_id?: string | null
           notes?: string | null
           owner_id?: string
           phone?: string | null
@@ -631,6 +634,7 @@ export type Database = {
           channel: Database["public"]["Enums"]["message_channel"]
           contact_id: string
           created_at: string
+          external_thread_id: string | null
           id: string
           last_message_at: string | null
           sub_account_id: string
@@ -640,6 +644,7 @@ export type Database = {
           channel?: Database["public"]["Enums"]["message_channel"]
           contact_id: string
           created_at?: string
+          external_thread_id?: string | null
           id?: string
           last_message_at?: string | null
           sub_account_id: string
@@ -649,6 +654,7 @@ export type Database = {
           channel?: Database["public"]["Enums"]["message_channel"]
           contact_id?: string
           created_at?: string
+          external_thread_id?: string | null
           id?: string
           last_message_at?: string | null
           sub_account_id?: string
@@ -1061,6 +1067,208 @@ export type Database = {
           },
           {
             foreignKeyName: "messages_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_ad_accounts: {
+        Row: {
+          ad_account_id: string
+          connection_id: string
+          created_at: string
+          currency: string | null
+          id: string
+          name: string | null
+          sub_account_id: string
+          timezone_name: string | null
+          updated_at: string
+          use_for_reports: boolean
+        }
+        Insert: {
+          ad_account_id: string
+          connection_id: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          name?: string | null
+          sub_account_id: string
+          timezone_name?: string | null
+          updated_at?: string
+          use_for_reports?: boolean
+        }
+        Update: {
+          ad_account_id?: string
+          connection_id?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          name?: string | null
+          sub_account_id?: string
+          timezone_name?: string | null
+          updated_at?: string
+          use_for_reports?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_ad_accounts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "meta_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_ad_accounts_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          created_by: string
+          granted_scopes: string[]
+          id: string
+          meta_user_id: string
+          meta_user_name: string | null
+          sub_account_id: string
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          created_by: string
+          granted_scopes?: string[]
+          id?: string
+          meta_user_id: string
+          meta_user_name?: string | null
+          sub_account_id: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          created_by?: string
+          granted_scopes?: string[]
+          id?: string
+          meta_user_id?: string
+          meta_user_name?: string | null
+          sub_account_id?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_connections_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_oauth_states: {
+        Row: {
+          created_at: string
+          expires_at: string
+          redirect_after: string | null
+          state: string
+          sub_account_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          redirect_after?: string | null
+          state: string
+          sub_account_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          redirect_after?: string | null
+          state?: string
+          sub_account_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_oauth_states_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_pages: {
+        Row: {
+          category: string | null
+          connection_id: string
+          created_at: string
+          id: string
+          instagram_business_account_id: string | null
+          page_access_token: string
+          page_id: string
+          page_name: string
+          route_instagram_to_inbox: boolean
+          route_messenger_to_inbox: boolean
+          sub_account_id: string
+          sync_lead_ads: boolean
+          updated_at: string
+          webhook_subscribed: boolean
+        }
+        Insert: {
+          category?: string | null
+          connection_id: string
+          created_at?: string
+          id?: string
+          instagram_business_account_id?: string | null
+          page_access_token: string
+          page_id: string
+          page_name: string
+          route_instagram_to_inbox?: boolean
+          route_messenger_to_inbox?: boolean
+          sub_account_id: string
+          sync_lead_ads?: boolean
+          updated_at?: string
+          webhook_subscribed?: boolean
+        }
+        Update: {
+          category?: string | null
+          connection_id?: string
+          created_at?: string
+          id?: string
+          instagram_business_account_id?: string | null
+          page_access_token?: string
+          page_id?: string
+          page_name?: string
+          route_instagram_to_inbox?: boolean
+          route_messenger_to_inbox?: boolean
+          sub_account_id?: string
+          sync_lead_ads?: boolean
+          updated_at?: string
+          webhook_subscribed?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_pages_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "meta_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_pages_sub_account_id_fkey"
             columns: ["sub_account_id"]
             isOneToOne: false
             referencedRelation: "sub_accounts"
@@ -2023,7 +2231,12 @@ export type Database = {
         | "linkedin"
         | "tiktok"
       message_direction: "inbound" | "outbound"
-      message_kind: "note" | "email_log" | "sms_log"
+      message_kind:
+        | "note"
+        | "email_log"
+        | "sms_log"
+        | "messenger_log"
+        | "instagram_log"
       outbound_channel: "email" | "sms"
       outbound_status: "queued" | "sending" | "sent" | "failed"
       social_platform: "facebook" | "instagram" | "linkedin" | "twitter"
@@ -2186,7 +2399,13 @@ export const Constants = {
         "tiktok",
       ],
       message_direction: ["inbound", "outbound"],
-      message_kind: ["note", "email_log", "sms_log"],
+      message_kind: [
+        "note",
+        "email_log",
+        "sms_log",
+        "messenger_log",
+        "instagram_log",
+      ],
       outbound_channel: ["email", "sms"],
       outbound_status: ["queued", "sending", "sent", "failed"],
       social_platform: ["facebook", "instagram", "linkedin", "twitter"],

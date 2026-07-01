@@ -40,8 +40,10 @@ import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
+import { Route as ApiPublicOauthMetaCallbackRouteImport } from './routes/api/public/oauth.meta.callback'
 import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/api/public/oauth.google-ads.callback'
 import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
+import { Route as ApiPublicHooksMetaTokenRouteImport } from './routes/api/public/hooks/meta.$token'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -208,6 +210,12 @@ const ApiPublicBookingSlugRoute = ApiPublicBookingSlugRouteImport.update({
   path: '/api/public/booking/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOauthMetaCallbackRoute =
+  ApiPublicOauthMetaCallbackRouteImport.update({
+    id: '/api/public/oauth/meta/callback',
+    path: '/api/public/oauth/meta/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicOauthGoogleAdsCallbackRoute =
   ApiPublicOauthGoogleAdsCallbackRouteImport.update({
     id: '/api/public/oauth/google-ads/callback',
@@ -220,6 +228,11 @@ const ApiPublicHooksWordpressTokenRoute =
     path: '/api/public/hooks/wordpress/$token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksMetaTokenRoute = ApiPublicHooksMetaTokenRouteImport.update({
+  id: '/api/public/hooks/meta/$token',
+  path: '/api/public/hooks/meta/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -252,8 +265,10 @@ export interface FileRoutesByFullPath {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
+  '/api/public/oauth/meta/callback': typeof ApiPublicOauthMetaCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -286,8 +301,10 @@ export interface FileRoutesByTo {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
+  '/api/public/oauth/meta/callback': typeof ApiPublicOauthMetaCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -322,8 +339,10 @@ export interface FileRoutesById {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
+  '/api/public/oauth/meta/callback': typeof ApiPublicOauthMetaCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -358,8 +377,10 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
+    | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
+    | '/api/public/oauth/meta/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -392,8 +413,10 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
+    | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
+    | '/api/public/oauth/meta/callback'
   id:
     | '__root__'
     | '/'
@@ -427,8 +450,10 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
+    | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
+    | '/api/public/oauth/meta/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -443,8 +468,10 @@ export interface RootRouteChildren {
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
   ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
+  ApiPublicHooksMetaTokenRoute: typeof ApiPublicHooksMetaTokenRoute
   ApiPublicHooksWordpressTokenRoute: typeof ApiPublicHooksWordpressTokenRoute
   ApiPublicOauthGoogleAdsCallbackRoute: typeof ApiPublicOauthGoogleAdsCallbackRoute
+  ApiPublicOauthMetaCallbackRoute: typeof ApiPublicOauthMetaCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -666,6 +693,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/oauth/meta/callback': {
+      id: '/api/public/oauth/meta/callback'
+      path: '/api/public/oauth/meta/callback'
+      fullPath: '/api/public/oauth/meta/callback'
+      preLoaderRoute: typeof ApiPublicOauthMetaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/oauth/google-ads/callback': {
       id: '/api/public/oauth/google-ads/callback'
       path: '/api/public/oauth/google-ads/callback'
@@ -678,6 +712,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/wordpress/$token'
       fullPath: '/api/public/hooks/wordpress/$token'
       preLoaderRoute: typeof ApiPublicHooksWordpressTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/meta/$token': {
+      id: '/api/public/hooks/meta/$token'
+      path: '/api/public/hooks/meta/$token'
+      fullPath: '/api/public/hooks/meta/$token'
+      preLoaderRoute: typeof ApiPublicHooksMetaTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -745,8 +786,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
   ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
+  ApiPublicHooksMetaTokenRoute: ApiPublicHooksMetaTokenRoute,
   ApiPublicHooksWordpressTokenRoute: ApiPublicHooksWordpressTokenRoute,
   ApiPublicOauthGoogleAdsCallbackRoute: ApiPublicOauthGoogleAdsCallbackRoute,
+  ApiPublicOauthMetaCallbackRoute: ApiPublicOauthMetaCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

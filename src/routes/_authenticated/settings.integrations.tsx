@@ -16,7 +16,8 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Mail, MessageSquare, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { Mail, MessageSquare, CheckCircle2, AlertCircle, ExternalLink, Facebook } from "lucide-react";
+import { MetaConnectPanel } from "@/components/MetaConnectPanel";
 import { useTenancy } from "@/lib/tenancy";
 import {
   fetchIntegrations,
@@ -52,14 +53,16 @@ function IntegrationsPage() {
             Select a workspace to configure integrations.
           </div>
         ) : (
-          <Tabs defaultValue="email" className="w-full">
+          <Tabs defaultValue={new URLSearchParams(typeof window !== "undefined" ? window.location.search : "").get("tab") ?? "email"} className="w-full">
             <TabsList>
               <TabsTrigger value="email"><Mail className="size-4 mr-2" />Email</TabsTrigger>
               <TabsTrigger value="sms"><MessageSquare className="size-4 mr-2" />SMS</TabsTrigger>
+              <TabsTrigger value="meta"><Facebook className="size-4 mr-2" />Meta</TabsTrigger>
               <TabsTrigger value="history">Send history</TabsTrigger>
             </TabsList>
             <TabsContent value="email"><EmailPanel subId={subId} /></TabsContent>
             <TabsContent value="sms"><SmsPanel subId={subId} /></TabsContent>
+            <TabsContent value="meta"><MetaConnectPanel subId={subId} /></TabsContent>
             <TabsContent value="history"><HistoryPanel subId={subId} /></TabsContent>
           </Tabs>
         )}

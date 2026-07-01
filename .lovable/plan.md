@@ -1,107 +1,68 @@
-# Plan: Workflows, Conversations, Calendar (v1)
 
-Three placeholders in the sidebar become real, in-app features. All data is scoped to the current sub-account and gated by the existing `has_subaccount_access` RLS helper. No external SMS/email/Google Calendar integrations in v1 — those are a follow-up.
+## Step 1 — Create your Meta App (you do this, ~10 minutes)
 
-## Scope
+Before I write code, do this so I have the App ID + Secret to wire up:
 
-### C1. Workflows (automation engine)
-Trigger → Action rules that fire from database events.
+1. Go to https://developers.facebook.com/apps → **Create App** → type **Business** → give it a name (e.g. "GoHighLevel Explorer").
+2. In **App settings → Basic**, copy the **App ID** and click **Show** on **App Secret**.
+3. In **App settings → Basic → Add Platform → Website**, set site URL to `https://gohighlevel-explorer.lovable.app`.
+4. **Add these products** from the left sidebar:
+   - Facebook Login for Business
+   - Marketing API
+   - Messenger
+   - Instagram (Instagram Graph API)
+   - Webhooks
+5. Under **Facebook Login for Business → Settings**, add these **Valid OAuth Redirect URIs**:
+   - `https://gohighlevel-explorer.lovable.app/api/public/oauth.meta.callback`
+   - `https://id-preview--6f2df40d-8f6c-4778-afb5-36698fa9ad31.lovable.app/api/public/oauth.meta.callback` (for preview testing)
+6. Under **App Roles → Roles**, add your Facebook account as a **Tester** so you can use it before Meta approves permissions.
+7. Under **App Review → Permissions and Features**, request (later, when ready to go live):
+   - `ads_read`, `ads_management`, `leads_retrieval`
+   - `pages_show_list`, `pages_read_engagement`, `pages_manage_metadata`, `pages_messaging`, `pages_manage_ads`
+   - `instagram_basic`, `instagram_manage_messages`, `instagram_manage_comments`
+   - Business Verification is required for the advanced scopes.
+8. Come back and tell me you're done — I'll ask for the App ID + Secret via the secure form.
 
-- **Triggers (v1):**
-  - `contact.created`
-  - `contact.stage_changed` (lifecycle_stage transitions to a chosen stage)
-  - `deal.stage_changed` (moved into a chosen pipeline stage)
-  - `task.completed`
-- **Actions (v1):**
-  - `create_task` (title, priority, due-in-N-days, assignee = trigger's owner)
-  - `set_contact_stage` (change lifecycle_stage)
-  - `add_contact_tag`
-  - `create_notification` (in-app bell)
-- Execution model: Postgres `AFTER INSERT/UPDATE` triggers on `contacts`, `deals`, `tasks` call a SECURITY DEFINER dispatcher that reads matching enabled workflows for the row's `sub_account_id` and performs the actions in the same transaction. Fast, no polling, no external HTTP.
-- Every run is logged in `workflow_runs` (workflow_id, trigger_row, status, error, ran_at) so the UI can show recent activity.
-- UI: `/workflows` list + a builder dialog (name, trigger dropdown + condition, ordered actions).
+## Step 2 — What I'll build (all in one pass, ~12 files)
 
-### C2. Notifications (dependency of Workflows)
-- `notifications` table (user_id, sub_account_id, title, body, link, read_at).
-- Bell in the header shows unread count and a dropdown of recent items.
-- Realtime subscription so a workflow-created notification pops instantly.
+### Database (1 migration)
+- `meta_connections` table: `sub_account_id`, `meta_user_id`, `access_token` (long-lived), `token_expires_at`, `granted_scopes[]`, timestamps. RLS scoped by sub-account.
+- `meta_pages` table: connected FB Pages / IG Business Accounts per connection, with per-page `page_access_token`, `webhook_subscribed`, `instagram_business_account_id`.
+- `meta_ad_accounts` table: linked ad accounts (`act_...`), currency, timezone.
+- Extend `contacts` with `meta_lead_id` (unique per sub-account) so we don't duplicate leads.
+- Extend `messages` / `conversations` to accept `channel = 'messenger'` / `'instagram'` with `external_message_id`.
+- All tables: `GRANT` block + RLS policies via `has_subaccount_access`.
 
-### D1. Conversations (internal activity thread per contact)
-- `conversations` table: one thread per contact.
-- `messages` table: author_user_id, body, kind (`note` | `email_log` | `sms_log` — only `note` is user-writable in v1; the others exist so future integrations slot in without a migration).
-- `/conversations` route: left pane = contacts with unread/latest snippet, right pane = thread + composer.
-- Contact drawer/detail page gets an "Activity" tab reusing the same thread.
+### Server code
+- `src/lib/meta.server.ts` — Graph API helpers: token exchange (short → long-lived), page token fetch, subscribe page to webhooks, `GET /me/adaccounts`, `GET /{ad_account}/insights`, `POST /{page}/messages`, `GET /{form}/leads`. All wrapped with typed errors.
+- `src/lib/meta.functions.ts` — `createServerFn` wrappers used by the UI: `startMetaOAuth`, `listMetaPages`, `linkMetaPage`, `unlinkMetaConnection`, `fetchMetaAdInsights`, `sendMetaMessage`, `listMetaLeadForms`, `subscribeMetaLeadForm`.
+- `src/routes/api/public/oauth.meta.callback.ts` — OAuth code-exchange route. Verifies `state` (HMAC-signed with `META_APP_SECRET`), exchanges code for long-lived token, stores in `meta_connections`, redirects to `/settings/integrations?meta=connected`.
+- `src/routes/api/public/hooks/meta.$token.ts` — single webhook endpoint for all three products. Handles `GET` challenge verification (`hub.challenge`), verifies `X-Hub-Signature-256` HMAC on `POST`, dispatches by `object` field:
+  - `object: page` → messenger messages → insert into `messages` + upsert conversation.
+  - `object: instagram` → IG DMs → same conversation table with `channel: 'instagram'`.
+  - `object: page` + `field: leadgen` → fetch lead via Graph API, upsert `contacts` with `meta_lead_id`, fire existing `form.submitted` workflow trigger.
+- `src/lib/meta-webhook-secret.ts` — deterministic per-sub-account webhook verify token so Meta's URL is stable.
 
-### D2. Calendar
-- `calendar_events` table: title, description, starts_at, ends_at, all_day, location, contact_id (optional), deal_id (optional), owner_user_id.
-- `/calendar` route: month + agenda view using shadcn Calendar + a day-panel list. Create/edit dialog.
-- Tasks with a `due_at` are surfaced on the calendar read-only (union query) so the agenda shows both.
-- Google Calendar sync is explicitly out of scope; hook point (an `external_id` column) is included for later.
+### UI
+- New tab in `src/routes/_authenticated/settings.integrations.tsx` → **Meta** (alongside Email / SMS). Shows:
+  - "Connect Facebook" button → opens `startMetaOAuth` → redirects to Facebook.
+  - Once connected: list of Pages/IG accounts with per-page toggles for "Sync leads", "Route Messenger to inbox", "Route Instagram DMs to inbox".
+  - List of ad accounts with a "Use for Reports" checkbox.
+  - Webhook callback URL + verify token displayed so you can paste them into Meta's Webhooks product UI (Meta requires you to add the callback URL there manually per product).
+- `src/components/MetaConnectPanel.tsx` extracted for the tab body.
+- `src/routes/_authenticated/reports.tsx` gets a "Meta Ads spend" widget when at least one ad account is linked (server-side fetch of last-30-day insights).
+- `src/routes/_authenticated/conversations.tsx` — Messenger/IG channel filter chips + provider badges on messages; send-reply path routes to `sendMetaMessage` when `conversation.channel === 'messenger' | 'instagram'`.
 
-## Explicitly deferred
-- Email/SMS sending, WhatsApp, phone/voice.
-- Google Calendar two-way sync.
-- Time-based / cron triggers ("3 days after created"). Only immediate DB-event triggers in v1.
-- Client portal (B) stays on hold.
+### Secrets
+- `META_APP_ID` (public — I'll store via `set_secret` once you give it to me; it's also fine as `VITE_META_APP_ID` for the OAuth redirect).
+- `META_APP_SECRET` (via `add_secret` secure form).
+- `META_WEBHOOK_VERIFY_TOKEN` (I'll generate via `generate_secret`).
 
-## Technical outline
+## Step 3 — After the build
 
-### New tables (all `sub_account_id` scoped, RLS via `has_subaccount_access`)
+- Immediately usable by you as a Tester (connect flow, page listing, sending a Messenger reply to yourself).
+- Lead Ads, ad insights, and Instagram DMs will start populating once Meta approves the corresponding permission — no further code changes needed.
 
-```text
-workflows(id, sub_account_id, name, enabled, trigger_type,
-          trigger_config jsonb, actions jsonb, created_by, timestamps)
-workflow_runs(id, workflow_id, sub_account_id, trigger_row_id,
-              status, error, ran_at)
-notifications(id, user_id, sub_account_id, title, body, link,
-              read_at, created_at)
-conversations(id, sub_account_id, contact_id UNIQUE, last_message_at)
-messages(id, conversation_id, sub_account_id, author_user_id,
-         kind, body, created_at)
-calendar_events(id, sub_account_id, owner_user_id, title, description,
-                starts_at, ends_at, all_day, location,
-                contact_id, deal_id, external_id, timestamps)
-```
+---
 
-Grants: `authenticated` + `service_role` on every table. RLS policies gate by `has_subaccount_access(auth.uid(), sub_account_id)`; notifications additionally scope select/update to `user_id = auth.uid()`.
-
-### Workflow dispatcher
-
-- `public.run_workflows(_trigger text, _row_id uuid, _sub uuid, _payload jsonb)` — SECURITY DEFINER, locked search_path, loops matching enabled workflows and applies actions.
-- Row triggers on `contacts` / `deals` / `tasks` compute the trigger event and payload, then call the dispatcher. Actions run in the same transaction.
-- Errors captured into `workflow_runs.error`; never abort the parent insert/update.
-
-### Files to add / edit
-
-```text
-supabase/migrations/<new>.sql          workflows, workflow_runs, notifications,
-                                        conversations, messages, calendar_events,
-                                        dispatcher + row triggers
-src/lib/workflows.ts                    CRUD + types + trigger/action registry
-src/lib/notifications.ts                fetch, mark read, realtime hook
-src/lib/conversations.ts                fetch threads, send note
-src/lib/calendar.ts                     fetch events (+task union), CRUD
-src/routes/_authenticated/workflows.tsx list + builder dialog
-src/routes/_authenticated/conversations.tsx
-src/routes/_authenticated/calendar.tsx
-src/components/NotificationBell.tsx     replaces the static Bell in AppShell
-src/components/WorkflowBuilder.tsx      trigger + ordered actions form
-src/components/EventDialog.tsx          create/edit calendar events
-src/components/AppShell.tsx             wire NotificationBell, keep nav items
-```
-
-## Rollout order
-
-1. Migration + shared libs.
-2. Notifications (bell + realtime) — small, unlocks workflow output.
-3. Workflows list + builder + dispatcher end-to-end.
-4. Conversations (notes thread).
-5. Calendar (events + task overlay).
-
-## Risks
-
-- Workflow triggers run in the write's transaction, so a buggy action rolls back the user's write. Mitigation: dispatcher wraps each action in `BEGIN ... EXCEPTION WHEN OTHERS THEN log to workflow_runs`.
-- No time-based triggers means "remind me in 3 days" isn't possible until we add pg_cron. Called out as deferred.
-- Conversations table looks like a messaging surface but is note-only in v1. UI copy makes that explicit ("Internal notes").
-
-Approve and I'll start with the migration, then Notifications → Workflows → Conversations → Calendar.
+**Reply "done" with your App ID when you've finished Step 1** (or ask me any question about the Meta setup) and I'll kick off Step 2 in one go.
