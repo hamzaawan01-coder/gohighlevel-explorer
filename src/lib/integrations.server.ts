@@ -98,3 +98,32 @@ export async function sendSmsViaTwilio(args: SendSmsArgs): Promise<{ id: string 
   if (!res.ok) throw new Error(`Twilio ${res.status}: ${body.message ?? JSON.stringify(body)}`);
   return { id: body.sid ?? "twilio" };
 }
+
+/**
+ * Send an SMS through the workspace-linked Twilio connector via the Lovable
+ * gateway. No per-tenant credentials required — auth flows through
+ * LOVABLE_API_KEY + TWILIO_API_KEY set by the connector.
+ */
+export async function sendSmsViaTwilioGateway(args: {
+  from: string;
+  to: string;
+  body: string;
+}): Promise<{ id: string }> {
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const twilioKey = process.env.TWILIO_API_KEY;
+  if (!lovableKey) throw new Error("LOVABLE_API_KEY is not configured");
+  if (!twilioKey) throw new Error("Twilio connector is not linked to this project");
+
+  const res = await fetch("https://connector-gateway.lovable.dev/twilio/Messages.json", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${lovableKey}`,
+      "X-Connection-Api-Key": twilioKey,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({ To: args.to, From: args.from, Body: args.body }),
+  });
+  const body = (await res.json().catch(() => ({}))) as { sid?: string; message?: string };
+  if (!res.ok) throw new Error(`Twilio gateway ${res.status}: ${body.message ?? JSON.stringify(body)}`);
+  return { id: body.sid ?? "twilio" };
+}
