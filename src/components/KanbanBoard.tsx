@@ -31,11 +31,14 @@ export function KanbanBoard({
   stages,
   deals,
   onMove,
+  onOpenDeal,
 }: {
   stages: Stage[];
   deals: Deal[];
   onMove: (dealId: string, stageId: string, position: number) => void;
+  onOpenDeal?: (dealId: string) => void;
 }) {
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
