@@ -348,6 +348,7 @@ function ActionFields({
           onChange={(v) => onChange({ body_text: v } as Partial<WorkflowAction>)}
           multiline
         />
+        <SendTimingFields action={action} onChange={onChange} />
       </div>
     );
   }
@@ -364,8 +365,49 @@ function ActionFields({
           onChange={(v) => onChange({ body: v } as Partial<WorkflowAction>)}
           multiline
         />
+        <SendTimingFields action={action} onChange={onChange} />
       </div>
     );
   }
   return null;
+}
+
+function SendTimingFields({
+  action,
+  onChange,
+}: {
+  action: Extract<WorkflowAction, { type: "send_email" | "send_sms" }>;
+  onChange: (patch: Partial<WorkflowAction>) => void;
+}) {
+  const delay = action.delay_minutes ?? 0;
+  const respect = action.respect_quiet_hours ?? true;
+  return (
+    <div className="rounded border border-dashed border-border p-2 space-y-2 bg-muted/30">
+      <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Send timing</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-[11px]">Wait (minutes)</Label>
+          <Input
+            type="number"
+            min={0}
+            value={delay}
+            onChange={(e) => onChange({ delay_minutes: Number(e.target.value) } as Partial<WorkflowAction>)}
+          />
+          <p className="text-[10px] text-muted-foreground">0 = send right away.</p>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px]">Quiet hours</Label>
+          <div className="flex items-center gap-2 h-9">
+            <Switch
+              checked={respect}
+              onCheckedChange={(v) => onChange({ respect_quiet_hours: v } as Partial<WorkflowAction>)}
+            />
+            <span className="text-[11px] text-muted-foreground">
+              {respect ? "Wait until morning if late" : "Send any time"}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
