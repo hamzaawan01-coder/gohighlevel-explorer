@@ -109,9 +109,17 @@ function ConversationsPage() {
       setBody("");
       qc.invalidateQueries({ queryKey: ["conversations"] });
       qc.invalidateQueries({ queryKey: ["messages"] });
+      requestAnimationFrame(() => {
+        threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
+      });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  useEffect(() => {
+    if (!msgsQ.data) return;
+    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
+  }, [msgsQ.data]);
 
   return (
     <AppShell>
