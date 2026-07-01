@@ -36,6 +36,7 @@ import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authentic
 import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
+import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/api/public/oauth.google-ads.callback'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -178,6 +179,12 @@ const ApiPublicBookingSlugRoute = ApiPublicBookingSlugRouteImport.update({
   path: '/api/public/booking/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOauthGoogleAdsCallbackRoute =
+  ApiPublicOauthGoogleAdsCallbackRouteImport.update({
+    id: '/api/public/oauth/google-ads/callback',
+    path: '/api/public/oauth/google-ads/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -234,6 +242,7 @@ export interface FileRoutesByTo {
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -264,6 +273,7 @@ export interface FileRoutesById {
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
     | '/api/public/l/$slug'
+    | '/api/public/oauth/google-ads/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
     | '/api/public/l/$slug'
+    | '/api/public/oauth/google-ads/callback'
   id:
     | '__root__'
     | '/'
@@ -351,6 +363,7 @@ export interface FileRouteTypes {
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
     | '/api/public/l/$slug'
+    | '/api/public/oauth/google-ads/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -364,6 +377,7 @@ export interface RootRouteChildren {
   ApiPublicBookingSlugRoute: typeof ApiPublicBookingSlugRoute
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
+  ApiPublicOauthGoogleAdsCallbackRoute: typeof ApiPublicOauthGoogleAdsCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -557,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/oauth/google-ads/callback': {
+      id: '/api/public/oauth/google-ads/callback'
+      path: '/api/public/oauth/google-ads/callback'
+      fullPath: '/api/public/oauth/google-ads/callback'
+      preLoaderRoute: typeof ApiPublicOauthGoogleAdsCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -615,6 +636,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBookingSlugRoute: ApiPublicBookingSlugRoute,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
+  ApiPublicOauthGoogleAdsCallbackRoute: ApiPublicOauthGoogleAdsCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
