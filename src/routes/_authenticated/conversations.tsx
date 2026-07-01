@@ -168,6 +168,31 @@ function ConversationsPage() {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
   }, [msgsQ.data]);
 
+  // Realtime: refresh the open thread + conversation list when new rows land.
+  useEffect(() => {
+    if (!subId) return;
+    const channel = supabase
+      .channel(`convos-${subId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversations", filter: `sub_account_id=eq.${subId}` },
+        () => qc.invalidateQueries({ queryKey: ["conversations", subId] }),
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `sub_account_id=eq.${subId}` },
+        (payload) => {
+          qc.invalidateQueries({ queryKey: ["conversations", subId] });
+          const convoId = (payload.new as { conversation_id?: string } | null)?.conversation_id;
+          if (convoId) qc.invalidateQueries({ queryKey: ["messages", convoId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [subId, qc]);
+
   const isRealChannel = composeChannel !== "note";
   const placeholder = isRealChannel
     ? `Send via ${CHANNEL_BY_KEY[composeChannel].label} (logged only until integration is connected)…`
