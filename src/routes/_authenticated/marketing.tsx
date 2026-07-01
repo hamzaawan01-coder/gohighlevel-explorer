@@ -165,7 +165,7 @@ function CampaignDialog({ open, onOpenChange, editing, subId, userId }: { open: 
       const segment: Record<string, unknown> = {};
       if (stage !== "__any") segment.stage = stage;
       if (tags.length) segment.tags = tags;
-      return upsertTemplate as never, upsertCampaign({
+      return upsertCampaign({
         id: editing?.id,
         sub_account_id: subId,
         created_by: userId,
