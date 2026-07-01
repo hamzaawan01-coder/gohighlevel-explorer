@@ -257,6 +257,7 @@ function SetupInstructions({ url, secret }: { url: string; secret: string | null
           <TabsTrigger value="wpforms">WPForms</TabsTrigger>
           <TabsTrigger value="gravity">Gravity Forms</TabsTrigger>
           <TabsTrigger value="cf7">Contact Form 7</TabsTrigger>
+          <TabsTrigger value="elementor">Elementor</TabsTrigger>
         </TabsList>
 
         <TabsContent value="functions" className="space-y-2">
