@@ -61,12 +61,22 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "bulk", label: "Bulk Actions" },
 ];
 
+type SavedView = "all" | "mine" | "closing_week" | "stale";
+
+const SAVED_VIEWS: { key: SavedView; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "mine", label: "My deals" },
+  { key: "closing_week", label: "Closing this week" },
+  { key: "stale", label: "Stale > 14d" },
+];
+
 function OpportunitiesPage() {
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("opportunities");
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [search, setSearch] = useState("");
+  const [savedView, setSavedView] = useState<SavedView>("all");
   const [newDealOpen, setNewDealOpen] = useState(false);
   const [openDealId, setOpenDealId] = useState<string | null>(null);
   const [activityMinimized, setActivityMinimized] = useState(false);
@@ -108,8 +118,24 @@ function OpportunitiesPage() {
 
   const filteredDeals = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return q ? deals.filter((d) => d.title.toLowerCase().includes(q)) : deals;
-  }, [deals, search]);
+    const now = Date.now();
+    const weekAhead = now + 7 * 24 * 60 * 60 * 1000;
+    const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
+    return deals.filter((d) => {
+      if (q && !d.title.toLowerCase().includes(q)) return false;
+      if (savedView === "mine" && d.owner_id !== userId) return false;
+      if (savedView === "closing_week") {
+        if (!d.expected_close_date) return false;
+        const t = new Date(d.expected_close_date).getTime();
+        if (isNaN(t) || t < now || t > weekAhead) return false;
+      }
+      if (savedView === "stale") {
+        const t = new Date(d.updated_at ?? d.created_at ?? 0).getTime();
+        if (!t || t > fourteenDaysAgo) return false;
+      }
+      return true;
+    });
+  }, [deals, search, savedView, userId]);
 
   const totalValue = useMemo(
     () => filteredDeals.reduce((s, d) => s + Number(d.value), 0),
@@ -300,6 +326,23 @@ function OpportunitiesPage() {
                 <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
                   {totalDeals} opportunities · ${totalValue.toLocaleString()}
                 </span>
+
+                <div className="flex items-center gap-1 border border-border rounded-md p-0.5 bg-card">
+                  {SAVED_VIEWS.map((v) => (
+                    <button
+                      key={v.key}
+                      onClick={() => setSavedView(v.key)}
+                      className={`h-7 px-2.5 rounded text-[11px] font-medium transition-colors ${
+                        savedView === v.key
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+
 
                 <div className="ml-auto flex items-center gap-2">
                   <div className="relative">
