@@ -130,7 +130,7 @@ function Dashboard() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["board", pipelineId] }),
   });
 
-  const loading = pipelineQuery.isLoading || boardQuery.isLoading;
+  const loading = defaultQuery.isLoading || pipelinesQuery.isLoading || boardQuery.isLoading;
   const totalDeals = deals.length;
   const unreadInbox = 2;
 
