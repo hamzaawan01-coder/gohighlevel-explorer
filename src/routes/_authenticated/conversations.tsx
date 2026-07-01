@@ -36,6 +36,8 @@ function ConversationsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [body, setBody] = useState("");
+  const [search, setSearch] = useState("");
+  const threadRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
