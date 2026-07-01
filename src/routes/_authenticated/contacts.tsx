@@ -58,6 +58,7 @@ function ContactsPage() {
 
   const filtered = useMemo(() => {
     return contacts.filter((c) => {
+      if (activeStage !== "all" && c.lifecycle_stage !== activeStage) return false;
       if (activeTag && !(c.tags ?? []).includes(activeTag)) return false;
       if (!search.trim()) return true;
       const q = search.toLowerCase();
@@ -69,7 +70,7 @@ function ContactsPage() {
         (c.phone ?? "").toLowerCase().includes(q)
       );
     });
-  }, [contacts, search, activeTag]);
+  }, [contacts, search, activeTag, activeStage]);
 
   const createMut = useMutation({
     mutationFn: (input: ContactInput) => {
