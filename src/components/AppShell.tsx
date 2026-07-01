@@ -11,6 +11,7 @@ import {
   Search,
   LogOut,
   CheckSquare,
+  BarChart3,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -35,6 +36,7 @@ const salesNav: NavItem[] = [
   { label: "Tasks", icon: CheckSquare, to: "/tasks" },
   { label: "Calendar", icon: Calendar, to: "/calendar" },
   { label: "Conversations", icon: MessageSquare, to: "/conversations" },
+  { label: "Reports", icon: BarChart3, to: "/reports" },
 ];
 
 const automationNav: NavItem[] = [
