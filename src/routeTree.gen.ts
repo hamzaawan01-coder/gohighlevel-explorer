@@ -21,6 +21,7 @@ import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
+import { Route as AuthenticatedContactsContactIdRouteImport } from './routes/_authenticated/contacts.$contactId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -84,17 +85,24 @@ const AuthenticatedSettingsSubAccountsRoute =
     path: '/settings/sub-accounts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContactsContactIdRoute =
+  AuthenticatedContactsContactIdRouteImport.update({
+    id: '/$contactId',
+    path: '/$contactId',
+    getParentRoute: () => AuthenticatedContactsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof AuthenticatedCalendarRoute
-  '/contacts': typeof AuthenticatedContactsRoute
+  '/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/conversations': typeof AuthenticatedConversationsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/contacts/$contactId': typeof AuthenticatedContactsContactIdRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
 }
@@ -102,12 +110,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof AuthenticatedCalendarRoute
-  '/contacts': typeof AuthenticatedContactsRoute
+  '/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/conversations': typeof AuthenticatedConversationsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/contacts/$contactId': typeof AuthenticatedContactsContactIdRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
 }
@@ -117,12 +126,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
-  '/_authenticated/contacts': typeof AuthenticatedContactsRoute
+  '/_authenticated/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/_authenticated/conversations': typeof AuthenticatedConversationsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/workflows': typeof AuthenticatedWorkflowsRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/_authenticated/contacts/$contactId': typeof AuthenticatedContactsContactIdRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
 }
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/workflows'
     | '/invite/$token'
+    | '/contacts/$contactId'
     | '/settings/sub-accounts'
     | '/settings/team'
   fileRoutesByTo: FileRoutesByTo
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/workflows'
     | '/invite/$token'
+    | '/contacts/$contactId'
     | '/settings/sub-accounts'
     | '/settings/team'
   id:
@@ -165,6 +177,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tasks'
     | '/_authenticated/workflows'
     | '/invite/$token'
+    | '/_authenticated/contacts/$contactId'
     | '/_authenticated/settings/sub-accounts'
     | '/_authenticated/settings/team'
   fileRoutesById: FileRoutesById
@@ -262,12 +275,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsSubAccountsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contacts/$contactId': {
+      id: '/_authenticated/contacts/$contactId'
+      path: '/$contactId'
+      fullPath: '/contacts/$contactId'
+      preLoaderRoute: typeof AuthenticatedContactsContactIdRouteImport
+      parentRoute: typeof AuthenticatedContactsRoute
+    }
   }
 }
 
+interface AuthenticatedContactsRouteChildren {
+  AuthenticatedContactsContactIdRoute: typeof AuthenticatedContactsContactIdRoute
+}
+
+const AuthenticatedContactsRouteChildren: AuthenticatedContactsRouteChildren = {
+  AuthenticatedContactsContactIdRoute: AuthenticatedContactsContactIdRoute,
+}
+
+const AuthenticatedContactsRouteWithChildren =
+  AuthenticatedContactsRoute._addFileChildren(
+    AuthenticatedContactsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
-  AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
+  AuthenticatedContactsRoute: typeof AuthenticatedContactsRouteWithChildren
   AuthenticatedConversationsRoute: typeof AuthenticatedConversationsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
@@ -278,7 +311,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
-  AuthenticatedContactsRoute: AuthenticatedContactsRoute,
+  AuthenticatedContactsRoute: AuthenticatedContactsRouteWithChildren,
   AuthenticatedConversationsRoute: AuthenticatedConversationsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Loader2, Pencil, Trash2, Mail, Phone, Building2 } from "lucide-react";
@@ -230,7 +230,15 @@ function ContactsPage() {
                   const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "—";
                   return (
                     <tr key={c.id} className="border-b border-border hover:bg-secondary/40">
-                      <td className="px-6 py-2.5 font-medium">{name}</td>
+                      <td className="px-6 py-2.5 font-medium">
+                        <Link
+                          to="/contacts/$contactId"
+                          params={{ contactId: c.id }}
+                          className="hover:text-primary hover:underline"
+                        >
+                          {name}
+                        </Link>
+                      </td>
                       <td className="px-3 py-2.5">
                         <span className="inline-block bg-accent/10 text-accent rounded px-1.5 py-0.5 text-[10px] font-mono uppercase">
                           {c.lifecycle_stage}
