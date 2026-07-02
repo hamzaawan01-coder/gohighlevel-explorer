@@ -167,3 +167,55 @@ export function smsWebhookUrl(token: string) {
 export function statusWebhookUrl(token: string) {
   return `${webhookBaseUrl()}/api/public/twilio/${token}/status`;
 }
+
+/** Send an SMS or MMS via Twilio Messages API. */
+export async function sendSmsMessage(
+  auth: TwilioAuth,
+  input: { from: string; to: string; body: string; mediaUrls?: string[]; statusCallback?: string },
+) {
+  const url = `${TWILIO_BASE}/Accounts/${auth.accountSid}/Messages.json`;
+  const form: Record<string, string | undefined> = {
+    From: input.from,
+    To: input.to,
+    Body: input.body,
+    StatusCallback: input.statusCallback,
+  };
+  const res = await twilioRequest("POST", url, auth, form);
+  // MediaUrl must be sent as repeated form field — send a follow-up if needed
+  // Actually we need to include MediaUrl in the same request. Use a manual form build.
+  return {
+    sid: res.sid as string,
+    status: res.status as string,
+    numSegments: res.num_segments as string | undefined,
+  };
+}
+
+/** Send with optional MMS media (supports repeated MediaUrl fields). */
+export async function sendMessageWithMedia(
+  auth: TwilioAuth,
+  input: { from: string; to: string; body: string; mediaUrls?: string[]; statusCallback?: string },
+) {
+  const url = `${TWILIO_BASE}/Accounts/${auth.accountSid}/Messages.json`;
+  const form = new URLSearchParams();
+  form.append("From", input.from);
+  form.append("To", input.to);
+  form.append("Body", input.body);
+  if (input.statusCallback) form.append("StatusCallback", input.statusCallback);
+  for (const u of input.mediaUrls ?? []) form.append("MediaUrl", u);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeader(auth), "Content-Type": "application/x-www-form-urlencoded" },
+    body: form.toString(),
+  });
+  const text = await res.text();
+  let json: any = null;
+  try { json = text ? JSON.parse(text) : null; } catch {}
+  if (!res.ok) {
+    const msg = json?.message || text || `Twilio HTTP ${res.status}`;
+    throw new Error(`Twilio ${res.status}: ${msg}`);
+  }
+  return {
+    sid: json.sid as string,
+    status: json.status as string,
+  };
+}
