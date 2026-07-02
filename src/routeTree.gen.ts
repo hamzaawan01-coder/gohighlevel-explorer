@@ -41,6 +41,8 @@ import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
+import { Route as ApiPublicTwilioTokenStatusRouteImport } from './routes/api/public/twilio.$token.status'
+import { Route as ApiPublicTwilioTokenSmsRouteImport } from './routes/api/public/twilio.$token.sms'
 import { Route as ApiPublicOauthMetaCallbackRouteImport } from './routes/api/public/oauth.meta.callback'
 import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/api/public/oauth.google-ads.callback'
 import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
@@ -217,6 +219,17 @@ const ApiPublicBookingSlugRoute = ApiPublicBookingSlugRouteImport.update({
   path: '/api/public/booking/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTwilioTokenStatusRoute =
+  ApiPublicTwilioTokenStatusRouteImport.update({
+    id: '/api/public/twilio/$token/status',
+    path: '/api/public/twilio/$token/status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioTokenSmsRoute = ApiPublicTwilioTokenSmsRouteImport.update({
+  id: '/api/public/twilio/$token/sms',
+  path: '/api/public/twilio/$token/sms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOauthMetaCallbackRoute =
   ApiPublicOauthMetaCallbackRouteImport.update({
     id: '/api/public/oauth/meta/callback',
@@ -277,6 +290,8 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
   '/api/public/oauth/meta/callback': typeof ApiPublicOauthMetaCallbackRoute
+  '/api/public/twilio/$token/sms': typeof ApiPublicTwilioTokenSmsRoute
+  '/api/public/twilio/$token/status': typeof ApiPublicTwilioTokenStatusRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -314,6 +329,8 @@ export interface FileRoutesByTo {
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
   '/api/public/oauth/meta/callback': typeof ApiPublicOauthMetaCallbackRoute
+  '/api/public/twilio/$token/sms': typeof ApiPublicTwilioTokenSmsRoute
+  '/api/public/twilio/$token/status': typeof ApiPublicTwilioTokenStatusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -353,6 +370,8 @@ export interface FileRoutesById {
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
   '/api/public/oauth/meta/callback': typeof ApiPublicOauthMetaCallbackRoute
+  '/api/public/twilio/$token/sms': typeof ApiPublicTwilioTokenSmsRoute
+  '/api/public/twilio/$token/status': typeof ApiPublicTwilioTokenStatusRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -392,6 +411,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
     | '/api/public/oauth/meta/callback'
+    | '/api/public/twilio/$token/sms'
+    | '/api/public/twilio/$token/status'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -429,6 +450,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
     | '/api/public/oauth/meta/callback'
+    | '/api/public/twilio/$token/sms'
+    | '/api/public/twilio/$token/status'
   id:
     | '__root__'
     | '/'
@@ -467,6 +490,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
     | '/api/public/oauth/meta/callback'
+    | '/api/public/twilio/$token/sms'
+    | '/api/public/twilio/$token/status'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -485,6 +510,8 @@ export interface RootRouteChildren {
   ApiPublicHooksWordpressTokenRoute: typeof ApiPublicHooksWordpressTokenRoute
   ApiPublicOauthGoogleAdsCallbackRoute: typeof ApiPublicOauthGoogleAdsCallbackRoute
   ApiPublicOauthMetaCallbackRoute: typeof ApiPublicOauthMetaCallbackRoute
+  ApiPublicTwilioTokenSmsRoute: typeof ApiPublicTwilioTokenSmsRoute
+  ApiPublicTwilioTokenStatusRoute: typeof ApiPublicTwilioTokenStatusRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -713,6 +740,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/twilio/$token/status': {
+      id: '/api/public/twilio/$token/status'
+      path: '/api/public/twilio/$token/status'
+      fullPath: '/api/public/twilio/$token/status'
+      preLoaderRoute: typeof ApiPublicTwilioTokenStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/sms': {
+      id: '/api/public/twilio/$token/sms'
+      path: '/api/public/twilio/$token/sms'
+      fullPath: '/api/public/twilio/$token/sms'
+      preLoaderRoute: typeof ApiPublicTwilioTokenSmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/oauth/meta/callback': {
       id: '/api/public/oauth/meta/callback'
       path: '/api/public/oauth/meta/callback'
@@ -813,6 +854,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksWordpressTokenRoute: ApiPublicHooksWordpressTokenRoute,
   ApiPublicOauthGoogleAdsCallbackRoute: ApiPublicOauthGoogleAdsCallbackRoute,
   ApiPublicOauthMetaCallbackRoute: ApiPublicOauthMetaCallbackRoute,
+  ApiPublicTwilioTokenSmsRoute: ApiPublicTwilioTokenSmsRoute,
+  ApiPublicTwilioTokenStatusRoute: ApiPublicTwilioTokenStatusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
