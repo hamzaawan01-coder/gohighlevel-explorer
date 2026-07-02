@@ -17,6 +17,7 @@ import {
   CalendarClock,
   Megaphone,
   Webhook,
+  Phone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -52,6 +53,7 @@ const automationNav: NavItem[] = [
   { label: "Forms", icon: FileText, to: "/forms" },
   { label: "WordPress", icon: Webhook, to: "/settings/wordpress" },
   { label: "Booking pages", icon: CalendarClock, to: "/settings/booking" },
+  { label: "Phone numbers", icon: Phone, to: "/settings/phone-numbers" },
   { label: "Integrations", icon: Settings, to: "/settings/integrations" },
   { label: "Quiet hours", icon: Settings, to: "/settings/messaging" },
 ];

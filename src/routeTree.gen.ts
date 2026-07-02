@@ -31,6 +31,7 @@ import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/publi
 import { Route as AuthenticatedSettingsWordpressRouteImport } from './routes/_authenticated/settings.wordpress'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
+import { Route as AuthenticatedSettingsPhoneNumbersRouteImport } from './routes/_authenticated/settings.phone-numbers'
 import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_authenticated/settings.messaging'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
@@ -161,6 +162,12 @@ const AuthenticatedSettingsSubAccountsRoute =
     path: '/settings/sub-accounts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsPhoneNumbersRoute =
+  AuthenticatedSettingsPhoneNumbersRouteImport.update({
+    id: '/settings/phone-numbers',
+    path: '/settings/phone-numbers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsMessagingRoute =
   AuthenticatedSettingsMessagingRouteImport.update({
     id: '/settings/messaging',
@@ -256,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
+  '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
@@ -292,6 +300,7 @@ export interface FileRoutesByTo {
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
+  '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
@@ -330,6 +339,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
+  '/_authenticated/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/_authenticated/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
     | '/settings/booking'
     | '/settings/integrations'
     | '/settings/messaging'
+    | '/settings/phone-numbers'
     | '/settings/sub-accounts'
     | '/settings/team'
     | '/settings/wordpress'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/settings/booking'
     | '/settings/integrations'
     | '/settings/messaging'
+    | '/settings/phone-numbers'
     | '/settings/sub-accounts'
     | '/settings/team'
     | '/settings/wordpress'
@@ -441,6 +453,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/booking'
     | '/_authenticated/settings/integrations'
     | '/_authenticated/settings/messaging'
+    | '/_authenticated/settings/phone-numbers'
     | '/_authenticated/settings/sub-accounts'
     | '/_authenticated/settings/team'
     | '/_authenticated/settings/wordpress'
@@ -630,6 +643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsSubAccountsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/phone-numbers': {
+      id: '/_authenticated/settings/phone-numbers'
+      path: '/settings/phone-numbers'
+      fullPath: '/settings/phone-numbers'
+      preLoaderRoute: typeof AuthenticatedSettingsPhoneNumbersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/messaging': {
       id: '/_authenticated/settings/messaging'
       path: '/settings/messaging'
@@ -741,6 +761,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsBookingRoute: typeof AuthenticatedSettingsBookingRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedSettingsMessagingRoute: typeof AuthenticatedSettingsMessagingRoute
+  AuthenticatedSettingsPhoneNumbersRoute: typeof AuthenticatedSettingsPhoneNumbersRoute
   AuthenticatedSettingsSubAccountsRoute: typeof AuthenticatedSettingsSubAccountsRoute
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
   AuthenticatedSettingsWordpressRoute: typeof AuthenticatedSettingsWordpressRoute
@@ -765,6 +786,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
   AuthenticatedSettingsMessagingRoute: AuthenticatedSettingsMessagingRoute,
+  AuthenticatedSettingsPhoneNumbersRoute:
+    AuthenticatedSettingsPhoneNumbersRoute,
   AuthenticatedSettingsSubAccountsRoute: AuthenticatedSettingsSubAccountsRoute,
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
   AuthenticatedSettingsWordpressRoute: AuthenticatedSettingsWordpressRoute,
@@ -794,13 +817,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

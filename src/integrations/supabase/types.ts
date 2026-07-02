@@ -1947,6 +1947,140 @@ export type Database = {
           },
         ]
       }
+      twilio_connections: {
+        Row: {
+          account_sid: string
+          api_key_secret: string
+          api_key_sid: string
+          created_at: string
+          created_by: string | null
+          friendly_name: string | null
+          id: string
+          last_verified_at: string | null
+          status: string
+          sub_account_id: string
+          twiml_app_sid: string | null
+          updated_at: string
+          webhook_token: string
+        }
+        Insert: {
+          account_sid: string
+          api_key_secret: string
+          api_key_sid: string
+          created_at?: string
+          created_by?: string | null
+          friendly_name?: string | null
+          id?: string
+          last_verified_at?: string | null
+          status?: string
+          sub_account_id: string
+          twiml_app_sid?: string | null
+          updated_at?: string
+          webhook_token?: string
+        }
+        Update: {
+          account_sid?: string
+          api_key_secret?: string
+          api_key_sid?: string
+          created_at?: string
+          created_by?: string | null
+          friendly_name?: string | null
+          id?: string
+          last_verified_at?: string | null
+          status?: string
+          sub_account_id?: string
+          twiml_app_sid?: string | null
+          updated_at?: string
+          webhook_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "twilio_connections_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: true
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      twilio_numbers: {
+        Row: {
+          capabilities: Json
+          connection_id: string
+          cost_currency: string | null
+          created_at: string
+          friendly_name: string | null
+          id: string
+          is_default: boolean
+          iso_country: string | null
+          monthly_cost: number | null
+          phone_number: string
+          purchased_at: string
+          released_at: string | null
+          sms_url: string | null
+          status_callback: string | null
+          sub_account_id: string
+          twilio_sid: string
+          updated_at: string
+          voice_url: string | null
+        }
+        Insert: {
+          capabilities?: Json
+          connection_id: string
+          cost_currency?: string | null
+          created_at?: string
+          friendly_name?: string | null
+          id?: string
+          is_default?: boolean
+          iso_country?: string | null
+          monthly_cost?: number | null
+          phone_number: string
+          purchased_at?: string
+          released_at?: string | null
+          sms_url?: string | null
+          status_callback?: string | null
+          sub_account_id: string
+          twilio_sid: string
+          updated_at?: string
+          voice_url?: string | null
+        }
+        Update: {
+          capabilities?: Json
+          connection_id?: string
+          cost_currency?: string | null
+          created_at?: string
+          friendly_name?: string | null
+          id?: string
+          is_default?: boolean
+          iso_country?: string | null
+          monthly_cost?: number | null
+          phone_number?: string
+          purchased_at?: string
+          released_at?: string | null
+          sms_url?: string | null
+          status_callback?: string | null
+          sub_account_id?: string
+          twilio_sid?: string
+          updated_at?: string
+          voice_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "twilio_numbers_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "twilio_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "twilio_numbers_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
