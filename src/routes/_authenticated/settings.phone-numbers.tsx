@@ -470,6 +470,7 @@ function OwnedNumbersPanel({ subId }: { subId: string }) {
               <TableHead>Number</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Capabilities</TableHead>
+              <TableHead>WhatsApp</TableHead>
               <TableHead>Monthly</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -486,6 +487,9 @@ function OwnedNumbersPanel({ subId }: { subId: string }) {
                   {n.capabilities?.voice && <Badge variant="secondary">Voice</Badge>}
                   {(n.capabilities?.sms ?? n.capabilities?.SMS) && <Badge variant="secondary">SMS</Badge>}
                   {(n.capabilities?.mms ?? n.capabilities?.MMS) && <Badge variant="secondary">MMS</Badge>}
+                </TableCell>
+                <TableCell>
+                  <WhatsAppCell subId={subId} number={n} />
                 </TableCell>
                 <TableCell className="text-xs">
                   {n.monthly_cost ? `${n.cost_currency ?? ""} ${Number(n.monthly_cost).toFixed(2)}` : "—"}
@@ -525,5 +529,122 @@ function OwnedNumbersPanel({ subId }: { subId: string }) {
         </Table>
       )}
     </div>
+  );
+}
+
+// ============ WhatsApp toggle ============
+function WhatsAppCell({ subId, number }: { subId: string; number: any }) {
+  const [open, setOpen] = useState(false);
+  const [sender, setSender] = useState<string>(number.whatsapp_sender ?? number.phone_number);
+  const qc = useQueryClient();
+  const connQ = useQuery({
+    queryKey: ["twilio-conn", subId],
+    queryFn: () => useServerFn(getTwilioConnection)({ data: { subAccountId: subId } }),
+  });
+  const enableFn = useServerFn(enableWhatsappOnNumber);
+  const enableM = useMutation({
+    mutationFn: (enabled: boolean) =>
+      enableFn({
+        data: {
+          subAccountId: subId,
+          numberId: number.id,
+          whatsappSender: sender,
+          enabled,
+        },
+      }),
+    onSuccess: (res) => {
+      toast.success(number.whatsapp_enabled ? "WhatsApp disabled" : "WhatsApp enabled");
+      qc.invalidateQueries({ queryKey: ["twilio-numbers", subId] });
+      if (res?.whatsappWebhookUrl) {
+        toast.message("Set this as Inbound URL on your Twilio WhatsApp Sender", {
+          description: res.whatsappWebhookUrl,
+        });
+      }
+      setOpen(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const inboundUrl =
+    (connQ.data && "webhookSmsUrl" in connQ.data
+      ? (connQ.data as any).webhookSmsUrl?.replace(/\/sms$/, "/whatsapp")
+      : null) ?? "";
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant={number.whatsapp_enabled ? "secondary" : "ghost"} size="sm" className="h-7 gap-1">
+          <MessageCircle className="size-3.5 text-green-600" />
+          {number.whatsapp_enabled ? "Enabled" : "Enable"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>WhatsApp on {number.phone_number}</DialogTitle>
+          <DialogDescription>
+            To send and receive WhatsApp on this number, you must first register it as a WhatsApp Sender in the
+            Twilio Console (Messaging → Try it out → Senders → WhatsApp senders). After Twilio approves the sender,
+            paste the inbound webhook URL below into the sender's "When a message comes in" field, then flip the
+            switch to enable WhatsApp in the CRM.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label>Inbound webhook URL (paste in Twilio)</Label>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={inboundUrl} className="font-mono text-xs" />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(inboundUrl);
+                  toast.success("Copied");
+                }}
+              >
+                Copy
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="wa-sender">WhatsApp sender (E.164)</Label>
+            <Input
+              id="wa-sender"
+              value={sender}
+              onChange={(e) => setSender(e.target.value)}
+              placeholder={number.phone_number}
+            />
+            <p className="text-xs text-muted-foreground">
+              Usually your Twilio number in E.164 (e.g. +14155238886). Twilio prefixes it with{" "}
+              <code>whatsapp:</code> automatically.
+            </p>
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <div className="text-sm font-medium">Enable WhatsApp</div>
+              <div className="text-xs text-muted-foreground">
+                Turn this on after the sender is approved in Twilio.
+              </div>
+            </div>
+            <Switch
+              checked={number.whatsapp_enabled}
+              onCheckedChange={(val) => enableM.mutate(val)}
+              disabled={enableM.isPending}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Close</Button>
+          <a
+            href="https://console.twilio.com/us1/develop/sms/senders/whatsapp-senders"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+          >
+            Open Twilio WhatsApp Senders <ExternalLink className="size-3" />
+          </a>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
