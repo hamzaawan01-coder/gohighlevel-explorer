@@ -678,7 +678,7 @@ export const saveCallFlow = createServerFn({ method: "POST" })
   });
 
 // ============ Phase 4: WhatsApp ============
-import { sendWhatsappMessage, whatsappWebhookUrl, updateNumberWebhooks } from "./twilio.server";
+import { sendWhatsappMessage, whatsappWebhookUrl } from "./twilio.server";
 
 /**
  * Enable WhatsApp on a purchased number.
