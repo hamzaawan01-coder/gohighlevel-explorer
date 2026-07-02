@@ -207,9 +207,12 @@ function ConversationsPage() {
   }, [subId, qc]);
 
   const isRealChannel = composeChannel !== "note";
-  const placeholder = isRealChannel
-    ? `Send via ${CHANNEL_BY_KEY[composeChannel].label} (logged only until integration is connected)…`
-    : "Add an internal note…";
+  const placeholder =
+    composeChannel === "sms"
+      ? "Type SMS message (sent via your Twilio number)…"
+      : isRealChannel
+      ? `Send via ${CHANNEL_BY_KEY[composeChannel].label} (logged only until integration is connected)…`
+      : "Add an internal note…";
 
   return (
     <AppShell>
