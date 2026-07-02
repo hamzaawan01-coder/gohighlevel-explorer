@@ -70,14 +70,21 @@ export const syncGoogleAds = createServerFn({ method: "POST" })
     const devToken = process.env.GOOGLE_ADS_DEVELOPER_TOKEN;
     if (!devToken) throw new Error("GOOGLE_ADS_DEVELOPER_TOKEN not configured");
 
-    const { data: conn, error } = await sb
-      .from("ad_platform_connections" as never)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: conn, error } = await (supabaseAdmin as any)
+      .from("ad_platform_connections")
       .select("*")
       .eq("sub_account_id", data.subAccountId)
       .eq("platform", "google")
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!conn) throw new Error("No Google Ads connection for this workspace");
+
+    // Verify caller has admin access to this sub_account (uses user-scoped client for RLS)
+    const { data: acl } = await sb
+      .from("sub_accounts").select("id").eq("id", data.subAccountId).maybeSingle();
+    if (!acl) throw new Error("Sub-account not accessible");
+
 
     const c = conn as unknown as {
       id: string; refresh_token: string; external_customer_id: string | null;
