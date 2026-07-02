@@ -15,7 +15,7 @@ import {
   type Conversation,
   type MessageChannel,
 } from "@/lib/conversations";
-import { sendTwilioSms } from "@/lib/twilio.functions";
+import { sendTwilioSms, sendTwilioWhatsapp } from "@/lib/twilio.functions";
 import { CHANNELS, CHANNEL_BY_KEY } from "@/lib/channels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
