@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Send, MessageSquare, Search, Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
@@ -14,6 +15,7 @@ import {
   type Conversation,
   type MessageChannel,
 } from "@/lib/conversations";
+import { sendTwilioSms } from "@/lib/twilio.functions";
 import { CHANNELS, CHANNEL_BY_KEY } from "@/lib/channels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -138,9 +140,20 @@ function ConversationsPage() {
     enabled: !!selectedConvoId,
   });
 
+  const sendSmsFn = useServerFn(sendTwilioSms);
+
   const sendMut = useMutation({
     mutationFn: async () => {
       if (!userId || !subId || !selectedConvo) throw new Error("Not ready");
+      if (composeChannel === "sms") {
+        return sendSmsFn({
+          data: {
+            subAccountId: subId,
+            conversationId: selectedConvo.id,
+            body: body.trim(),
+          },
+        });
+      }
       return postMessage({
         conversation_id: selectedConvo.id,
         sub_account_id: subId,
