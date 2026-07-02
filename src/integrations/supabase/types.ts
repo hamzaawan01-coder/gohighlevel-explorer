@@ -2226,6 +2226,9 @@ export type Database = {
           twilio_sid: string
           updated_at: string
           voice_url: string | null
+          whatsapp_enabled: boolean
+          whatsapp_sender: string | null
+          whatsapp_url: string | null
         }
         Insert: {
           capabilities?: Json
@@ -2246,6 +2249,9 @@ export type Database = {
           twilio_sid: string
           updated_at?: string
           voice_url?: string | null
+          whatsapp_enabled?: boolean
+          whatsapp_sender?: string | null
+          whatsapp_url?: string | null
         }
         Update: {
           capabilities?: Json
@@ -2266,6 +2272,9 @@ export type Database = {
           twilio_sid?: string
           updated_at?: string
           voice_url?: string | null
+          whatsapp_enabled?: boolean
+          whatsapp_sender?: string | null
+          whatsapp_url?: string | null
         }
         Relationships: [
           {
