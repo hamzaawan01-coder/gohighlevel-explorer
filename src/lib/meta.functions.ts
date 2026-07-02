@@ -72,7 +72,8 @@ export const getMetaConnection = createServerFn({ method: "GET" })
   .inputValidator((d: { subAccountId: string }) => z.object({ subAccountId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
-    const { data: conns, error } = await (context.supabase as any)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: conns, error } = await (supabaseAdmin as any)
       .from("meta_connections")
       .select("id, sub_account_id, meta_user_id, meta_user_name, token_expires_at, granted_scopes, created_at")
       .eq("sub_account_id", data.subAccountId)
@@ -83,7 +84,9 @@ export const getMetaConnection = createServerFn({ method: "GET" })
     if (!conn) return { connection: null, pages: [], adAccounts: [] };
 
     const [pagesRes, adAccountsRes] = await Promise.all([
-      (context.supabase as any).from("meta_pages").select("*").eq("sub_account_id", data.subAccountId),
+      (supabaseAdmin as any).from("meta_pages")
+        .select("id, sub_account_id, connection_id, page_id, page_name, category, instagram_business_account_id, route_messenger_to_inbox, route_instagram_to_inbox, sync_lead_ads, webhook_subscribed, created_at, updated_at")
+        .eq("sub_account_id", data.subAccountId),
       (context.supabase as any).from("meta_ad_accounts").select("*").eq("sub_account_id", data.subAccountId),
     ]);
     return {
