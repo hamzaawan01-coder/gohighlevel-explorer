@@ -25,6 +25,7 @@ import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedFormsRouteImport } from './routes/_authenticated/forms'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConversationsRouteImport } from './routes/_authenticated/conversations'
+import { Route as AuthenticatedCallsRouteImport } from './routes/_authenticated/calls'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
 import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
@@ -34,6 +35,7 @@ import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_
 import { Route as AuthenticatedSettingsPhoneNumbersRouteImport } from './routes/_authenticated/settings.phone-numbers'
 import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_authenticated/settings.messaging'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
+import { Route as AuthenticatedSettingsCallFlowsRouteImport } from './routes/_authenticated/settings.call-flows'
 import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
@@ -134,6 +136,11 @@ const AuthenticatedConversationsRoute =
     path: '/conversations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCallsRoute = AuthenticatedCallsRouteImport.update({
+  id: '/calls',
+  path: '/calls',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
@@ -185,6 +192,12 @@ const AuthenticatedSettingsIntegrationsRoute =
   AuthenticatedSettingsIntegrationsRouteImport.update({
     id: '/settings/integrations',
     path: '/settings/integrations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsCallFlowsRoute =
+  AuthenticatedSettingsCallFlowsRouteImport.update({
+    id: '/settings/call-flows',
+    path: '/settings/call-flows',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSettingsBookingRoute =
@@ -293,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof AuthenticatedCalendarRoute
+  '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/forms': typeof AuthenticatedFormsRoute
@@ -309,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
+  '/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -337,6 +352,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof AuthenticatedCalendarRoute
+  '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/forms': typeof AuthenticatedFormsRoute
@@ -353,6 +369,7 @@ export interface FileRoutesByTo {
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
+  '/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -383,6 +400,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
+  '/_authenticated/calls': typeof AuthenticatedCallsRoute
   '/_authenticated/conversations': typeof AuthenticatedConversationsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/forms': typeof AuthenticatedFormsRoute
@@ -399,6 +417,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/_authenticated/deals/$id': typeof AuthenticatedDealsIdRoute
   '/_authenticated/settings/booking': typeof AuthenticatedSettingsBookingRoute
+  '/_authenticated/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/_authenticated/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -429,6 +448,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/calendar'
+    | '/calls'
     | '/conversations'
     | '/dashboard'
     | '/forms'
@@ -445,6 +465,7 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/deals/$id'
     | '/settings/booking'
+    | '/settings/call-flows'
     | '/settings/integrations'
     | '/settings/messaging'
     | '/settings/phone-numbers'
@@ -473,6 +494,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/calendar'
+    | '/calls'
     | '/conversations'
     | '/dashboard'
     | '/forms'
@@ -489,6 +511,7 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/deals/$id'
     | '/settings/booking'
+    | '/settings/call-flows'
     | '/settings/integrations'
     | '/settings/messaging'
     | '/settings/phone-numbers'
@@ -518,6 +541,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/calendar'
+    | '/_authenticated/calls'
     | '/_authenticated/conversations'
     | '/_authenticated/dashboard'
     | '/_authenticated/forms'
@@ -534,6 +558,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts/$id'
     | '/_authenticated/deals/$id'
     | '/_authenticated/settings/booking'
+    | '/_authenticated/settings/call-flows'
     | '/_authenticated/settings/integrations'
     | '/_authenticated/settings/messaging'
     | '/_authenticated/settings/phone-numbers'
@@ -698,6 +723,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConversationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/calls': {
+      id: '/_authenticated/calls'
+      path: '/calls'
+      fullPath: '/calls'
+      preLoaderRoute: typeof AuthenticatedCallsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/calendar': {
       id: '/_authenticated/calendar'
       path: '/calendar'
@@ -759,6 +791,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/integrations'
       fullPath: '/settings/integrations'
       preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/call-flows': {
+      id: '/_authenticated/settings/call-flows'
+      path: '/settings/call-flows'
+      fullPath: '/settings/call-flows'
+      preLoaderRoute: typeof AuthenticatedSettingsCallFlowsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/booking': {
@@ -892,6 +931,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
+  AuthenticatedCallsRoute: typeof AuthenticatedCallsRoute
   AuthenticatedConversationsRoute: typeof AuthenticatedConversationsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFormsRoute: typeof AuthenticatedFormsRoute
@@ -905,6 +945,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactsIdRoute: typeof AuthenticatedContactsIdRoute
   AuthenticatedDealsIdRoute: typeof AuthenticatedDealsIdRoute
   AuthenticatedSettingsBookingRoute: typeof AuthenticatedSettingsBookingRoute
+  AuthenticatedSettingsCallFlowsRoute: typeof AuthenticatedSettingsCallFlowsRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedSettingsMessagingRoute: typeof AuthenticatedSettingsMessagingRoute
   AuthenticatedSettingsPhoneNumbersRoute: typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -916,6 +957,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
+  AuthenticatedCallsRoute: AuthenticatedCallsRoute,
   AuthenticatedConversationsRoute: AuthenticatedConversationsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFormsRoute: AuthenticatedFormsRoute,
@@ -929,6 +971,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactsIdRoute: AuthenticatedContactsIdRoute,
   AuthenticatedDealsIdRoute: AuthenticatedDealsIdRoute,
   AuthenticatedSettingsBookingRoute: AuthenticatedSettingsBookingRoute,
+  AuthenticatedSettingsCallFlowsRoute: AuthenticatedSettingsCallFlowsRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
   AuthenticatedSettingsMessagingRoute: AuthenticatedSettingsMessagingRoute,
