@@ -180,7 +180,7 @@ function TeamPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => copyLink(inv.token)}>
+                    <Button variant="outline" size="sm" onClick={() => copyLink(inv.id)}>
                       <Copy className="size-3.5 mr-1.5" /> Copy link
                     </Button>
                     <Button
