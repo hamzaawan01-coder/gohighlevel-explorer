@@ -220,6 +220,8 @@ function ConversationsPage() {
   const placeholder =
     composeChannel === "sms"
       ? "Type SMS message (sent via your Twilio number)…"
+      : composeChannel === "whatsapp"
+      ? "Type WhatsApp message (sent via your Twilio WhatsApp sender)…"
       : isRealChannel
       ? `Send via ${CHANNEL_BY_KEY[composeChannel].label} (logged only until integration is connected)…`
       : "Add an internal note…";
