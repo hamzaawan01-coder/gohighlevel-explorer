@@ -638,6 +638,7 @@ export type Database = {
           id: string
           last_message_at: string | null
           sub_account_id: string
+          twilio_number_id: string | null
           updated_at: string
         }
         Insert: {
@@ -648,6 +649,7 @@ export type Database = {
           id?: string
           last_message_at?: string | null
           sub_account_id: string
+          twilio_number_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -658,6 +660,7 @@ export type Database = {
           id?: string
           last_message_at?: string | null
           sub_account_id?: string
+          twilio_number_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -673,6 +676,13 @@ export type Database = {
             columns: ["sub_account_id"]
             isOneToOne: false
             referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_twilio_number_id_fkey"
+            columns: ["twilio_number_id"]
+            isOneToOne: false
+            referencedRelation: "twilio_numbers"
             referencedColumns: ["id"]
           },
         ]
@@ -1024,12 +1034,17 @@ export type Database = {
           channel: Database["public"]["Enums"]["message_channel"]
           conversation_id: string
           created_at: string
+          delivery_status: string | null
           direction: Database["public"]["Enums"]["message_direction"]
+          error_message: string | null
           external_id: string | null
+          from_number: string | null
           id: string
           kind: Database["public"]["Enums"]["message_kind"]
+          media_urls: string[]
           sender_handle: string | null
           sub_account_id: string
+          to_number: string | null
         }
         Insert: {
           author_user_id?: string | null
@@ -1037,12 +1052,17 @@ export type Database = {
           channel?: Database["public"]["Enums"]["message_channel"]
           conversation_id: string
           created_at?: string
+          delivery_status?: string | null
           direction?: Database["public"]["Enums"]["message_direction"]
+          error_message?: string | null
           external_id?: string | null
+          from_number?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["message_kind"]
+          media_urls?: string[]
           sender_handle?: string | null
           sub_account_id: string
+          to_number?: string | null
         }
         Update: {
           author_user_id?: string | null
@@ -1050,12 +1070,17 @@ export type Database = {
           channel?: Database["public"]["Enums"]["message_channel"]
           conversation_id?: string
           created_at?: string
+          delivery_status?: string | null
           direction?: Database["public"]["Enums"]["message_direction"]
+          error_message?: string | null
           external_id?: string | null
+          from_number?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["message_kind"]
+          media_urls?: string[]
           sender_handle?: string | null
           sub_account_id?: string
+          to_number?: string | null
         }
         Relationships: [
           {
