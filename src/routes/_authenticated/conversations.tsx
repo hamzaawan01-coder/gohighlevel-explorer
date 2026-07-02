@@ -141,12 +141,22 @@ function ConversationsPage() {
   });
 
   const sendSmsFn = useServerFn(sendTwilioSms);
+  const sendWaFn = useServerFn(sendTwilioWhatsapp);
 
   const sendMut = useMutation({
     mutationFn: async () => {
       if (!userId || !subId || !selectedConvo) throw new Error("Not ready");
       if (composeChannel === "sms") {
         return sendSmsFn({
+          data: {
+            subAccountId: subId,
+            conversationId: selectedConvo.id,
+            body: body.trim(),
+          },
+        });
+      }
+      if (composeChannel === "whatsapp") {
+        return sendWaFn({
           data: {
             subAccountId: subId,
             conversationId: selectedConvo.id,
