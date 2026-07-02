@@ -537,9 +537,10 @@ function WhatsAppCell({ subId, number }: { subId: string; number: any }) {
   const [open, setOpen] = useState(false);
   const [sender, setSender] = useState<string>(number.whatsapp_sender ?? number.phone_number);
   const qc = useQueryClient();
+  const getConnFn = useServerFn(getTwilioConnection);
   const connQ = useQuery({
     queryKey: ["twilio-conn", subId],
-    queryFn: () => useServerFn(getTwilioConnection)({ data: { subAccountId: subId } }),
+    queryFn: () => getConnFn({ data: { subAccountId: subId } }),
   });
   const enableFn = useServerFn(enableWhatsappOnNumber);
   const enableM = useMutation({
