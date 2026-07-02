@@ -1493,6 +1493,181 @@ export type Database = {
           },
         ]
       }
+      phone_call_flows: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          greeting_audio_url: string | null
+          greeting_text: string | null
+          id: string
+          is_default: boolean | null
+          menu: Json
+          name: string
+          ring_agent_ids: string[] | null
+          ring_timeout_seconds: number | null
+          sub_account_id: string
+          twilio_number_id: string | null
+          updated_at: string
+          voice_gender: string | null
+          voice_language: string | null
+          voicemail_enabled: boolean | null
+          voicemail_prompt: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          greeting_audio_url?: string | null
+          greeting_text?: string | null
+          id?: string
+          is_default?: boolean | null
+          menu?: Json
+          name: string
+          ring_agent_ids?: string[] | null
+          ring_timeout_seconds?: number | null
+          sub_account_id: string
+          twilio_number_id?: string | null
+          updated_at?: string
+          voice_gender?: string | null
+          voice_language?: string | null
+          voicemail_enabled?: boolean | null
+          voicemail_prompt?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          greeting_audio_url?: string | null
+          greeting_text?: string | null
+          id?: string
+          is_default?: boolean | null
+          menu?: Json
+          name?: string
+          ring_agent_ids?: string[] | null
+          ring_timeout_seconds?: number | null
+          sub_account_id?: string
+          twilio_number_id?: string | null
+          updated_at?: string
+          voice_gender?: string | null
+          voice_language?: string | null
+          voicemail_enabled?: boolean | null
+          voicemail_prompt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_call_flows_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_call_flows_twilio_number_id_fkey"
+            columns: ["twilio_number_id"]
+            isOneToOne: false
+            referencedRelation: "twilio_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_calls: {
+        Row: {
+          agent_user_id: string | null
+          call_sid: string | null
+          contact_id: string | null
+          created_at: string
+          direction: string
+          duration_seconds: number | null
+          ended_at: string | null
+          from_number: string | null
+          id: string
+          parent_call_sid: string | null
+          price: number | null
+          price_currency: string | null
+          recording_duration: number | null
+          recording_sid: string | null
+          recording_url: string | null
+          started_at: string | null
+          status: string | null
+          sub_account_id: string
+          to_number: string | null
+          transcript: string | null
+          transcript_status: string | null
+          twilio_number_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_user_id?: string | null
+          call_sid?: string | null
+          contact_id?: string | null
+          created_at?: string
+          direction: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          from_number?: string | null
+          id?: string
+          parent_call_sid?: string | null
+          price?: number | null
+          price_currency?: string | null
+          recording_duration?: number | null
+          recording_sid?: string | null
+          recording_url?: string | null
+          started_at?: string | null
+          status?: string | null
+          sub_account_id: string
+          to_number?: string | null
+          transcript?: string | null
+          transcript_status?: string | null
+          twilio_number_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_user_id?: string | null
+          call_sid?: string | null
+          contact_id?: string | null
+          created_at?: string
+          direction?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          from_number?: string | null
+          id?: string
+          parent_call_sid?: string | null
+          price?: number | null
+          price_currency?: string | null
+          recording_duration?: number | null
+          recording_sid?: string | null
+          recording_url?: string | null
+          started_at?: string | null
+          status?: string | null
+          sub_account_id?: string
+          to_number?: string | null
+          transcript?: string | null
+          transcript_status?: string | null
+          twilio_number_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_calls_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_calls_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_calls_twilio_number_id_fkey"
+            columns: ["twilio_number_id"]
+            isOneToOne: false
+            referencedRelation: "twilio_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_stages: {
         Row: {
           color: string
@@ -1986,6 +2161,7 @@ export type Database = {
           sub_account_id: string
           twiml_app_sid: string | null
           updated_at: string
+          voice_identity_prefix: string | null
           webhook_token: string
         }
         Insert: {
@@ -2001,6 +2177,7 @@ export type Database = {
           sub_account_id: string
           twiml_app_sid?: string | null
           updated_at?: string
+          voice_identity_prefix?: string | null
           webhook_token?: string
         }
         Update: {
@@ -2016,6 +2193,7 @@ export type Database = {
           sub_account_id?: string
           twiml_app_sid?: string | null
           updated_at?: string
+          voice_identity_prefix?: string | null
           webhook_token?: string
         }
         Relationships: [
@@ -2126,6 +2304,89 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      voicemails: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          duration_seconds: number | null
+          from_number: string | null
+          id: string
+          listened_at: string | null
+          listened_by: string | null
+          phone_call_id: string | null
+          recording_sid: string | null
+          recording_url: string
+          sub_account_id: string
+          transcription: string | null
+          transcription_status: string | null
+          twilio_number_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          from_number?: string | null
+          id?: string
+          listened_at?: string | null
+          listened_by?: string | null
+          phone_call_id?: string | null
+          recording_sid?: string | null
+          recording_url: string
+          sub_account_id: string
+          transcription?: string | null
+          transcription_status?: string | null
+          twilio_number_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          from_number?: string | null
+          id?: string
+          listened_at?: string | null
+          listened_by?: string | null
+          phone_call_id?: string | null
+          recording_sid?: string | null
+          recording_url?: string
+          sub_account_id?: string
+          transcription?: string | null
+          transcription_status?: string | null
+          twilio_number_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voicemails_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voicemails_phone_call_id_fkey"
+            columns: ["phone_call_id"]
+            isOneToOne: false
+            referencedRelation: "phone_calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voicemails_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voicemails_twilio_number_id_fkey"
+            columns: ["twilio_number_id"]
+            isOneToOne: false
+            referencedRelation: "twilio_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wordpress_webhooks: {
         Row: {
