@@ -45,7 +45,19 @@ import {
   listMyNumbers,
   releaseTwilioNumber,
   setDefaultTwilioNumber,
+  enableWhatsappOnNumber,
 } from "@/lib/twilio.functions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { MessageCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings/phone-numbers")({
   head: () => ({ meta: [{ title: "Phone Numbers — Settings" }] }),
