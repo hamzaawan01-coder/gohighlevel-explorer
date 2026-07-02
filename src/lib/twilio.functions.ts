@@ -364,3 +364,115 @@ export const setDefaultTwilioNumber = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ============ Phase 2: SMS send ============
+import { sendMessageWithMedia } from "./twilio.server";
+
+/** Send an SMS/MMS from one of your Twilio numbers into a conversation. */
+export const sendTwilioSms = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    subAccountId: string;
+    conversationId: string;
+    body: string;
+    twilioNumberId?: string;
+    mediaUrls?: string[];
+  }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      conversationId: z.string().uuid(),
+      body: z.string().min(1).max(1600),
+      twilioNumberId: z.string().uuid().optional(),
+      mediaUrls: z.array(z.string().url()).max(10).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureMember(context.supabase, context.userId, data.subAccountId);
+    const conn = await loadConnection(data.subAccountId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Load conversation + contact phone
+    const { data: convo, error: convoErr } = await (supabaseAdmin as any)
+      .from("conversations")
+      .select("id, sub_account_id, contact_id, twilio_number_id, channel")
+      .eq("id", data.conversationId)
+      .single();
+    if (convoErr || !convo || convo.sub_account_id !== data.subAccountId) {
+      throw new Error("Conversation not found");
+    }
+
+    const { data: contact, error: contactErr } = await (supabaseAdmin as any)
+      .from("contacts")
+      .select("id, phone")
+      .eq("id", convo.contact_id)
+      .single();
+    if (contactErr || !contact?.phone) throw new Error("Contact has no phone number");
+
+    // Pick the from-number: explicit -> conversation's saved -> default -> first
+    const chosenId = data.twilioNumberId ?? convo.twilio_number_id;
+    let fromRow: any = null;
+    if (chosenId) {
+      const { data: r } = await (supabaseAdmin as any)
+        .from("twilio_numbers")
+        .select("id, phone_number, sub_account_id")
+        .eq("id", chosenId)
+        .single();
+      if (r?.sub_account_id === data.subAccountId) fromRow = r;
+    }
+    if (!fromRow) {
+      const { data: rows } = await (supabaseAdmin as any)
+        .from("twilio_numbers")
+        .select("id, phone_number, is_default")
+        .eq("sub_account_id", data.subAccountId)
+        .is("released_at", null)
+        .order("is_default", { ascending: false })
+        .order("purchased_at", { ascending: false })
+        .limit(1);
+      fromRow = rows?.[0];
+    }
+    if (!fromRow) throw new Error("No Twilio numbers available. Buy one in Settings → Phone numbers.");
+
+    // Persist the number on the conversation for future replies
+    if (convo.twilio_number_id !== fromRow.id) {
+      await (supabaseAdmin as any)
+        .from("conversations")
+        .update({ twilio_number_id: fromRow.id, channel: "sms" })
+        .eq("id", convo.id);
+    }
+
+    // Send via Twilio
+    const sent = await sendMessageWithMedia(
+      { accountSid: conn.account_sid, apiKeySid: conn.api_key_sid, apiKeySecret: conn.api_key_secret },
+      {
+        from: fromRow.phone_number,
+        to: contact.phone,
+        body: data.body,
+        mediaUrls: data.mediaUrls,
+        statusCallback: statusWebhookUrl(conn.webhook_token),
+      },
+    );
+
+    // Insert outbound message row
+    const { data: msg, error: msgErr } = await (supabaseAdmin as any)
+      .from("messages")
+      .insert({
+        conversation_id: convo.id,
+        sub_account_id: data.subAccountId,
+        author_user_id: context.userId,
+        body: data.body,
+        channel: "sms",
+        direction: "outbound",
+        kind: "sms_log",
+        external_id: sent.sid,
+        from_number: fromRow.phone_number,
+        to_number: contact.phone,
+        delivery_status: sent.status,
+        media_urls: data.mediaUrls ?? [],
+        sender_handle: fromRow.phone_number,
+      })
+      .select("id")
+      .single();
+    if (msgErr) throw new Error(msgErr.message);
+    return { id: msg.id, sid: sent.sid, status: sent.status };
+  });
