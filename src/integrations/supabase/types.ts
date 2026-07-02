@@ -2577,6 +2577,7 @@ export type Database = {
           sub_account_id: string
         }[]
       }
+      get_invitation_token: { Args: { _id: string }; Returns: string }
       has_agency_access: {
         Args: { _agency: string; _user: string }
         Returns: boolean
