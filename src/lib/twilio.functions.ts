@@ -676,3 +676,165 @@ export const saveCallFlow = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { id: row.id };
   });
+
+// ============ Phase 4: WhatsApp ============
+import { sendWhatsappMessage, whatsappWebhookUrl, updateNumberWebhooks } from "./twilio.server";
+
+/**
+ * Enable WhatsApp on a purchased number.
+ * Note: the number must already be registered as a WhatsApp Sender in the
+ * Twilio Console (WhatsApp → Senders). This endpoint records the sender
+ * identifier and wires the inbound WhatsApp webhook onto the Twilio number.
+ */
+export const enableWhatsappOnNumber = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    subAccountId: string;
+    numberId: string;
+    whatsappSender?: string;
+    enabled: boolean;
+  }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      numberId: z.string().uuid(),
+      whatsappSender: z.string().min(4).optional(),
+      enabled: z.boolean(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId, data.subAccountId);
+    const conn = await loadConnection(data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: row } = await (supabaseAdmin as any)
+      .from("twilio_numbers")
+      .select("id, twilio_sid, phone_number, sub_account_id")
+      .eq("id", data.numberId)
+      .single();
+    if (!row || row.sub_account_id !== data.subAccountId) throw new Error("Number not found");
+
+    const waUrl = whatsappWebhookUrl(conn.webhook_token);
+
+    // Twilio's WhatsApp inbound webhook is configured per-Sender in the
+    // Twilio Console (WhatsApp Senders → Inbound URL). We still set the
+    // SmsUrl on the underlying number to the SMS webhook so text still works.
+    await (supabaseAdmin as any)
+      .from("twilio_numbers")
+      .update({
+        whatsapp_enabled: data.enabled,
+        whatsapp_sender: data.enabled ? (data.whatsappSender ?? row.phone_number) : null,
+        whatsapp_url: data.enabled ? waUrl : null,
+      })
+      .eq("id", data.numberId);
+
+    return { ok: true, whatsappWebhookUrl: waUrl };
+  });
+
+/** Send a WhatsApp message into a conversation. */
+export const sendTwilioWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    subAccountId: string;
+    conversationId: string;
+    body: string;
+    twilioNumberId?: string;
+    mediaUrls?: string[];
+  }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      conversationId: z.string().uuid(),
+      body: z.string().min(1).max(1600),
+      twilioNumberId: z.string().uuid().optional(),
+      mediaUrls: z.array(z.string().url()).max(10).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureMember(context.supabase, context.userId, data.subAccountId);
+    const conn = await loadConnection(data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: convo, error: convoErr } = await (supabaseAdmin as any)
+      .from("conversations")
+      .select("id, sub_account_id, contact_id, twilio_number_id")
+      .eq("id", data.conversationId)
+      .single();
+    if (convoErr || !convo || convo.sub_account_id !== data.subAccountId) {
+      throw new Error("Conversation not found");
+    }
+
+    const { data: contact } = await (supabaseAdmin as any)
+      .from("contacts")
+      .select("id, phone")
+      .eq("id", convo.contact_id)
+      .single();
+    if (!contact?.phone) throw new Error("Contact has no phone number");
+
+    // Pick a WhatsApp-enabled number
+    const chosenId = data.twilioNumberId ?? convo.twilio_number_id;
+    let fromRow: any = null;
+    if (chosenId) {
+      const { data: r } = await (supabaseAdmin as any)
+        .from("twilio_numbers")
+        .select("id, phone_number, whatsapp_sender, whatsapp_enabled, sub_account_id")
+        .eq("id", chosenId)
+        .single();
+      if (r?.sub_account_id === data.subAccountId && r.whatsapp_enabled) fromRow = r;
+    }
+    if (!fromRow) {
+      const { data: rows } = await (supabaseAdmin as any)
+        .from("twilio_numbers")
+        .select("id, phone_number, whatsapp_sender, whatsapp_enabled, is_default")
+        .eq("sub_account_id", data.subAccountId)
+        .eq("whatsapp_enabled", true)
+        .is("released_at", null)
+        .order("is_default", { ascending: false })
+        .limit(1);
+      fromRow = rows?.[0];
+    }
+    if (!fromRow) {
+      throw new Error(
+        "No WhatsApp-enabled number. Enable WhatsApp on a number in Settings → Phone numbers.",
+      );
+    }
+
+    const sender = fromRow.whatsapp_sender ?? fromRow.phone_number;
+    const sent = await sendWhatsappMessage(
+      { accountSid: conn.account_sid, apiKeySid: conn.api_key_sid, apiKeySecret: conn.api_key_secret },
+      {
+        from: sender,
+        to: contact.phone,
+        body: data.body,
+        mediaUrls: data.mediaUrls,
+        statusCallback: statusWebhookUrl(conn.webhook_token),
+      },
+    );
+
+    if (convo.twilio_number_id !== fromRow.id) {
+      await (supabaseAdmin as any)
+        .from("conversations")
+        .update({ twilio_number_id: fromRow.id, channel: "whatsapp" })
+        .eq("id", convo.id);
+    }
+
+    const { data: msg, error: msgErr } = await (supabaseAdmin as any)
+      .from("messages")
+      .insert({
+        conversation_id: convo.id,
+        sub_account_id: data.subAccountId,
+        author_user_id: context.userId,
+        body: data.body,
+        channel: "whatsapp",
+        direction: "outbound",
+        kind: "whatsapp_log",
+        external_id: sent.sid,
+        from_number: sender,
+        to_number: contact.phone,
+        delivery_status: sent.status,
+        media_urls: data.mediaUrls ?? [],
+        sender_handle: sender,
+      })
+      .select("id")
+      .single();
+    if (msgErr) throw new Error(msgErr.message);
+    return { id: msg.id, sid: sent.sid, status: sent.status };
+  });
