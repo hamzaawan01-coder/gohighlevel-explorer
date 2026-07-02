@@ -15,7 +15,7 @@ import {
   type Conversation,
   type MessageChannel,
 } from "@/lib/conversations";
-import { sendTwilioSms } from "@/lib/twilio.functions";
+import { sendTwilioSms, sendTwilioWhatsapp } from "@/lib/twilio.functions";
 import { CHANNELS, CHANNEL_BY_KEY } from "@/lib/channels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,12 +141,22 @@ function ConversationsPage() {
   });
 
   const sendSmsFn = useServerFn(sendTwilioSms);
+  const sendWaFn = useServerFn(sendTwilioWhatsapp);
 
   const sendMut = useMutation({
     mutationFn: async () => {
       if (!userId || !subId || !selectedConvo) throw new Error("Not ready");
       if (composeChannel === "sms") {
         return sendSmsFn({
+          data: {
+            subAccountId: subId,
+            conversationId: selectedConvo.id,
+            body: body.trim(),
+          },
+        });
+      }
+      if (composeChannel === "whatsapp") {
+        return sendWaFn({
           data: {
             subAccountId: subId,
             conversationId: selectedConvo.id,
@@ -210,6 +220,8 @@ function ConversationsPage() {
   const placeholder =
     composeChannel === "sms"
       ? "Type SMS message (sent via your Twilio number)…"
+      : composeChannel === "whatsapp"
+      ? "Type WhatsApp message (sent via your Twilio WhatsApp sender)…"
       : isRealChannel
       ? `Send via ${CHANNEL_BY_KEY[composeChannel].label} (logged only until integration is connected)…`
       : "Add an internal note…";
