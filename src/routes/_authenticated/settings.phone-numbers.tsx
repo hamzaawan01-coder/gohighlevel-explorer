@@ -86,7 +86,7 @@ function PhonePanels({ subId }: { subId: string }) {
     queryFn: () => getConn({ data: { subAccountId: subId } }),
   });
 
-  if (connQ.isLoading) return <EmptyBox>Loading…</EmptyBox>;
+  if (connQ.isLoading || !connQ.data) return <EmptyBox>Loading…</EmptyBox>;
   if (connQ.error) return <EmptyBox>Failed to load: {(connQ.error as Error).message}</EmptyBox>;
 
   return (
