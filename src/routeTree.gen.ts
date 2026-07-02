@@ -25,6 +25,7 @@ import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedFormsRouteImport } from './routes/_authenticated/forms'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConversationsRouteImport } from './routes/_authenticated/conversations'
+import { Route as AuthenticatedCallsRouteImport } from './routes/_authenticated/calls'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
 import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
@@ -34,6 +35,7 @@ import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_
 import { Route as AuthenticatedSettingsPhoneNumbersRouteImport } from './routes/_authenticated/settings.phone-numbers'
 import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_authenticated/settings.messaging'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
+import { Route as AuthenticatedSettingsCallFlowsRouteImport } from './routes/_authenticated/settings.call-flows'
 import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
@@ -41,8 +43,13 @@ import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
+import { Route as ApiPublicTwilioTokenVoicemailRouteImport } from './routes/api/public/twilio.$token.voicemail'
+import { Route as ApiPublicTwilioTokenVoiceStatusRouteImport } from './routes/api/public/twilio.$token.voice-status'
+import { Route as ApiPublicTwilioTokenVoiceOutboundRouteImport } from './routes/api/public/twilio.$token.voice-outbound'
+import { Route as ApiPublicTwilioTokenVoiceRouteImport } from './routes/api/public/twilio.$token.voice'
 import { Route as ApiPublicTwilioTokenStatusRouteImport } from './routes/api/public/twilio.$token.status'
 import { Route as ApiPublicTwilioTokenSmsRouteImport } from './routes/api/public/twilio.$token.sms'
+import { Route as ApiPublicTwilioTokenRecordingRouteImport } from './routes/api/public/twilio.$token.recording'
 import { Route as ApiPublicOauthMetaCallbackRouteImport } from './routes/api/public/oauth.meta.callback'
 import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/api/public/oauth.google-ads.callback'
 import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
@@ -129,6 +136,11 @@ const AuthenticatedConversationsRoute =
     path: '/conversations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCallsRoute = AuthenticatedCallsRouteImport.update({
+  id: '/calls',
+  path: '/calls',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
@@ -182,6 +194,12 @@ const AuthenticatedSettingsIntegrationsRoute =
     path: '/settings/integrations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsCallFlowsRoute =
+  AuthenticatedSettingsCallFlowsRouteImport.update({
+    id: '/settings/call-flows',
+    path: '/settings/call-flows',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsBookingRoute =
   AuthenticatedSettingsBookingRouteImport.update({
     id: '/settings/booking',
@@ -219,6 +237,30 @@ const ApiPublicBookingSlugRoute = ApiPublicBookingSlugRouteImport.update({
   path: '/api/public/booking/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTwilioTokenVoicemailRoute =
+  ApiPublicTwilioTokenVoicemailRouteImport.update({
+    id: '/api/public/twilio/$token/voicemail',
+    path: '/api/public/twilio/$token/voicemail',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioTokenVoiceStatusRoute =
+  ApiPublicTwilioTokenVoiceStatusRouteImport.update({
+    id: '/api/public/twilio/$token/voice-status',
+    path: '/api/public/twilio/$token/voice-status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioTokenVoiceOutboundRoute =
+  ApiPublicTwilioTokenVoiceOutboundRouteImport.update({
+    id: '/api/public/twilio/$token/voice-outbound',
+    path: '/api/public/twilio/$token/voice-outbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioTokenVoiceRoute =
+  ApiPublicTwilioTokenVoiceRouteImport.update({
+    id: '/api/public/twilio/$token/voice',
+    path: '/api/public/twilio/$token/voice',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTwilioTokenStatusRoute =
   ApiPublicTwilioTokenStatusRouteImport.update({
     id: '/api/public/twilio/$token/status',
@@ -230,6 +272,12 @@ const ApiPublicTwilioTokenSmsRoute = ApiPublicTwilioTokenSmsRouteImport.update({
   path: '/api/public/twilio/$token/sms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTwilioTokenRecordingRoute =
+  ApiPublicTwilioTokenRecordingRouteImport.update({
+    id: '/api/public/twilio/$token/recording',
+    path: '/api/public/twilio/$token/recording',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicOauthMetaCallbackRoute =
   ApiPublicOauthMetaCallbackRouteImport.update({
     id: '/api/public/oauth/meta/callback',
@@ -258,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof AuthenticatedCalendarRoute
+  '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/forms': typeof AuthenticatedFormsRoute
@@ -274,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
+  '/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -290,13 +340,19 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
   '/api/public/oauth/meta/callback': typeof ApiPublicOauthMetaCallbackRoute
+  '/api/public/twilio/$token/recording': typeof ApiPublicTwilioTokenRecordingRoute
   '/api/public/twilio/$token/sms': typeof ApiPublicTwilioTokenSmsRoute
   '/api/public/twilio/$token/status': typeof ApiPublicTwilioTokenStatusRoute
+  '/api/public/twilio/$token/voice': typeof ApiPublicTwilioTokenVoiceRoute
+  '/api/public/twilio/$token/voice-outbound': typeof ApiPublicTwilioTokenVoiceOutboundRoute
+  '/api/public/twilio/$token/voice-status': typeof ApiPublicTwilioTokenVoiceStatusRoute
+  '/api/public/twilio/$token/voicemail': typeof ApiPublicTwilioTokenVoicemailRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/calendar': typeof AuthenticatedCalendarRoute
+  '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/forms': typeof AuthenticatedFormsRoute
@@ -313,6 +369,7 @@ export interface FileRoutesByTo {
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
+  '/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -329,8 +386,13 @@ export interface FileRoutesByTo {
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
   '/api/public/oauth/meta/callback': typeof ApiPublicOauthMetaCallbackRoute
+  '/api/public/twilio/$token/recording': typeof ApiPublicTwilioTokenRecordingRoute
   '/api/public/twilio/$token/sms': typeof ApiPublicTwilioTokenSmsRoute
   '/api/public/twilio/$token/status': typeof ApiPublicTwilioTokenStatusRoute
+  '/api/public/twilio/$token/voice': typeof ApiPublicTwilioTokenVoiceRoute
+  '/api/public/twilio/$token/voice-outbound': typeof ApiPublicTwilioTokenVoiceOutboundRoute
+  '/api/public/twilio/$token/voice-status': typeof ApiPublicTwilioTokenVoiceStatusRoute
+  '/api/public/twilio/$token/voicemail': typeof ApiPublicTwilioTokenVoicemailRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -338,6 +400,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
+  '/_authenticated/calls': typeof AuthenticatedCallsRoute
   '/_authenticated/conversations': typeof AuthenticatedConversationsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/forms': typeof AuthenticatedFormsRoute
@@ -354,6 +417,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/_authenticated/deals/$id': typeof AuthenticatedDealsIdRoute
   '/_authenticated/settings/booking': typeof AuthenticatedSettingsBookingRoute
+  '/_authenticated/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/_authenticated/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -370,8 +434,13 @@ export interface FileRoutesById {
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
   '/api/public/oauth/meta/callback': typeof ApiPublicOauthMetaCallbackRoute
+  '/api/public/twilio/$token/recording': typeof ApiPublicTwilioTokenRecordingRoute
   '/api/public/twilio/$token/sms': typeof ApiPublicTwilioTokenSmsRoute
   '/api/public/twilio/$token/status': typeof ApiPublicTwilioTokenStatusRoute
+  '/api/public/twilio/$token/voice': typeof ApiPublicTwilioTokenVoiceRoute
+  '/api/public/twilio/$token/voice-outbound': typeof ApiPublicTwilioTokenVoiceOutboundRoute
+  '/api/public/twilio/$token/voice-status': typeof ApiPublicTwilioTokenVoiceStatusRoute
+  '/api/public/twilio/$token/voicemail': typeof ApiPublicTwilioTokenVoicemailRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -379,6 +448,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/calendar'
+    | '/calls'
     | '/conversations'
     | '/dashboard'
     | '/forms'
@@ -395,6 +465,7 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/deals/$id'
     | '/settings/booking'
+    | '/settings/call-flows'
     | '/settings/integrations'
     | '/settings/messaging'
     | '/settings/phone-numbers'
@@ -411,13 +482,19 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
     | '/api/public/oauth/meta/callback'
+    | '/api/public/twilio/$token/recording'
     | '/api/public/twilio/$token/sms'
     | '/api/public/twilio/$token/status'
+    | '/api/public/twilio/$token/voice'
+    | '/api/public/twilio/$token/voice-outbound'
+    | '/api/public/twilio/$token/voice-status'
+    | '/api/public/twilio/$token/voicemail'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/calendar'
+    | '/calls'
     | '/conversations'
     | '/dashboard'
     | '/forms'
@@ -434,6 +511,7 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/deals/$id'
     | '/settings/booking'
+    | '/settings/call-flows'
     | '/settings/integrations'
     | '/settings/messaging'
     | '/settings/phone-numbers'
@@ -450,14 +528,20 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
     | '/api/public/oauth/meta/callback'
+    | '/api/public/twilio/$token/recording'
     | '/api/public/twilio/$token/sms'
     | '/api/public/twilio/$token/status'
+    | '/api/public/twilio/$token/voice'
+    | '/api/public/twilio/$token/voice-outbound'
+    | '/api/public/twilio/$token/voice-status'
+    | '/api/public/twilio/$token/voicemail'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/calendar'
+    | '/_authenticated/calls'
     | '/_authenticated/conversations'
     | '/_authenticated/dashboard'
     | '/_authenticated/forms'
@@ -474,6 +558,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts/$id'
     | '/_authenticated/deals/$id'
     | '/_authenticated/settings/booking'
+    | '/_authenticated/settings/call-flows'
     | '/_authenticated/settings/integrations'
     | '/_authenticated/settings/messaging'
     | '/_authenticated/settings/phone-numbers'
@@ -490,8 +575,13 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
     | '/api/public/oauth/meta/callback'
+    | '/api/public/twilio/$token/recording'
     | '/api/public/twilio/$token/sms'
     | '/api/public/twilio/$token/status'
+    | '/api/public/twilio/$token/voice'
+    | '/api/public/twilio/$token/voice-outbound'
+    | '/api/public/twilio/$token/voice-status'
+    | '/api/public/twilio/$token/voicemail'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -510,8 +600,13 @@ export interface RootRouteChildren {
   ApiPublicHooksWordpressTokenRoute: typeof ApiPublicHooksWordpressTokenRoute
   ApiPublicOauthGoogleAdsCallbackRoute: typeof ApiPublicOauthGoogleAdsCallbackRoute
   ApiPublicOauthMetaCallbackRoute: typeof ApiPublicOauthMetaCallbackRoute
+  ApiPublicTwilioTokenRecordingRoute: typeof ApiPublicTwilioTokenRecordingRoute
   ApiPublicTwilioTokenSmsRoute: typeof ApiPublicTwilioTokenSmsRoute
   ApiPublicTwilioTokenStatusRoute: typeof ApiPublicTwilioTokenStatusRoute
+  ApiPublicTwilioTokenVoiceRoute: typeof ApiPublicTwilioTokenVoiceRoute
+  ApiPublicTwilioTokenVoiceOutboundRoute: typeof ApiPublicTwilioTokenVoiceOutboundRoute
+  ApiPublicTwilioTokenVoiceStatusRoute: typeof ApiPublicTwilioTokenVoiceStatusRoute
+  ApiPublicTwilioTokenVoicemailRoute: typeof ApiPublicTwilioTokenVoicemailRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -628,6 +723,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConversationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/calls': {
+      id: '/_authenticated/calls'
+      path: '/calls'
+      fullPath: '/calls'
+      preLoaderRoute: typeof AuthenticatedCallsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/calendar': {
       id: '/_authenticated/calendar'
       path: '/calendar'
@@ -691,6 +793,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/call-flows': {
+      id: '/_authenticated/settings/call-flows'
+      path: '/settings/call-flows'
+      fullPath: '/settings/call-flows'
+      preLoaderRoute: typeof AuthenticatedSettingsCallFlowsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/booking': {
       id: '/_authenticated/settings/booking'
       path: '/settings/booking'
@@ -740,6 +849,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/twilio/$token/voicemail': {
+      id: '/api/public/twilio/$token/voicemail'
+      path: '/api/public/twilio/$token/voicemail'
+      fullPath: '/api/public/twilio/$token/voicemail'
+      preLoaderRoute: typeof ApiPublicTwilioTokenVoicemailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/voice-status': {
+      id: '/api/public/twilio/$token/voice-status'
+      path: '/api/public/twilio/$token/voice-status'
+      fullPath: '/api/public/twilio/$token/voice-status'
+      preLoaderRoute: typeof ApiPublicTwilioTokenVoiceStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/voice-outbound': {
+      id: '/api/public/twilio/$token/voice-outbound'
+      path: '/api/public/twilio/$token/voice-outbound'
+      fullPath: '/api/public/twilio/$token/voice-outbound'
+      preLoaderRoute: typeof ApiPublicTwilioTokenVoiceOutboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/voice': {
+      id: '/api/public/twilio/$token/voice'
+      path: '/api/public/twilio/$token/voice'
+      fullPath: '/api/public/twilio/$token/voice'
+      preLoaderRoute: typeof ApiPublicTwilioTokenVoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/$token/status': {
       id: '/api/public/twilio/$token/status'
       path: '/api/public/twilio/$token/status'
@@ -752,6 +889,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/twilio/$token/sms'
       fullPath: '/api/public/twilio/$token/sms'
       preLoaderRoute: typeof ApiPublicTwilioTokenSmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/recording': {
+      id: '/api/public/twilio/$token/recording'
+      path: '/api/public/twilio/$token/recording'
+      fullPath: '/api/public/twilio/$token/recording'
+      preLoaderRoute: typeof ApiPublicTwilioTokenRecordingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/oauth/meta/callback': {
@@ -787,6 +931,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
+  AuthenticatedCallsRoute: typeof AuthenticatedCallsRoute
   AuthenticatedConversationsRoute: typeof AuthenticatedConversationsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFormsRoute: typeof AuthenticatedFormsRoute
@@ -800,6 +945,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactsIdRoute: typeof AuthenticatedContactsIdRoute
   AuthenticatedDealsIdRoute: typeof AuthenticatedDealsIdRoute
   AuthenticatedSettingsBookingRoute: typeof AuthenticatedSettingsBookingRoute
+  AuthenticatedSettingsCallFlowsRoute: typeof AuthenticatedSettingsCallFlowsRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedSettingsMessagingRoute: typeof AuthenticatedSettingsMessagingRoute
   AuthenticatedSettingsPhoneNumbersRoute: typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -811,6 +957,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
+  AuthenticatedCallsRoute: AuthenticatedCallsRoute,
   AuthenticatedConversationsRoute: AuthenticatedConversationsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFormsRoute: AuthenticatedFormsRoute,
@@ -824,6 +971,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactsIdRoute: AuthenticatedContactsIdRoute,
   AuthenticatedDealsIdRoute: AuthenticatedDealsIdRoute,
   AuthenticatedSettingsBookingRoute: AuthenticatedSettingsBookingRoute,
+  AuthenticatedSettingsCallFlowsRoute: AuthenticatedSettingsCallFlowsRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
   AuthenticatedSettingsMessagingRoute: AuthenticatedSettingsMessagingRoute,
@@ -854,8 +1002,14 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksWordpressTokenRoute: ApiPublicHooksWordpressTokenRoute,
   ApiPublicOauthGoogleAdsCallbackRoute: ApiPublicOauthGoogleAdsCallbackRoute,
   ApiPublicOauthMetaCallbackRoute: ApiPublicOauthMetaCallbackRoute,
+  ApiPublicTwilioTokenRecordingRoute: ApiPublicTwilioTokenRecordingRoute,
   ApiPublicTwilioTokenSmsRoute: ApiPublicTwilioTokenSmsRoute,
   ApiPublicTwilioTokenStatusRoute: ApiPublicTwilioTokenStatusRoute,
+  ApiPublicTwilioTokenVoiceRoute: ApiPublicTwilioTokenVoiceRoute,
+  ApiPublicTwilioTokenVoiceOutboundRoute:
+    ApiPublicTwilioTokenVoiceOutboundRoute,
+  ApiPublicTwilioTokenVoiceStatusRoute: ApiPublicTwilioTokenVoiceStatusRoute,
+  ApiPublicTwilioTokenVoicemailRoute: ApiPublicTwilioTokenVoicemailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
