@@ -268,7 +268,8 @@ export const sendMetaMessage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
-    const { data: pageRows } = await (context.supabase as any)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: pageRows } = await (supabaseAdmin as any)
       .from("meta_pages").select("*")
       .eq("id", data.pageRowId).eq("sub_account_id", data.subAccountId).limit(1);
     const page = (pageRows ?? [])[0] as MetaPageRow | undefined;
@@ -282,7 +283,8 @@ export const disconnectMeta = createServerFn({ method: "POST" })
   .inputValidator((d: { subAccountId: string }) => z.object({ subAccountId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
-    const { error } = await (context.supabase as any)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await (supabaseAdmin as any)
       .from("meta_connections").delete().eq("sub_account_id", data.subAccountId);
     if (error) throw new Error(error.message);
     return { ok: true };
