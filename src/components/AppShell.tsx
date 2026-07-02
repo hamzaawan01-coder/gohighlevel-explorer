@@ -18,12 +18,14 @@ import {
   Megaphone,
   Webhook,
   Phone,
+  PhoneCall,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { SubAccountSwitcher } from "@/components/SubAccountSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
 import { CommandPalette } from "@/components/CommandPalette";
+import { Softphone } from "@/components/Softphone";
 
 function openPalette() {
   (window as unknown as { __openPalette?: () => void }).__openPalette?.();
@@ -42,6 +44,8 @@ const salesNav: NavItem[] = [
   { label: "Tasks", icon: CheckSquare, to: "/tasks" },
   { label: "Calendar", icon: Calendar, to: "/calendar" },
   { label: "Conversations", icon: MessageSquare, to: "/conversations" },
+  { label: "Conversations", icon: MessageSquare, to: "/conversations" },
+  { label: "Calls", icon: PhoneCall, to: "/calls" },
   { label: "Reports", icon: BarChart3, to: "/reports" },
   { label: "Inbox", icon: Inbox, to: "/inbox" },
 ];
@@ -54,6 +58,7 @@ const automationNav: NavItem[] = [
   { label: "WordPress", icon: Webhook, to: "/settings/wordpress" },
   { label: "Booking pages", icon: CalendarClock, to: "/settings/booking" },
   { label: "Phone numbers", icon: Phone, to: "/settings/phone-numbers" },
+  { label: "Call flows", icon: PhoneCall, to: "/settings/call-flows" },
   { label: "Integrations", icon: Settings, to: "/settings/integrations" },
   { label: "Quiet hours", icon: Settings, to: "/settings/messaging" },
 ];
@@ -115,6 +120,7 @@ export function AppShell({
         <aside className="w-80 border-l border-border bg-card flex flex-col shrink-0">{rightPane}</aside>
       ) : null}
       <CommandPalette />
+      <Softphone />
     </div>
   );
 }
