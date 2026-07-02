@@ -43,6 +43,7 @@ import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
+import { Route as ApiPublicTwilioTokenWhatsappRouteImport } from './routes/api/public/twilio.$token.whatsapp'
 import { Route as ApiPublicTwilioTokenVoicemailRouteImport } from './routes/api/public/twilio.$token.voicemail'
 import { Route as ApiPublicTwilioTokenVoiceStatusRouteImport } from './routes/api/public/twilio.$token.voice-status'
 import { Route as ApiPublicTwilioTokenVoiceOutboundRouteImport } from './routes/api/public/twilio.$token.voice-outbound'
@@ -237,6 +238,12 @@ const ApiPublicBookingSlugRoute = ApiPublicBookingSlugRouteImport.update({
   path: '/api/public/booking/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTwilioTokenWhatsappRoute =
+  ApiPublicTwilioTokenWhatsappRouteImport.update({
+    id: '/api/public/twilio/$token/whatsapp',
+    path: '/api/public/twilio/$token/whatsapp',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTwilioTokenVoicemailRoute =
   ApiPublicTwilioTokenVoicemailRouteImport.update({
     id: '/api/public/twilio/$token/voicemail',
@@ -347,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/api/public/twilio/$token/voice-outbound': typeof ApiPublicTwilioTokenVoiceOutboundRoute
   '/api/public/twilio/$token/voice-status': typeof ApiPublicTwilioTokenVoiceStatusRoute
   '/api/public/twilio/$token/voicemail': typeof ApiPublicTwilioTokenVoicemailRoute
+  '/api/public/twilio/$token/whatsapp': typeof ApiPublicTwilioTokenWhatsappRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -393,6 +401,7 @@ export interface FileRoutesByTo {
   '/api/public/twilio/$token/voice-outbound': typeof ApiPublicTwilioTokenVoiceOutboundRoute
   '/api/public/twilio/$token/voice-status': typeof ApiPublicTwilioTokenVoiceStatusRoute
   '/api/public/twilio/$token/voicemail': typeof ApiPublicTwilioTokenVoicemailRoute
+  '/api/public/twilio/$token/whatsapp': typeof ApiPublicTwilioTokenWhatsappRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -441,6 +450,7 @@ export interface FileRoutesById {
   '/api/public/twilio/$token/voice-outbound': typeof ApiPublicTwilioTokenVoiceOutboundRoute
   '/api/public/twilio/$token/voice-status': typeof ApiPublicTwilioTokenVoiceStatusRoute
   '/api/public/twilio/$token/voicemail': typeof ApiPublicTwilioTokenVoicemailRoute
+  '/api/public/twilio/$token/whatsapp': typeof ApiPublicTwilioTokenWhatsappRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -489,6 +499,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/$token/voice-outbound'
     | '/api/public/twilio/$token/voice-status'
     | '/api/public/twilio/$token/voicemail'
+    | '/api/public/twilio/$token/whatsapp'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -535,6 +546,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/$token/voice-outbound'
     | '/api/public/twilio/$token/voice-status'
     | '/api/public/twilio/$token/voicemail'
+    | '/api/public/twilio/$token/whatsapp'
   id:
     | '__root__'
     | '/'
@@ -582,6 +594,7 @@ export interface FileRouteTypes {
     | '/api/public/twilio/$token/voice-outbound'
     | '/api/public/twilio/$token/voice-status'
     | '/api/public/twilio/$token/voicemail'
+    | '/api/public/twilio/$token/whatsapp'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -607,6 +620,7 @@ export interface RootRouteChildren {
   ApiPublicTwilioTokenVoiceOutboundRoute: typeof ApiPublicTwilioTokenVoiceOutboundRoute
   ApiPublicTwilioTokenVoiceStatusRoute: typeof ApiPublicTwilioTokenVoiceStatusRoute
   ApiPublicTwilioTokenVoicemailRoute: typeof ApiPublicTwilioTokenVoicemailRoute
+  ApiPublicTwilioTokenWhatsappRoute: typeof ApiPublicTwilioTokenWhatsappRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -849,6 +863,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/twilio/$token/whatsapp': {
+      id: '/api/public/twilio/$token/whatsapp'
+      path: '/api/public/twilio/$token/whatsapp'
+      fullPath: '/api/public/twilio/$token/whatsapp'
+      preLoaderRoute: typeof ApiPublicTwilioTokenWhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twilio/$token/voicemail': {
       id: '/api/public/twilio/$token/voicemail'
       path: '/api/public/twilio/$token/voicemail'
@@ -1010,6 +1031,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicTwilioTokenVoiceOutboundRoute,
   ApiPublicTwilioTokenVoiceStatusRoute: ApiPublicTwilioTokenVoiceStatusRoute,
   ApiPublicTwilioTokenVoicemailRoute: ApiPublicTwilioTokenVoicemailRoute,
+  ApiPublicTwilioTokenWhatsappRoute: ApiPublicTwilioTokenWhatsappRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
