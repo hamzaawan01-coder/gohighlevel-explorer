@@ -476,3 +476,203 @@ export const sendTwilioSms = createServerFn({ method: "POST" })
     if (msgErr) throw new Error(msgErr.message);
     return { id: msg.id, sid: sent.sid, status: sent.status };
   });
+
+// ============ Phase 3: Voice, IVR, calls, voicemail ============
+import { buildVoiceAccessToken, createTwimlApp } from "./twilio-voice.server";
+import { webhookBaseUrl } from "./twilio.server";
+
+/** Ensure a TwiML app exists on Twilio for this workspace's browser dialer. */
+async function ensureTwimlApp(subId: string): Promise<{ sid: string; conn: any }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const conn = await loadConnection(subId);
+  const { data: full } = await (supabaseAdmin as any)
+    .from("twilio_connections")
+    .select("id, twiml_app_sid, friendly_name")
+    .eq("id", conn.id)
+    .single();
+
+  const voiceUrl = `${webhookBaseUrl()}/api/public/twilio/${conn.webhook_token}/voice-outbound`;
+  const statusUrl = `${webhookBaseUrl()}/api/public/twilio/${conn.webhook_token}/voice-status`;
+  const auth = { accountSid: conn.account_sid, apiKeySid: conn.api_key_sid, apiKeySecret: conn.api_key_secret };
+
+  const app = await createTwimlApp(auth, {
+    friendlyName: `CRM Browser Dialer — ${full?.friendly_name ?? subId.slice(0, 8)}`,
+    voiceUrl,
+    statusCallback: statusUrl,
+    existingSid: full?.twiml_app_sid ?? null,
+  });
+
+  if (!full?.twiml_app_sid) {
+    await (supabaseAdmin as any)
+      .from("twilio_connections")
+      .update({ twiml_app_sid: app.sid })
+      .eq("id", conn.id);
+  }
+  return { sid: app.sid, conn };
+}
+
+/** Mint a Twilio Voice Access Token for the current user. */
+export const getVoiceToken = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string }) =>
+    z.object({ subAccountId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureMember(context.supabase, context.userId, data.subAccountId);
+    const { sid, conn } = await ensureTwimlApp(data.subAccountId);
+    const identity = `agent_${context.userId}`;
+    const tok = await buildVoiceAccessToken(
+      { accountSid: conn.account_sid, apiKeySid: conn.api_key_sid, apiKeySecret: conn.api_key_secret },
+      { identity, twimlAppSid: sid, ttlSeconds: 3600 },
+    );
+    return { token: tok.token, identity, expiresAt: tok.expiresAt };
+  });
+
+/** List recent phone calls for the workspace. */
+export const listPhoneCalls = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string; contactId?: string; limit?: number }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      contactId: z.string().uuid().optional(),
+      limit: z.number().int().min(1).max(200).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureMember(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = (supabaseAdmin as any)
+      .from("phone_calls")
+      .select("id, direction, from_number, to_number, status, duration_seconds, recording_url, transcript, started_at, contact_id, agent_user_id, twilio_number_id, price, price_currency")
+      .eq("sub_account_id", data.subAccountId)
+      .order("started_at", { ascending: false })
+      .limit(data.limit ?? 100);
+    if (data.contactId) q = q.eq("contact_id", data.contactId);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+/** List voicemails for the workspace. */
+export const listVoicemails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string }) =>
+    z.object({ subAccountId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureMember(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await (supabaseAdmin as any)
+      .from("voicemails")
+      .select("id, from_number, recording_url, duration_seconds, transcription, transcription_status, listened_at, contact_id, twilio_number_id, created_at")
+      .eq("sub_account_id", data.subAccountId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+/** Mark a voicemail as listened. */
+export const markVoicemailListened = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string; voicemailId: string }) =>
+    z.object({ subAccountId: z.string().uuid(), voicemailId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureMember(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await (supabaseAdmin as any)
+      .from("voicemails")
+      .update({ listened_at: new Date().toISOString(), listened_by: context.userId })
+      .eq("id", data.voicemailId)
+      .eq("sub_account_id", data.subAccountId);
+    return { ok: true };
+  });
+
+/** Get or create the default call flow for the workspace. */
+export const getCallFlow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string; twilioNumberId?: string | null }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      twilioNumberId: z.string().uuid().nullable().optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureMember(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = (supabaseAdmin as any)
+      .from("phone_call_flows")
+      .select("*")
+      .eq("sub_account_id", data.subAccountId);
+    q = data.twilioNumberId ? q.eq("twilio_number_id", data.twilioNumberId) : q.is("twilio_number_id", null);
+    const { data: row } = await q.maybeSingle();
+    return row ?? null;
+  });
+
+/** Save (upsert) a call flow. */
+export const saveCallFlow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    subAccountId: string;
+    id?: string | null;
+    name: string;
+    twilioNumberId?: string | null;
+    greetingText?: string;
+    voiceLanguage?: string;
+    voiceGender?: string;
+    ringAgentIds?: string[];
+    ringTimeoutSeconds?: number;
+    voicemailEnabled?: boolean;
+    voicemailPrompt?: string;
+    isDefault?: boolean;
+  }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      id: z.string().uuid().nullable().optional(),
+      name: z.string().min(1).max(120),
+      twilioNumberId: z.string().uuid().nullable().optional(),
+      greetingText: z.string().max(1000).optional(),
+      voiceLanguage: z.string().optional(),
+      voiceGender: z.string().optional(),
+      ringAgentIds: z.array(z.string().uuid()).optional(),
+      ringTimeoutSeconds: z.number().int().min(5).max(120).optional(),
+      voicemailEnabled: z.boolean().optional(),
+      voicemailPrompt: z.string().max(1000).optional(),
+      isDefault: z.boolean().optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const payload: any = {
+      sub_account_id: data.subAccountId,
+      name: data.name,
+      twilio_number_id: data.twilioNumberId ?? null,
+      greeting_text: data.greetingText ?? null,
+      voice_language: data.voiceLanguage ?? "en-US",
+      voice_gender: data.voiceGender ?? "alice",
+      ring_agent_ids: data.ringAgentIds ?? [],
+      ring_timeout_seconds: data.ringTimeoutSeconds ?? 20,
+      voicemail_enabled: data.voicemailEnabled ?? true,
+      voicemail_prompt: data.voicemailPrompt ?? "Please leave a message after the tone.",
+      is_default: data.isDefault ?? false,
+      created_by: context.userId,
+    };
+    if (data.id) {
+      const { error } = await (supabaseAdmin as any)
+        .from("phone_call_flows")
+        .update(payload)
+        .eq("id", data.id)
+        .eq("sub_account_id", data.subAccountId);
+      if (error) throw new Error(error.message);
+      return { id: data.id };
+    }
+    const { data: row, error } = await (supabaseAdmin as any)
+      .from("phone_call_flows")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: row.id };
+  });
