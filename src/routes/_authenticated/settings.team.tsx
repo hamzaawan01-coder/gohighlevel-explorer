@@ -62,10 +62,10 @@ function TeamPage() {
         role,
         sub_account_id: role === "admin" ? null : subAccountId || subsQ.data?.[0]?.id || null,
       }),
-    onSuccess: (inv) => {
+    onSuccess: ({ token }) => {
       qc.invalidateQueries({ queryKey: ["invitations", agencyId] });
       setEmail("");
-      const url = buildInviteUrl(inv.token);
+      const url = buildInviteUrl(token);
       navigator.clipboard?.writeText(url).catch(() => {});
       toast.success("Invite created — link copied to clipboard");
     },
@@ -80,10 +80,16 @@ function TeamPage() {
     },
   });
 
-  const copyLink = (token: string) => {
-    const url = buildInviteUrl(token);
-    navigator.clipboard?.writeText(url);
-    toast.success("Link copied");
+  const copyLink = async (id: string) => {
+    try {
+      const { fetchInvitationToken } = await import("@/lib/invitations");
+      const token = await fetchInvitationToken(id);
+      const url = buildInviteUrl(token);
+      await navigator.clipboard?.writeText(url);
+      toast.success("Link copied");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not copy link");
+    }
   };
 
   return (
@@ -174,7 +180,7 @@ function TeamPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => copyLink(inv.token)}>
+                    <Button variant="outline" size="sm" onClick={() => copyLink(inv.id)}>
                       <Copy className="size-3.5 mr-1.5" /> Copy link
                     </Button>
                     <Button

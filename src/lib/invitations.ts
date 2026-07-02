@@ -9,8 +9,10 @@ export type Invitation = {
   expires_at: string;
   accepted_at: string | null;
   created_at: string;
-  token: string;
 };
+
+const INVITATION_COLUMNS =
+  "id,email,agency_id,sub_account_id,role,expires_at,accepted_at,created_at,invited_by";
 
 export type InvitationPreview = {
   email: string;
@@ -36,12 +38,12 @@ export type AgencyMember = {
 export async function fetchInvitations(agencyId: string): Promise<Invitation[]> {
   const { data, error } = await supabase
     .from("invitations")
-    .select("*")
+    .select(INVITATION_COLUMNS)
     .eq("agency_id", agencyId)
     .is("accepted_at", null)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Invitation[];
+  return (data ?? []) as unknown as Invitation[];
 }
 
 export async function createInvitation(input: {
@@ -49,7 +51,7 @@ export async function createInvitation(input: {
   agency_id: string;
   role: "owner" | "admin" | "member" | "client";
   sub_account_id?: string | null;
-}): Promise<Invitation> {
+}): Promise<{ invitation: Invitation; token: string }> {
   const { data: userData } = await supabase.auth.getUser();
   const invited_by = userData.user?.id;
   if (!invited_by) throw new Error("Not authenticated");
@@ -63,15 +65,25 @@ export async function createInvitation(input: {
       sub_account_id: input.sub_account_id ?? null,
       invited_by,
     })
-    .select("*")
+    .select(INVITATION_COLUMNS)
     .single();
   if (error) throw error;
-  return data as Invitation;
+  const invitation = data as unknown as Invitation;
+  const token = await fetchInvitationToken(invitation.id);
+  return { invitation, token };
 }
 
 export async function revokeInvitation(id: string): Promise<void> {
   const { error } = await supabase.from("invitations").delete().eq("id", id);
   if (error) throw error;
+}
+
+/** Fetch the raw invite token — server-side check ensures only the creator can read it. */
+export async function fetchInvitationToken(id: string): Promise<string> {
+  const { data, error } = await supabase.rpc("get_invitation_token" as never, { _id: id } as never);
+  if (error) throw error;
+  if (!data) throw new Error("Invitation token not available");
+  return data as unknown as string;
 }
 
 export async function previewInvitation(token: string): Promise<InvitationPreview | null> {
