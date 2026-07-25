@@ -110,7 +110,7 @@ export function Softphone() {
       call.on("accept", () => setCallState("in-call"));
       call.on("disconnect", () => { setActiveCall(null); setCallState("idle"); setMuted(false); });
       call.on("cancel", () => { setActiveCall(null); setCallState("idle"); });
-      call.on("error", (e) => toast.error(`Call error: ${e.message}`));
+      call.on("error", (e: any) => toast.error(`Call error: ${e.message}`));
     } catch (e: any) {
       toast.error(`Dial failed: ${e.message ?? e}`);
     }
