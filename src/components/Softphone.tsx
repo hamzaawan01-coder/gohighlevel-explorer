@@ -58,12 +58,12 @@ export function Softphone() {
       const { Device } = await import("@twilio/voice-sdk");
       const d = new Device(token, { logLevel: 1, codecPreferences: ["opus" as any, "pcmu" as any] });
       d.on("registered", () => setStatus("ready"));
-      d.on("error", (e) => {
+      d.on("error", (e: any) => {
         console.error("Twilio device error", e);
         toast.error(`Softphone: ${e.message ?? "error"}`);
         setStatus("error");
       });
-      d.on("incoming", (call) => {
+      d.on("incoming", (call: Call) => {
         setIncoming(call);
         setCallState("ringing");
         call.on("cancel", () => { setIncoming(null); setCallState("idle"); });
