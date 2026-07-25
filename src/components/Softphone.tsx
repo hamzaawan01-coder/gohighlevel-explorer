@@ -55,6 +55,7 @@ export function Softphone() {
     setStatus("registering");
     try {
       const { token } = await fetchToken({ data: { subAccountId: subId } });
+      const { Device } = await import("@twilio/voice-sdk");
       const d = new Device(token, { logLevel: 1, codecPreferences: ["opus" as any, "pcmu" as any] });
       d.on("registered", () => setStatus("ready"));
       d.on("error", (e) => {
