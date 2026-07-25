@@ -1,7 +1,7 @@
 // Browser softphone — floating widget that lets any workspace member place and
 // receive Twilio Voice calls right in the CRM.
 import { useEffect, useRef, useState } from "react";
-import { Device, type Call } from "@twilio/voice-sdk";
+import type { Device as DeviceType, Call } from "@twilio/voice-sdk";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Phone, PhoneOff, PhoneIncoming, Mic, MicOff, X } from "lucide-react";
@@ -19,7 +19,7 @@ export function Softphone() {
   const getConn = useServerFn(getTwilioConnection);
 
   const [open, setOpen] = useState(false);
-  const [device, setDevice] = useState<Device | null>(null);
+  const [device, setDevice] = useState<DeviceType | null>(null);
   const [status, setStatus] = useState<"idle" | "registering" | "ready" | "error">("idle");
   const [activeCall, setActiveCall] = useState<Call | null>(null);
   const [incoming, setIncoming] = useState<Call | null>(null);
@@ -55,14 +55,15 @@ export function Softphone() {
     setStatus("registering");
     try {
       const { token } = await fetchToken({ data: { subAccountId: subId } });
+      const { Device } = await import("@twilio/voice-sdk");
       const d = new Device(token, { logLevel: 1, codecPreferences: ["opus" as any, "pcmu" as any] });
       d.on("registered", () => setStatus("ready"));
-      d.on("error", (e) => {
+      d.on("error", (e: any) => {
         console.error("Twilio device error", e);
         toast.error(`Softphone: ${e.message ?? "error"}`);
         setStatus("error");
       });
-      d.on("incoming", (call) => {
+      d.on("incoming", (call: Call) => {
         setIncoming(call);
         setCallState("ringing");
         call.on("cancel", () => { setIncoming(null); setCallState("idle"); });
@@ -109,7 +110,7 @@ export function Softphone() {
       call.on("accept", () => setCallState("in-call"));
       call.on("disconnect", () => { setActiveCall(null); setCallState("idle"); setMuted(false); });
       call.on("cancel", () => { setActiveCall(null); setCallState("idle"); });
-      call.on("error", (e) => toast.error(`Call error: ${e.message}`));
+      call.on("error", (e: any) => toast.error(`Call error: ${e.message}`));
     } catch (e: any) {
       toast.error(`Dial failed: ${e.message ?? e}`);
     }
