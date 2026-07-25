@@ -19,7 +19,7 @@ export function Softphone() {
   const getConn = useServerFn(getTwilioConnection);
 
   const [open, setOpen] = useState(false);
-  const [device, setDevice] = useState<Device | null>(null);
+  const [device, setDevice] = useState<DeviceType | null>(null);
   const [status, setStatus] = useState<"idle" | "registering" | "ready" | "error">("idle");
   const [activeCall, setActiveCall] = useState<Call | null>(null);
   const [incoming, setIncoming] = useState<Call | null>(null);
