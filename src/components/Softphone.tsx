@@ -1,7 +1,7 @@
 // Browser softphone — floating widget that lets any workspace member place and
 // receive Twilio Voice calls right in the CRM.
 import { useEffect, useRef, useState } from "react";
-import { Device, type Call } from "@twilio/voice-sdk";
+import type { Device as DeviceType, Call } from "@twilio/voice-sdk";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Phone, PhoneOff, PhoneIncoming, Mic, MicOff, X } from "lucide-react";
