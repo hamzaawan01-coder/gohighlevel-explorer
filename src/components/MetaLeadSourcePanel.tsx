@@ -88,14 +88,23 @@ const COLUMN_LABELS: Array<{ key: ColumnKey; label: string }> = [
   { key: "raw", label: "Raw payload" },
 ];
 
+type TimelineKind = "meta" | "crm" | "webhook_ok" | "webhook_error";
+
+const TIMELINE_KINDS: Array<{ key: TimelineKind; label: string }> = [
+  { key: "meta", label: "Meta lifecycle" },
+  { key: "crm", label: "CRM events" },
+  { key: "webhook_ok", label: "Webhooks · ok" },
+  { key: "webhook_error", label: "Webhooks · failed" },
+];
+
 /** Collects date-ish values from raw Meta fields for the timeline. */
 function timelineFromFields(fields: Record<string, string>) {
-  const out: Array<{ label: string; at: Date }> = [];
+  const out: Array<{ label: string; at: Date; kind: TimelineKind }> = [];
   for (const [k, v] of Object.entries(fields)) {
     if (typeof v !== "string") continue;
     if (!/time|date|_at$|created|updated|submitted/i.test(k)) continue;
     const d = new Date(v);
-    if (!Number.isNaN(d.getTime())) out.push({ label: prettyLabel(k), at: d });
+    if (!Number.isNaN(d.getTime())) out.push({ label: prettyLabel(k), at: d, kind: "meta" });
   }
   return out;
 }
