@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPlanModules } from "@/lib/subscriptions";
 import { useTenancy } from "@/lib/tenancy";
+
 
 export type ModuleDef = {
   key: string;
