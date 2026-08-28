@@ -1,7 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, Loader2, Save } from "lucide-react";
+import { useRef } from "react";
+import {
+  Bot,
+  Loader2,
+  Save,
+  Upload,
+  Trash2,
+  FileText,
+  ThumbsUp,
+  ThumbsDown,
+  Plus,
+} from "lucide-react";
+import {
+  fetchKnowledgeDocs,
+  createKnowledgeDoc,
+  updateKnowledgeDoc,
+  deleteKnowledgeDoc,
+  fetchDraftFeedback,
+  readTextFile,
+  KNOWLEDGE_ACCEPT,
+} from "@/lib/ai-knowledge";
 import { PageHeader, PageBody } from "@/components/PageHeader";
 import { useTenancy } from "@/lib/tenancy";
 import { fetchBookingPages } from "@/lib/booking";
