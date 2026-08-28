@@ -420,3 +420,105 @@ export const setMetaLeadFormRoute = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, cleared: false };
   });
+
+/** Audit trail: recent Lead Ad ingestion events, newest first. */
+export const listMetaLeadAdEvents = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string; formId?: string | null; limit?: number }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      formId: z.string().nullish(),
+      limit: z.number().int().min(1).max(100).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
+    let q = (context.supabase as any)
+      .from("meta_lead_ad_events")
+      .select("id, page_id, form_id, form_name, leadgen_id, contact_id, deal_id, pipeline_id, stage_id, routing_source, status, error, is_test, lead_fields, payload, created_at")
+      .eq("sub_account_id", data.subAccountId)
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 25);
+    if (data.formId) q = q.eq("form_id", data.formId);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const [pipesRes, stagesRes] = await Promise.all([
+      (context.supabase as any).from("pipelines").select("id, name").eq("sub_account_id", data.subAccountId),
+      (context.supabase as any).from("pipeline_stages").select("id, name").eq("sub_account_id", data.subAccountId),
+    ]);
+    return {
+      events: rows ?? [],
+      pipelineNames: Object.fromEntries(((pipesRes.data ?? []) as Array<{ id: string; name: string }>).map((p) => [p.id, p.name])),
+      stageNames: Object.fromEntries(((stagesRes.data ?? []) as Array<{ id: string; name: string }>).map((s) => [s.id, s.name])),
+    };
+  });
+
+const SAMPLE_LEAD_FIELDS: Record<string, string> = {
+  full_name: "Test Lead",
+  email: "test.lead@example.com",
+  phone_number: "+10000000000",
+};
+
+/**
+ * Replay the last received webhook payload for a Lead Ad form (or a sample lead
+ * when none was received yet) so the mapped pipeline/stage can be verified
+ * before going live. Writes an audit-trail row flagged as a test.
+ */
+export const replayMetaLeadAdTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string; formId: string; formName?: string | null; pageId?: string | null }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      formId: z.string().min(1),
+      formName: z.string().nullish(),
+      pageId: z.string().nullish(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { ingestLeadAdLead } = await import("./meta.server");
+
+    const { data: conns } = await (supabaseAdmin as any)
+      .from("meta_connections").select("id, created_by")
+      .eq("sub_account_id", data.subAccountId)
+      .order("created_at", { ascending: false }).limit(1);
+    const conn = (conns ?? [])[0] as { id: string; created_by: string } | undefined;
+
+    const { data: prev } = await (supabaseAdmin as any)
+      .from("meta_lead_ad_events")
+      .select("lead_fields, payload, page_id")
+      .eq("sub_account_id", data.subAccountId)
+      .eq("form_id", data.formId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const last = (prev ?? [])[0] as { lead_fields: Record<string, string>; payload: unknown; page_id: string | null } | undefined;
+    const fields = last && Object.keys(last.lead_fields ?? {}).length > 0 ? last.lead_fields : SAMPLE_LEAD_FIELDS;
+    const usedSample = !(last && Object.keys(last.lead_fields ?? {}).length > 0);
+
+    const result = await ingestLeadAdLead(supabaseAdmin as any, {
+      subAccountId: data.subAccountId,
+      ownerId: conn?.created_by ?? context.userId,
+      pageId: data.pageId ?? last?.page_id ?? null,
+      formId: data.formId,
+      formName: data.formName ?? null,
+      leadgenId: `test:${data.formId}`,
+      fields,
+      payload: last?.payload ?? { test: true, form_id: data.formId },
+      isTest: true,
+    });
+
+    let pipelineName: string | null = null;
+    let stageName: string | null = null;
+    if (result.pipelineId) {
+      const { data: p } = await (context.supabase as any).from("pipelines").select("name").eq("id", result.pipelineId).limit(1);
+      pipelineName = (p ?? [])[0]?.name ?? null;
+    }
+    if (result.stageId) {
+      const { data: s } = await (context.supabase as any).from("pipeline_stages").select("name").eq("id", result.stageId).limit(1);
+      stageName = (s ?? [])[0]?.name ?? null;
+    }
+
+    return { ...result, pipelineName, stageName, usedSample };
+  });
