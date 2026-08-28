@@ -2580,6 +2580,67 @@ export type Database = {
           },
         ]
       }
+      sub_account_subscription_audit: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          modules: string[]
+          new_plan_id: string | null
+          note: string | null
+          old_plan_id: string | null
+          source: string
+          status: string | null
+          sub_account_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          modules?: string[]
+          new_plan_id?: string | null
+          note?: string | null
+          old_plan_id?: string | null
+          source?: string
+          status?: string | null
+          sub_account_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          modules?: string[]
+          new_plan_id?: string | null
+          note?: string | null
+          old_plan_id?: string | null
+          source?: string
+          status?: string | null
+          sub_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_account_subscription_audit_new_plan_id_fkey"
+            columns: ["new_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sub_account_subscription_audit_old_plan_id_fkey"
+            columns: ["old_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sub_account_subscription_audit_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sub_account_subscriptions: {
         Row: {
           created_at: string
