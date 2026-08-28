@@ -241,6 +241,19 @@ export async function fetchLeadById(
   return graph(`/${leadId}`, { fields: "id,created_time,field_data,form_id" }, pageAccessToken);
 }
 
+/** List the Lead Ad forms configured on a Facebook Page. */
+export async function fetchPageLeadForms(
+  pageId: string,
+  pageAccessToken: string,
+): Promise<Array<{ id: string; name: string; status?: string }>> {
+  const res = await graph<{ data?: Array<{ id: string; name: string; status?: string }> }>(
+    `/${pageId}/leadgen_forms`,
+    { fields: "id,name,status", limit: "100" },
+    pageAccessToken,
+  );
+  return res.data ?? [];
+}
+
 /** Verify Meta X-Hub-Signature-256 header against the raw request body. */
 export function verifyMetaSignature(rawBody: string, signatureHeader: string | null): boolean {
   const appSecret = process.env.META_APP_SECRET;
