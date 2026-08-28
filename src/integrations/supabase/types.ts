@@ -1200,6 +1200,67 @@ export type Database = {
           },
         ]
       }
+      meta_lead_form_routes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          form_id: string
+          form_name: string | null
+          id: string
+          page_id: string | null
+          pipeline_id: string
+          stage_id: string
+          sub_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          form_id: string
+          form_name?: string | null
+          id?: string
+          page_id?: string | null
+          pipeline_id: string
+          stage_id: string
+          sub_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          form_id?: string
+          form_name?: string | null
+          id?: string
+          page_id?: string | null
+          pipeline_id?: string
+          stage_id?: string
+          sub_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_lead_form_routes_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_lead_form_routes_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_lead_form_routes_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meta_oauth_states: {
         Row: {
           created_at: string
