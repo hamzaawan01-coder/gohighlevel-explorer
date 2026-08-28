@@ -55,6 +55,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Opportunities", icon: LayoutGrid, to: "/opportunities", module: "opportunities", keywords: "deals pipeline kanban" },
       { label: "Contacts", icon: Users, to: "/contacts", module: "contacts", keywords: "people leads customers" },
       { label: "Tasks", icon: CheckSquare, to: "/tasks", module: "tasks", badge: "tasks", keywords: "todo follow up" },
+      { label: "Invoices", icon: Receipt, to: "/invoices", module: "invoices", keywords: "billing invoice payments quote" },
       { label: "Reports", icon: BarChart3, to: "/reports", module: "reports", keywords: "analytics metrics" },
     ],
   },
