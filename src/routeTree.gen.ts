@@ -36,6 +36,7 @@ import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
+import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authenticated/invoices.$id'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
 import { Route as AuthenticatedSettingsAiAssistantRouteImport } from './routes/_authenticated/settings.ai-assistant'
 import { Route as AuthenticatedSettingsAppReviewRouteImport } from './routes/_authenticated/settings.app-review'
@@ -213,6 +214,11 @@ const AuthenticatedInvoicesIndexRoute =
     path: '/invoices/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInvoicesIdRoute = AuthenticatedInvoicesIdRouteImport.update({
+  id: '/invoices/$id',
+  path: '/invoices/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsIndexRoute =
   AuthenticatedSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -450,6 +456,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantRoute
   '/settings/app-review': typeof AuthenticatedSettingsAppReviewRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
@@ -514,6 +521,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantRoute
   '/settings/app-review': typeof AuthenticatedSettingsAppReviewRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
@@ -580,6 +588,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/_authenticated/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
   '/_authenticated/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantRoute
   '/_authenticated/settings/app-review': typeof AuthenticatedSettingsAppReviewRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
@@ -646,6 +655,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/contacts/$id'
     | '/deals/$id'
+    | '/invoices/$id'
     | '/settings/ai-assistant'
     | '/settings/app-review'
     | '/settings/appearance'
@@ -710,6 +720,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/contacts/$id'
     | '/deals/$id'
+    | '/invoices/$id'
     | '/settings/ai-assistant'
     | '/settings/app-review'
     | '/settings/appearance'
@@ -775,6 +786,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_authenticated/contacts/$id'
     | '/_authenticated/deals/$id'
+    | '/_authenticated/invoices/$id'
     | '/_authenticated/settings/ai-assistant'
     | '/_authenticated/settings/app-review'
     | '/_authenticated/settings/appearance'
@@ -1038,6 +1050,13 @@ declare module '@tanstack/react-router' {
       path: '/invoices'
       fullPath: '/invoices/'
       preLoaderRoute: typeof AuthenticatedInvoicesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/invoices/$id': {
+      id: '/_authenticated/invoices/$id'
+      path: '/invoices/$id'
+      fullPath: '/invoices/$id'
+      preLoaderRoute: typeof AuthenticatedInvoicesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/': {
@@ -1312,6 +1331,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
   AuthenticatedContactsIdRoute: typeof AuthenticatedContactsIdRoute
   AuthenticatedDealsIdRoute: typeof AuthenticatedDealsIdRoute
+  AuthenticatedInvoicesIdRoute: typeof AuthenticatedInvoicesIdRoute
   AuthenticatedSettingsAiAssistantRoute: typeof AuthenticatedSettingsAiAssistantRoute
   AuthenticatedSettingsAppReviewRoute: typeof AuthenticatedSettingsAppReviewRoute
   AuthenticatedSettingsAppearanceRoute: typeof AuthenticatedSettingsAppearanceRoute
@@ -1347,6 +1367,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
   AuthenticatedContactsIdRoute: AuthenticatedContactsIdRoute,
   AuthenticatedDealsIdRoute: AuthenticatedDealsIdRoute,
+  AuthenticatedInvoicesIdRoute: AuthenticatedInvoicesIdRoute,
   AuthenticatedSettingsAiAssistantRoute: AuthenticatedSettingsAiAssistantRoute,
   AuthenticatedSettingsAppReviewRoute: AuthenticatedSettingsAppReviewRoute,
   AuthenticatedSettingsAppearanceRoute: AuthenticatedSettingsAppearanceRoute,

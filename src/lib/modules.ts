@@ -41,6 +41,12 @@ export const MODULES: ModuleDef[] = [
     paths: ["/tasks"],
   },
   {
+    key: "invoices",
+    label: "Invoices",
+    description: "Client invoices with line items, tax and payment status.",
+    paths: ["/invoices"],
+  },
+  {
     key: "calendar",
     label: "Calendar",
     description: "Appointments and booking pages.",
