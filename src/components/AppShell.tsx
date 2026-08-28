@@ -19,6 +19,8 @@ import {
   Webhook,
   Phone,
   PhoneCall,
+  ToggleLeft,
+  Ban,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,6 +28,7 @@ import { SubAccountSwitcher } from "@/components/SubAccountSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Softphone } from "@/components/Softphone";
+import { isModuleEnabled, moduleForPath, useModules } from "@/lib/modules";
 
 function openPalette() {
   (window as unknown as { __openPalette?: () => void }).__openPalette?.();
@@ -35,32 +38,34 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   to: string;
+  /** Module key gating this item; omit for always-visible items. */
+  module?: string;
 };
 
 const salesNav: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-  { label: "Opportunities", icon: LayoutGrid, to: "/opportunities" },
-  { label: "Contacts", icon: Users, to: "/contacts" },
-  { label: "Tasks", icon: CheckSquare, to: "/tasks" },
-  { label: "Calendar", icon: Calendar, to: "/calendar" },
-  { label: "Conversations", icon: MessageSquare, to: "/conversations" },
-  { label: "Conversations", icon: MessageSquare, to: "/conversations" },
-  { label: "Calls", icon: PhoneCall, to: "/calls" },
-  { label: "Reports", icon: BarChart3, to: "/reports" },
-  { label: "Inbox", icon: Inbox, to: "/inbox" },
+  { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard", module: "dashboard" },
+  { label: "Opportunities", icon: LayoutGrid, to: "/opportunities", module: "opportunities" },
+  { label: "Contacts", icon: Users, to: "/contacts", module: "contacts" },
+  { label: "Tasks", icon: CheckSquare, to: "/tasks", module: "tasks" },
+  { label: "Calendar", icon: Calendar, to: "/calendar", module: "calendar" },
+  { label: "Conversations", icon: MessageSquare, to: "/conversations", module: "conversations" },
+  { label: "Calls", icon: PhoneCall, to: "/calls", module: "calls" },
+  { label: "Reports", icon: BarChart3, to: "/reports", module: "reports" },
+  { label: "Inbox", icon: Inbox, to: "/inbox", module: "conversations" },
 ];
 
 const automationNav: NavItem[] = [
-  { label: "Marketing", icon: Megaphone, to: "/marketing" },
-  { label: "Workflows", icon: Workflow, to: "/workflows" },
-  { label: "Templates", icon: FileText, to: "/templates" },
-  { label: "Forms", icon: FileText, to: "/forms" },
-  { label: "WordPress", icon: Webhook, to: "/settings/wordpress" },
-  { label: "Booking pages", icon: CalendarClock, to: "/settings/booking" },
-  { label: "Phone numbers", icon: Phone, to: "/settings/phone-numbers" },
-  { label: "Call flows", icon: PhoneCall, to: "/settings/call-flows" },
-  { label: "Integrations", icon: Settings, to: "/settings/integrations" },
-  { label: "Quiet hours", icon: Settings, to: "/settings/messaging" },
+  { label: "Marketing", icon: Megaphone, to: "/marketing", module: "marketing" },
+  { label: "Workflows", icon: Workflow, to: "/workflows", module: "workflows" },
+  { label: "Templates", icon: FileText, to: "/templates", module: "templates" },
+  { label: "Forms", icon: FileText, to: "/forms", module: "forms" },
+  { label: "WordPress", icon: Webhook, to: "/settings/wordpress", module: "integrations" },
+  { label: "Booking pages", icon: CalendarClock, to: "/settings/booking", module: "calendar" },
+  { label: "Phone numbers", icon: Phone, to: "/settings/phone-numbers", module: "calls" },
+  { label: "Call flows", icon: PhoneCall, to: "/settings/call-flows", module: "calls" },
+  { label: "Integrations", icon: Settings, to: "/settings/integrations", module: "integrations" },
+  { label: "Quiet hours", icon: Settings, to: "/settings/messaging", module: "integrations" },
+  { label: "Modules", icon: ToggleLeft, to: "/settings/modules" },
 ];
 
 export function AppShell({
@@ -74,6 +79,18 @@ export function AppShell({
   headerStatus?: ReactNode;
   headerActions?: ReactNode;
 }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { state, isLoading: modulesLoading } = useModules();
+  const visible = (items: NavItem[]) =>
+    items.filter((i) => !i.module || isModuleEnabled(state, i.module));
+
+  const currentModule = moduleForPath(pathname);
+  const blocked =
+    !modulesLoading &&
+    !!currentModule &&
+    !isModuleEnabled(state, currentModule.key) &&
+    !pathname.startsWith("/settings/modules");
+
   return (
     <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
       <aside className="w-64 border-r border-border bg-sidebar flex flex-col shrink-0">
@@ -81,8 +98,8 @@ export function AppShell({
           <SubAccountSwitcher />
         </div>
         <nav className="flex-1 py-4 overflow-y-auto">
-          <NavGroup label="Sales" items={salesNav} />
-          <NavGroup label="Automations" items={automationNav} />
+          <NavGroup label="Sales" items={visible(salesNav)} />
+          <NavGroup label="Automations" items={visible(automationNav)} />
         </nav>
         <div className="p-4 border-t border-border">
           <UserMenu />
@@ -113,14 +130,40 @@ export function AppShell({
             {headerActions}
           </div>
         </header>
-        <div className="flex-1 overflow-auto min-h-0">{children}</div>
+        <div className="flex-1 overflow-auto min-h-0">
+          {blocked ? <ModuleDisabled label={currentModule!.label} /> : children}
+        </div>
       </main>
 
-      {rightPane ? (
+      {rightPane && !blocked ? (
         <aside className="w-80 border-l border-border bg-card flex flex-col shrink-0">{rightPane}</aside>
       ) : null}
       <CommandPalette />
       <Softphone />
+    </div>
+  );
+}
+
+function ModuleDisabled({ label }: { label: string }) {
+  return (
+    <div className="h-full flex items-center justify-center p-10">
+      <div className="max-w-sm text-center space-y-3">
+        <div className="mx-auto size-10 rounded-full bg-secondary flex items-center justify-center">
+          <Ban className="size-4 text-muted-foreground" />
+        </div>
+        <h2 className="text-sm font-bold">{label} is turned off</h2>
+        <p className="text-xs text-muted-foreground">
+          This module is disabled for the current workspace. Nothing has been deleted — a workspace
+          admin can switch it back on at any time.
+        </p>
+        <Link
+          to="/settings/modules"
+          className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-md bg-primary text-primary-foreground"
+        >
+          <ToggleLeft className="size-3.5" />
+          Manage modules
+        </Link>
+      </div>
     </div>
   );
 }
