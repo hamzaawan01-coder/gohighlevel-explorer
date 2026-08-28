@@ -278,9 +278,10 @@ function DealCardView({
 
   return (
     <div
-      className={`bg-card p-3.5 rounded-xl ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] cursor-grab active:cursor-grabbing ${
-        dragging ? "shadow-lg ring-accent/40" : "hover:ring-accent/40"
-      } transition-all`}
+      className={`surface-card cursor-grab p-3.5 active:cursor-grabbing ${
+        dragging ? "elevation-overlay ring-1 ring-primary/40" : "hover:elevation-raised hover:-translate-y-0.5"
+      } transition-all duration-150`}
+
     >
       <div className="flex items-start justify-between gap-2 mb-3">
         <h4 className="text-sm font-semibold leading-snug flex-1">{deal.title}</h4>
