@@ -1,3 +1,4 @@
+import { SettingsNav } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -100,6 +101,7 @@ function WordPressPage() {
         }
       />
       <PageBody width="full">
+        <SettingsNav />
         {!subId || !userId ? (
           <EmptyState icon={Webhook} title="Select a workspace" description="Select a workspace to configure WordPress webhooks." />
         ) : (

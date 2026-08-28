@@ -1,3 +1,4 @@
+import { SettingsNav } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, Monitor, Moon, Palette, Rows3, Rows4, Sun } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -47,6 +48,7 @@ function AppearancePage() {
         }
       />
       <PageBody>
+        <SettingsNav />
         {/* Palette */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">

@@ -1,3 +1,4 @@
+import { SettingsNav } from "@/components/SettingsNav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -60,6 +61,7 @@ function SubAccountsPage() {
     <AppShell
       headerStatus={
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <SettingsNav />
           <span className="text-foreground font-medium">Sub-accounts</span>
           <span>·</span>
           <Link to="/settings/team" className="hover:text-foreground">Team</Link>

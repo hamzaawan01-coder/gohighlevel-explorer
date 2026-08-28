@@ -1,3 +1,4 @@
+import { SettingsNav } from "@/components/SettingsNav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Palette,
@@ -152,6 +153,7 @@ function SettingsHub() {
         description="Everything you configure once, grouped in one place."
       />
       <PageBody>
+        <SettingsNav />
         <div className="space-y-8">
           {GROUPS.map((group) => {
             const tiles = group.tiles.filter((t) => !t.module || isModuleEnabled(state, t.module));

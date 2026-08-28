@@ -1,3 +1,4 @@
+import { SettingsNav } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
@@ -107,6 +108,7 @@ function ModulesSettingsPage() {
         }
       />
       <PageBody width="full">
+        <SettingsNav />
         <ConsoleSplit
           main={
             <ConsoleSection title="Modules" icon={ToggleLeft} hint="This workspace">
