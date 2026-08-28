@@ -192,12 +192,25 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
 
           {/* Pages */}
           <div className="rounded-md border border-border overflow-hidden">
-            <div className="p-4 border-b border-border">
-              <h3 className="font-medium text-sm">Facebook Pages & Instagram accounts</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                {(data.pages ?? []).length === 0 ? "No pages found. Click Refresh above." : "Toggle what should flow into this workspace."}
-              </p>
+            <div className="p-4 border-b border-border flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-medium text-sm">Facebook Pages & Instagram accounts</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {(data.pages ?? []).length === 0 ? "No pages found. Click Refresh above." : "Toggle what should flow into this workspace."}
+                </p>
+              </div>
+              {(data.pages ?? []).length > 0 && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={enableAll.isPending}
+                  onClick={() => enableAll.mutate()}
+                >
+                  {enableAll.isPending ? "Enabling…" : "Enable all pages"}
+                </Button>
+              )}
             </div>
+
             {(data.pages ?? []).map((p: PageRow) => (
               <div key={p.id} className="p-4 border-t border-border first:border-t-0 space-y-3">
                 <div className="flex items-center justify-between gap-3">
