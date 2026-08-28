@@ -2,7 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Send, MessageSquare, Search, Inbox, ArrowLeft, Star, UserCheck, Bot } from "lucide-react";
+import {
+  Loader2,
+  Send,
+  MessageSquare,
+  Search,
+  Inbox,
+  ArrowLeft,
+  Star,
+  UserCheck,
+  Bot,
+  ThumbsUp,
+  ThumbsDown,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useTenancy, fetchMySubAccounts } from "@/lib/tenancy";
