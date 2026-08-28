@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLeadDisplayPrefs } from "@/lib/lead-display-prefs";
+import { useSavedLeadSearches } from "@/lib/lead-saved-searches";
+import { CopyField } from "@/components/CopyField";
 import {
   dedupeValues,
   isEmailKey,
@@ -31,6 +33,9 @@ import {
   AlertTriangle,
   Clock,
   EyeOff,
+  Save,
+  Trash2,
+  ListChecks,
 } from "lucide-react";
 
 const FILE_RE = /^https?:\/\/\S+$/i;
@@ -83,14 +88,23 @@ const COLUMN_LABELS: Array<{ key: ColumnKey; label: string }> = [
   { key: "raw", label: "Raw payload" },
 ];
 
+type TimelineKind = "meta" | "crm" | "webhook_ok" | "webhook_error";
+
+const TIMELINE_KINDS: Array<{ key: TimelineKind; label: string }> = [
+  { key: "meta", label: "Meta lifecycle" },
+  { key: "crm", label: "CRM events" },
+  { key: "webhook_ok", label: "Webhooks · ok" },
+  { key: "webhook_error", label: "Webhooks · failed" },
+];
+
 /** Collects date-ish values from raw Meta fields for the timeline. */
 function timelineFromFields(fields: Record<string, string>) {
-  const out: Array<{ label: string; at: Date }> = [];
+  const out: Array<{ label: string; at: Date; kind: TimelineKind }> = [];
   for (const [k, v] of Object.entries(fields)) {
     if (typeof v !== "string") continue;
     if (!/time|date|_at$|created|updated|submitted/i.test(k)) continue;
     const d = new Date(v);
-    if (!Number.isNaN(d.getTime())) out.push({ label: prettyLabel(k), at: d });
+    if (!Number.isNaN(d.getTime())) out.push({ label: prettyLabel(k), at: d, kind: "meta" });
   }
   return out;
 }
@@ -132,6 +146,13 @@ export function MetaLeadSourcePanel({
     metadata: true,
     raw: false,
   });
+  const [timelineKinds, setTimelineKinds] = useState<TimelineKind[]>(
+    TIMELINE_KINDS.map((k) => k.key),
+  );
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkIds, setBulkIds] = useState<string[]>([]);
+  const [searchName, setSearchName] = useState("");
+  const { searches, save: saveSearch, remove: removeSearch } = useSavedLeadSearches();
 
   const selected = useMemo(
     () => events.find((e) => e.id === selectedId) ?? events[0] ?? null,
@@ -205,14 +226,24 @@ export function MetaLeadSourcePanel({
   const missing = [...missingContact, ...missingAnswers, ...emptyAnswers];
 
   // Timeline
-  const timeline = [
+  const allTimeline: Array<{ label: string; at: Date; kind: TimelineKind }> = [
     ...timelineFromFields(fields),
-    ...(contact ? [{ label: "Contact created in CRM", at: new Date(contact.created_at) }] : []),
+    ...(contact
+      ? [
+          {
+            label: "Contact created in CRM",
+            at: new Date(contact.created_at),
+            kind: "crm" as TimelineKind,
+          },
+        ]
+      : []),
     ...events.map((ev) => ({
       label: `Webhook ${ev.status}${ev.form_name ? ` · ${ev.form_name}` : ""}`,
       at: new Date(ev.created_at),
+      kind: (ev.status === "error" ? "webhook_error" : "webhook_ok") as TimelineKind,
     })),
   ].sort((a, b) => a.at.getTime() - b.at.getTime());
+  const timeline = allTimeline.filter((t) => timelineKinds.includes(t.kind));
 
   // Search index
   const q = query.trim().toLowerCase();
@@ -229,6 +260,39 @@ export function MetaLeadSourcePanel({
           group.toLowerCase().includes(q),
       )
     : [];
+
+  const eventRows = (
+    ev: (typeof events)[number],
+    cols: Record<ColumnKey, boolean>,
+  ): Array<[string, string]> => {
+    const evFields = (ev.lead_fields ?? {}) as Record<string, string>;
+    const evEntries = Object.entries(evFields);
+    const evAttachments = evEntries.filter(([, v]) => typeof v === "string" && isAttachment(v));
+    const evAnswers = evEntries.filter(([, v]) => !(typeof v === "string" && isAttachment(v)));
+    const evMeta: Array<[string, string]> = [
+      ["Facebook Page", ev.page_id ?? "—"],
+      ["Lead Ad form", ev.form_name ?? ev.form_id ?? "—"],
+      ["Form ID", ev.form_id ?? "—"],
+      ["Meta lead ID", ev.leadgen_id ?? "—"],
+      ["Webhook event ID", ev.id],
+      ["Status", ev.status],
+      ["Test lead", ev.is_test ? "yes" : "no"],
+      ["Received", new Date(ev.created_at).toLocaleString()],
+    ];
+    return [
+      ...(cols.contact ? contactRows.map(([k, v]) => [`Contact · ${k}`, v] as [string, string]) : []),
+      ...(cols.answers
+        ? evAnswers.map(([k, v]) => [`Answer · ${prettyLabel(k)}`, String(v)] as [string, string])
+        : []),
+      ...(cols.attachments
+        ? evAttachments.map(
+            ([k, v]) => [`Attachment · ${prettyLabel(k)}`, String(v)] as [string, string],
+          )
+        : []),
+      ...(cols.metadata ? evMeta : []),
+      ...(cols.raw ? [["Raw payload", ev.payloadJson ?? ""] as [string, string]] : []),
+    ];
+  };
 
   const exportRows = (cols: Record<ColumnKey, boolean>): Array<[string, string]> => [
     ...(cols.contact
@@ -265,6 +329,32 @@ export function MetaLeadSourcePanel({
       ),
     );
 
+  const bulkSelected = events.filter((ev) => bulkIds.includes(ev.id));
+
+  const exportBulkCsv = () => {
+    const esc = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = ["Lead,Field,Value"];
+    for (const ev of bulkSelected) {
+      const name = ev.leadgen_id ?? ev.id;
+      for (const [k, v] of eventRows(ev, columns)) lines.push(`${esc(name)},${esc(k)},${esc(v)}`);
+    }
+    download(`leads-${bulkSelected.length}.csv`, "text/csv", lines.join("\n"));
+  };
+
+  const exportBulkJson = () =>
+    download(
+      `leads-${bulkSelected.length}.json`,
+      "application/json",
+      JSON.stringify(
+        bulkSelected.map((ev) => ({
+          leadId: ev.leadgen_id ?? ev.id,
+          fields: Object.fromEntries(eventRows(ev, columns)),
+        })),
+        null,
+        2,
+      ),
+    );
+
   const anyColumn = Object.values(columns).some(Boolean);
 
   return (
@@ -285,6 +375,16 @@ export function MetaLeadSourcePanel({
           >
             <Download className="size-3 mr-1" /> CSV
           </Button>
+          {events.length > 1 && (
+            <Button
+              size="sm"
+              variant={bulkOpen ? "secondary" : "outline"}
+              className="h-7 px-2 text-[11px]"
+              onClick={() => setBulkOpen((o) => !o)}
+            >
+              <ListChecks className="size-3 mr-1" /> Bulk
+            </Button>
+          )}
         </div>
       </div>
 
@@ -318,6 +418,76 @@ export function MetaLeadSourcePanel({
         </div>
       )}
 
+      {bulkOpen && events.length > 1 && (
+        <div className="px-4 py-3 border-b border-border space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+              Select leads to export · {bulkIds.length}/{events.length}
+            </div>
+            <div className="ml-auto flex gap-1.5">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px]"
+                onClick={() => setBulkIds(events.map((e) => e.id))}
+              >
+                All
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px]"
+                onClick={() => setBulkIds([])}
+              >
+                None
+              </Button>
+            </div>
+          </div>
+          <div className="max-h-48 overflow-auto rounded border border-border divide-y divide-border">
+            {events.map((ev) => (
+              <label key={ev.id} className="flex items-center gap-2 px-3 py-2 text-xs">
+                <Checkbox
+                  checked={bulkIds.includes(ev.id)}
+                  onCheckedChange={(v) =>
+                    setBulkIds((ids) =>
+                      v ? [...new Set([...ids, ev.id])] : ids.filter((i) => i !== ev.id),
+                    )
+                  }
+                />
+                <span className="min-w-0 truncate">
+                  {ev.form_name ?? ev.form_id ?? "Lead"} · {ev.leadgen_id ?? ev.id}
+                </span>
+                <span className="ml-auto text-muted-foreground shrink-0">
+                  {new Date(ev.created_at).toLocaleDateString()}
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Uses the same columns as the CSV picker above.
+          </p>
+          <div className="flex gap-1.5">
+            <Button
+              size="sm"
+              className="h-7 px-2 text-[11px]"
+              disabled={bulkIds.length === 0 || !anyColumn}
+              onClick={exportBulkCsv}
+            >
+              <Download className="size-3 mr-1" /> Export CSV
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-[11px]"
+              disabled={bulkIds.length === 0 || !anyColumn}
+              onClick={exportBulkJson}
+            >
+              <Download className="size-3 mr-1" /> Export JSON
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="px-4 py-2.5 border-b border-border">
         <div className="relative">
           <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -328,6 +498,68 @@ export function MetaLeadSourcePanel({
             className="h-8 pl-8 text-xs"
           />
         </div>
+
+        <div className="mt-2 flex items-center gap-1.5">
+          <Input
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            placeholder="Name this filter to save it…"
+            className="h-7 text-xs"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-[11px] shrink-0"
+            disabled={!searchName.trim() || !query.trim()}
+            onClick={() => {
+              saveSearch({
+                name: searchName.trim(),
+                query,
+                columns,
+                timelineKinds,
+              });
+              setSearchName("");
+            }}
+          >
+            <Save className="size-3 mr-1" /> Save
+          </Button>
+        </div>
+
+        {searches.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {searches.map((s) => (
+              <span
+                key={s.id}
+                className="inline-flex items-center gap-1 rounded-full border border-border pl-2 pr-1 py-0.5 text-[11px]"
+              >
+                <button
+                  type="button"
+                  className="hover:text-accent"
+                  onClick={() => {
+                    setQuery(s.query);
+                    setColumns((c) => ({ ...c, ...(s.columns as Record<ColumnKey, boolean>) }));
+                    setTimelineKinds(
+                      (s.timelineKinds as TimelineKind[] | undefined)?.length
+                        ? (s.timelineKinds as TimelineKind[])
+                        : TIMELINE_KINDS.map((k) => k.key),
+                    );
+                  }}
+                >
+                  {s.name}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Delete saved filter ${s.name}`}
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => removeSearch(s.id)}
+                >
+                  <Trash2 className="size-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
         {q && (
           <div className="mt-2 rounded border border-border divide-y divide-border max-h-60 overflow-auto">
             {searchResults.length === 0 ? (
@@ -340,6 +572,7 @@ export function MetaLeadSourcePanel({
                   </Badge>
                   <span className="text-muted-foreground shrink-0">{k}</span>
                   <span className="ml-auto min-w-0 break-words text-right">{v || "—"}</span>
+                  <CopyField value={v} label={k} />
                 </div>
               ))
             )}
@@ -391,11 +624,12 @@ export function MetaLeadSourcePanel({
           {sourceOpen && (
             <dl className="divide-y divide-border">
               {metaRows.map(([k, v]) => (
-                <div key={k} className="px-4 py-2.5 grid grid-cols-[130px_1fr] gap-4 text-xs">
+                <div key={k} className="px-4 py-2.5 grid grid-cols-[130px_1fr_auto] gap-3 text-xs">
                   <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground self-center">
                     {k}
                   </dt>
                   <dd className="min-w-0 break-all">{v}</dd>
+                  <CopyField value={v} label={k} />
                 </div>
               ))}
             </dl>
@@ -415,9 +649,10 @@ export function MetaLeadSourcePanel({
           </div>
           <dl className="divide-y divide-border">
             {contactRows.map(([k, v]) => (
-              <div key={k} className="px-4 py-2.5 grid grid-cols-[130px_1fr] gap-4 text-xs">
+              <div key={k} className="px-4 py-2.5 grid grid-cols-[130px_1fr_auto] gap-3 text-xs">
                 <dt className="text-muted-foreground">{k}</dt>
                 <dd className="min-w-0 break-words text-foreground">{v}</dd>
+                <CopyField value={v} label={k} />
               </div>
             ))}
           </dl>
@@ -431,9 +666,10 @@ export function MetaLeadSourcePanel({
           </div>
           <dl className="divide-y divide-border">
             {answers.map(([k, v]) => (
-              <div key={k} className="px-4 py-2.5 grid grid-cols-[160px_1fr] gap-4 text-xs">
+              <div key={k} className="px-4 py-2.5 grid grid-cols-[160px_1fr_auto] gap-3 text-xs">
                 <dt className="text-muted-foreground break-words">{prettyLabel(k)}</dt>
                 <dd className="min-w-0 break-words text-foreground">{String(v) || "—"}</dd>
+                <CopyField value={String(v)} label={prettyLabel(k)} />
               </div>
             ))}
           </dl>
@@ -458,17 +694,46 @@ export function MetaLeadSourcePanel({
                 >
                   Open file
                 </a>
+                <CopyField value={String(v)} label={`${prettyLabel(k)} link`} />
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {timeline.length > 0 && (
+      {allTimeline.length > 0 && (
         <div className="border-t border-border">
           <div className="px-4 py-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            Timeline · {timeline.length}
+            Timeline · {timeline.length}/{allTimeline.length}
           </div>
+          <div className="px-4 pb-2 flex flex-wrap gap-1.5">
+            {TIMELINE_KINDS.map(({ key, label }) => {
+              const active = timelineKinds.includes(key);
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() =>
+                    setTimelineKinds((k) =>
+                      active ? k.filter((x) => x !== key) : [...k, key],
+                    )
+                  }
+                  className={`rounded-full border px-2 py-0.5 text-[11px] transition-colors ${
+                    active
+                      ? "border-accent text-accent"
+                      : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          {timeline.length === 0 && (
+            <div className="px-4 pb-3 text-xs text-muted-foreground">
+              No events match the selected categories.
+            </div>
+          )}
           <ul className="divide-y divide-border">
             {timeline.map((t, i) => (
               <li key={`${t.label}-${i}`} className="px-4 py-2.5 text-xs flex items-center gap-2">
