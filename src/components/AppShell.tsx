@@ -1,43 +1,23 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  LayoutGrid,
-  LayoutDashboard,
-  Users,
-  Calendar,
-  MessageSquare,
-  Workflow,
-  Settings,
   Search,
   LogOut,
-  CheckSquare,
-  BarChart3,
-  FileText,
-  Inbox,
-  CalendarClock,
-  Megaphone,
-  Webhook,
-  Phone,
-  PhoneCall,
   ToggleLeft,
   Ban,
-  ShieldCheck,
-  Palette,
   Sun,
   Moon,
   Rows3,
   Rows4,
   PanelLeftClose,
   PanelLeftOpen,
-  Users2,
-  Clock,
   Menu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { SubAccountSwitcher } from "@/components/SubAccountSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
-import { Compass } from "lucide-react";
+
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Softphone } from "@/components/Softphone";
