@@ -7,6 +7,8 @@ import {
   Target,
   DollarSign,
 } from "lucide-react";
+import { PageBody, PageHeader } from "@/components/PageHeader";
+import { CardGridSkeleton, KpiSkeleton } from "@/components/ui/states";
 import {
   BarChart,
   Bar,
