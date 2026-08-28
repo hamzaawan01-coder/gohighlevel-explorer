@@ -165,5 +165,7 @@ export const suggestReply = createServerFn({ method: "POST" })
       contact,
       deal,
       messages,
+      knowledge,
+      feedback,
     });
   });
