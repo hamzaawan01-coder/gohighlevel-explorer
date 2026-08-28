@@ -182,6 +182,7 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
                 contactId: contactId ?? null,
                 title: name || email || phone || "Facebook lead",
                 source: "Facebook Lead Ad",
+                formId: lead.form_id ?? ch.value.form_id ?? null,
               });
             } catch (e) {
               console.error("meta leadgen fetch failed", e);
