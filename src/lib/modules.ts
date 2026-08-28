@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPlanModules } from "@/lib/subscriptions";
 import { useTenancy } from "@/lib/tenancy";
+
 
 export type ModuleDef = {
   key: string;
@@ -114,15 +116,25 @@ export function moduleForPath(pathname: string): ModuleDef | undefined {
 }
 
 export async function fetchModuleState(subAccountId: string): Promise<ModuleState> {
-  const { data, error } = await supabase
-    .from("sub_account_modules")
-    .select("module_key, enabled")
-    .eq("sub_account_id", subAccountId);
+  const [{ data, error }, planModules] = await Promise.all([
+    supabase
+      .from("sub_account_modules")
+      .select("module_key, enabled")
+      .eq("sub_account_id", subAccountId),
+    fetchPlanModules(subAccountId).catch(() => null),
+  ]);
   if (error) throw error;
   const state: ModuleState = {};
   for (const row of data ?? []) state[row.module_key] = row.enabled;
+  // A subscription plan is a hard ceiling: modules it doesn't include stay off.
+  if (planModules) {
+    for (const m of MODULES) {
+      if (!m.locked && !planModules.includes(m.key)) state[m.key] = false;
+    }
+  }
   return state;
 }
+
 
 export async function setModuleEnabled(
   subAccountId: string,

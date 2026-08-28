@@ -46,6 +46,7 @@ import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_au
 import { Route as AuthenticatedSettingsModulesRouteImport } from './routes/_authenticated/settings.modules'
 import { Route as AuthenticatedSettingsPhoneNumbersRouteImport } from './routes/_authenticated/settings.phone-numbers'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
+import { Route as AuthenticatedSettingsSubscriptionsRouteImport } from './routes/_authenticated/settings.subscriptions'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsWordpressRouteImport } from './routes/_authenticated/settings.wordpress'
 import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
@@ -55,6 +56,7 @@ import { Route as ApiPublicHooksAppointmentsRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
 import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta.data-deletion'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicBookingRescheduleTokenRouteImport } from './routes/api/public/booking.reschedule.$token'
 import { Route as ApiPublicHooksMetaTokenRouteImport } from './routes/api/public/hooks/meta.$token'
 import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
@@ -269,6 +271,12 @@ const AuthenticatedSettingsSubAccountsRoute =
     path: '/settings/sub-accounts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsSubscriptionsRoute =
+  AuthenticatedSettingsSubscriptionsRouteImport.update({
+    id: '/settings/subscriptions',
+    path: '/settings/subscriptions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsTeamRoute =
   AuthenticatedSettingsTeamRouteImport.update({
     id: '/settings/team',
@@ -318,6 +326,12 @@ const ApiPublicMetaDataDeletionRoute =
   ApiPublicMetaDataDeletionRouteImport.update({
     id: '/api/public/meta/data-deletion',
     path: '/api/public/meta/data-deletion',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicBookingRescheduleTokenRoute =
@@ -432,6 +446,7 @@ export interface FileRoutesByFullPath {
   '/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
+  '/settings/subscriptions': typeof AuthenticatedSettingsSubscriptionsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
@@ -443,6 +458,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
@@ -492,6 +508,7 @@ export interface FileRoutesByTo {
   '/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
+  '/settings/subscriptions': typeof AuthenticatedSettingsSubscriptionsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
@@ -503,6 +520,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
@@ -554,6 +572,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/_authenticated/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
+  '/_authenticated/settings/subscriptions': typeof AuthenticatedSettingsSubscriptionsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/_authenticated/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
@@ -565,6 +584,7 @@ export interface FileRoutesById {
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
@@ -616,6 +636,7 @@ export interface FileRouteTypes {
     | '/settings/modules'
     | '/settings/phone-numbers'
     | '/settings/sub-accounts'
+    | '/settings/subscriptions'
     | '/settings/team'
     | '/settings/wordpress'
     | '/api/public/process-outbound'
@@ -627,6 +648,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
+    | '/api/public/payments/webhook'
     | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
@@ -676,6 +698,7 @@ export interface FileRouteTypes {
     | '/settings/modules'
     | '/settings/phone-numbers'
     | '/settings/sub-accounts'
+    | '/settings/subscriptions'
     | '/settings/team'
     | '/settings/wordpress'
     | '/api/public/process-outbound'
@@ -687,6 +710,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
+    | '/api/public/payments/webhook'
     | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
@@ -737,6 +761,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/modules'
     | '/_authenticated/settings/phone-numbers'
     | '/_authenticated/settings/sub-accounts'
+    | '/_authenticated/settings/subscriptions'
     | '/_authenticated/settings/team'
     | '/_authenticated/settings/wordpress'
     | '/api/public/process-outbound'
@@ -748,6 +773,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
+    | '/api/public/payments/webhook'
     | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
@@ -780,6 +806,7 @@ export interface RootRouteChildren {
   ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
   ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicBookingRescheduleTokenRoute: typeof ApiPublicBookingRescheduleTokenRoute
   ApiPublicHooksMetaTokenRoute: typeof ApiPublicHooksMetaTokenRoute
   ApiPublicHooksWordpressTokenRoute: typeof ApiPublicHooksWordpressTokenRoute
@@ -1056,6 +1083,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsSubAccountsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/subscriptions': {
+      id: '/_authenticated/settings/subscriptions'
+      path: '/settings/subscriptions'
+      fullPath: '/settings/subscriptions'
+      preLoaderRoute: typeof AuthenticatedSettingsSubscriptionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/team': {
       id: '/_authenticated/settings/team'
       path: '/settings/team'
@@ -1117,6 +1151,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/meta/data-deletion'
       fullPath: '/api/public/meta/data-deletion'
       preLoaderRoute: typeof ApiPublicMetaDataDeletionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/booking/reschedule/$token': {
@@ -1240,6 +1281,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsModulesRoute: typeof AuthenticatedSettingsModulesRoute
   AuthenticatedSettingsPhoneNumbersRoute: typeof AuthenticatedSettingsPhoneNumbersRoute
   AuthenticatedSettingsSubAccountsRoute: typeof AuthenticatedSettingsSubAccountsRoute
+  AuthenticatedSettingsSubscriptionsRoute: typeof AuthenticatedSettingsSubscriptionsRoute
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
   AuthenticatedSettingsWordpressRoute: typeof AuthenticatedSettingsWordpressRoute
   AuthenticatedContactsIndexRoute: typeof AuthenticatedContactsIndexRoute
@@ -1275,6 +1317,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsPhoneNumbersRoute:
     AuthenticatedSettingsPhoneNumbersRoute,
   AuthenticatedSettingsSubAccountsRoute: AuthenticatedSettingsSubAccountsRoute,
+  AuthenticatedSettingsSubscriptionsRoute:
+    AuthenticatedSettingsSubscriptionsRoute,
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
   AuthenticatedSettingsWordpressRoute: AuthenticatedSettingsWordpressRoute,
   AuthenticatedContactsIndexRoute: AuthenticatedContactsIndexRoute,
@@ -1301,6 +1345,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
   ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicBookingRescheduleTokenRoute: ApiPublicBookingRescheduleTokenRoute,
   ApiPublicHooksMetaTokenRoute: ApiPublicHooksMetaTokenRoute,
   ApiPublicHooksWordpressTokenRoute: ApiPublicHooksWordpressTokenRoute,
