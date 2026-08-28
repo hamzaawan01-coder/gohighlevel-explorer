@@ -131,7 +131,10 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   }, [qc, subId]);
 
   const connect = useMutation({
-    mutationFn: () => startFn({ data: { subAccountId: subId } }),
+    mutationFn: () => {
+      const id = toast.loading("Opening Facebook…");
+      return startFn({ data: { subAccountId: subId } }).finally(() => toast.dismiss(id));
+    },
     onSuccess: ({ url }) => {
       // Facebook refuses to render inside an iframe (the Lovable preview),
       // so always hand off in a top-level tab/window.
@@ -146,16 +149,20 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         toast.info("Continue in the Facebook tab, then come back and click Refresh accounts.");
       }
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(`Could not start Facebook login — ${e.message}`),
   });
 
   const refresh = useMutation({
-    mutationFn: () => refreshFn({ data: { subAccountId: subId } }),
+    mutationFn: () => {
+      const id = toast.loading("Refreshing pages and ad accounts from Meta…");
+      return refreshFn({ data: { subAccountId: subId } }).finally(() => toast.dismiss(id));
+    },
     onSuccess: ({ pages, adAccounts }) => {
       toast.success(`Refreshed: ${pages} pages, ${adAccounts} ad accounts`);
+      stampNow({ countsAt: new Date().toISOString() });
       qc.invalidateQueries({ queryKey: ["meta-connection", subId] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(`Refresh failed — ${e.message}`),
   });
 
   const disconnect = useMutation({
@@ -181,13 +188,43 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  /** Restore a snapshot of page routing settings — used for "Undo". */
+  const restorePages = async (snapshot: PageRow[]) => {
+    const id = toast.loading("Undoing page changes…");
+    let ok = 0;
+    for (const p of snapshot) {
+      try {
+        await updatePageFn({
+          data: {
+            pageRowId: p.id,
+            subAccountId: subId,
+            subscribe: p.webhook_subscribed,
+            route_messenger_to_inbox: p.route_messenger_to_inbox,
+            route_instagram_to_inbox: p.route_instagram_to_inbox,
+            sync_lead_ads: p.sync_lead_ads,
+          },
+        });
+        ok++;
+      } catch {
+        /* keep going; reported below */
+      }
+    }
+    toast.dismiss(id);
+    if (ok === snapshot.length) toast.success("Reverted to previous page settings");
+    else toast.warning(`Reverted ${ok} of ${snapshot.length} pages — check each page manually`);
+    qc.invalidateQueries({ queryKey: ["meta-connection", subId] });
+  };
+
   /** One-click: subscribe every page to webhooks and route everything to the inbox. */
   const enableAll = useMutation({
     mutationFn: async () => {
       const pages = (q.data?.pages ?? []) as PageRow[];
+      const snapshot = pages.map((p) => ({ ...p }));
+      const toastId = toast.loading(`Enabling 0 / ${pages.length} pages…`);
       let ok = 0;
       const failures: string[] = [];
-      for (const p of pages) {
+      for (const [i, p] of pages.entries()) {
+        toast.loading(`Enabling ${i + 1} / ${pages.length} — ${p.page_name}`, { id: toastId });
         try {
           await updatePageFn({
             data: {
@@ -204,14 +241,19 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
           failures.push(`${p.page_name}: ${e instanceof Error ? e.message : String(e)}`);
         }
       }
-      return { ok, failures };
+      toast.dismiss(toastId);
+      return { ok, failures, snapshot };
     },
-    onSuccess: ({ ok, failures }) => {
-      if (ok > 0) toast.success(`Enabled ${ok} page${ok === 1 ? "" : "s"}`);
+    onSuccess: ({ ok, failures, snapshot }) => {
+      if (ok > 0)
+        toast.success(`Enabled ${ok} page${ok === 1 ? "" : "s"}`, {
+          duration: 12_000,
+          action: { label: "Undo", onClick: () => void restorePages(snapshot) },
+        });
       if (failures.length > 0) toast.error(`${failures.length} failed — ${failures[0]}`);
       qc.invalidateQueries({ queryKey: ["meta-connection", subId] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(`Enable everything failed — ${e.message}`),
   });
 
   const data = q.data;
@@ -222,30 +264,42 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   const igCount = pages.filter((p) => p.instagram_business_account_id).length;
   const leadAdsCount = pages.filter((p) => p.sync_lead_ads).length;
 
-  // Persisted UI state: sub-tab, channel search, channel filter, expanded cards.
+  // Persisted UI state: sub-tab plus per-sub-tab search / filter / expanded cards.
   const [ui, setUi] = useState<MetaTabUiState>(() => loadMetaTabUi());
   useEffect(() => {
     saveMetaTabUi(ui);
   }, [ui]);
+  const view: MetaTabView =
+    ui.views[ui.tab] ?? { search: "", filter: "all", expanded: [] };
   const patchUi = (patch: Partial<MetaTabUiState>) => setUi((s) => ({ ...s, ...patch }));
+  /** Patch only the current sub-tab's view state. */
+  const patchView = (patch: Partial<MetaTabView>) =>
+    setUi((s) => {
+      const current = s.views[s.tab] ?? { search: "", filter: "all", expanded: [] };
+      return { ...s, views: { ...s.views, [s.tab]: { ...current, ...patch } } };
+    });
   const toggleExpanded = (id: string) =>
-    setUi((s) => ({
-      ...s,
-      expanded: s.expanded.includes(id) ? s.expanded.filter((x) => x !== id) : [...s.expanded, id],
-    }));
+    setUi((s) => {
+      const current = s.views[s.tab] ?? { search: "", filter: "all" as MetaChannelFilter, expanded: [] };
+      const expanded = current.expanded.includes(id)
+        ? current.expanded.filter((x) => x !== id)
+        : [...current.expanded, id];
+      return { ...s, views: { ...s.views, [s.tab]: { ...current, expanded } } };
+    });
 
   const visiblePages = useMemo(() => {
-    const term = ui.search.trim().toLowerCase();
+    const term = view.search.trim().toLowerCase();
     return pages.filter((p) => {
       if (term && !`${p.page_name} ${p.page_id} ${p.category ?? ""}`.toLowerCase().includes(term))
         return false;
-      if (ui.filter === "subscribed") return p.webhook_subscribed;
-      if (ui.filter === "unsubscribed") return !p.webhook_subscribed;
-      if (ui.filter === "instagram") return Boolean(p.instagram_business_account_id);
-      if (ui.filter === "leadads") return p.sync_lead_ads;
+      if (view.filter === "subscribed") return p.webhook_subscribed;
+      if (view.filter === "unsubscribed") return !p.webhook_subscribed;
+      if (view.filter === "instagram") return Boolean(p.instagram_business_account_id);
+      if (view.filter === "leadads") return p.sync_lead_ads;
       return true;
     });
-  }, [pages, ui.search, ui.filter]);
+  }, [pages, view.search, view.filter]);
+
 
 
   if (q.isLoading) {
