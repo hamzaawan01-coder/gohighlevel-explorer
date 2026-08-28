@@ -473,16 +473,16 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                     <input
-                      value={ui.search}
-                      onChange={(e) => patchUi({ search: e.target.value })}
+                      value={view.search}
+                      onChange={(e) => patchView({ search: e.target.value })}
                       placeholder="Search pages by name, category or ID…"
                       aria-label="Search Facebook pages"
                       className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-xs outline-none focus:border-primary"
                     />
-                    {ui.search && (
+                    {view.search && (
                       <button
                         type="button"
-                        onClick={() => patchUi({ search: "" })}
+                        onClick={() => patchView({ search: "" })}
                         aria-label="Clear search"
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
@@ -503,10 +503,10 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                       <button
                         key={key}
                         type="button"
-                        onClick={() => patchUi({ filter: key })}
-                        aria-pressed={ui.filter === key}
+                        onClick={() => patchView({ filter: key })}
+                        aria-pressed={view.filter === key}
                         className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
-                          ui.filter === key
+                          view.filter === key
                             ? "bg-primary text-primary-foreground"
                             : "bg-secondary text-muted-foreground hover:text-foreground"
                         }`}
@@ -528,7 +528,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 ) : (
                   <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
                     {visiblePages.map((p) => {
-                      const open = ui.expanded.includes(p.id);
+                      const open = view.expanded.includes(p.id);
                       return (
                         <div key={p.id} className="surface-card overflow-hidden">
                           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 p-4">
