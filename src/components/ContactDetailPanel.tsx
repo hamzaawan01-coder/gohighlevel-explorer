@@ -271,6 +271,7 @@ export function ContactDetailPanel({
             openTaskCount={openTasks.length}
             dealCount={deals.length}
           />
+          {subId && <MetaLeadSourcePanel subId={subId} contactId={contactId} />}
         </TabsContent>
 
         <TabsContent value="deals" className="flex-1 overflow-auto px-6 py-4">
