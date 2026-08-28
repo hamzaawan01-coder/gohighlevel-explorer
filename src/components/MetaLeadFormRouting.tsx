@@ -1,16 +1,35 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listMetaLeadFormRoutes, setMetaLeadFormRoute } from "@/lib/meta.functions";
+import { listMetaLeadFormRoutes, setMetaLeadFormRoute, replayMetaLeadAdTest, listMetaLeadAdEvents } from "@/lib/meta.functions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ClipboardList, RefreshCw } from "lucide-react";
+import { ClipboardList, RefreshCw, PlayCircle, ScrollText } from "lucide-react";
 
 type Form = { pageId: string; pageName: string; formId: string; formName: string; status?: string };
 type Route = { id: string; page_id: string | null; form_id: string; pipeline_id: string; stage_id: string };
 type Pipeline = { id: string; name: string };
 type Stage = { id: string; pipeline_id: string; name: string; position: number };
+
+type AuditEvent = {
+  id: string;
+  page_id: string | null;
+  form_id: string | null;
+  form_name: string | null;
+  leadgen_id: string | null;
+  contact_id: string | null;
+  deal_id: string | null;
+  pipeline_id: string | null;
+  stage_id: string | null;
+  routing_source: string;
+  status: string;
+  error: string | null;
+  is_test: boolean;
+  lead_fields: Record<string, unknown>;
+  payload: unknown;
+  created_at: string;
+};
 
 const NONE = "__default__";
 
@@ -18,6 +37,8 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
   const qc = useQueryClient();
   const listFn = useServerFn(listMetaLeadFormRoutes);
   const setFn = useServerFn(setMetaLeadFormRoute);
+  const replayFn = useServerFn(replayMetaLeadAdTest);
+  const eventsFn = useServerFn(listMetaLeadAdEvents);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["meta-lead-form-routes", subId],
@@ -35,6 +56,26 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
     onSuccess: (res: { cleared?: boolean }) => {
       toast.success(res?.cleared ? "Form now uses the default pipeline" : "Lead Ad form routing saved");
       qc.invalidateQueries({ queryKey: ["meta-lead-form-routes", subId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const events = useQuery({
+    queryKey: ["meta-lead-ad-events", subId],
+    queryFn: () => eventsFn({ data: { subAccountId: subId, limit: 25 } }),
+  });
+
+  const replay = useMutation({
+    mutationFn: (input: { formId: string; formName?: string | null; pageId?: string | null }) =>
+      replayFn({ data: { subAccountId: subId, ...input } }),
+    onSuccess: (res: any) => {
+      if (res?.error) toast.error(res.error);
+      else
+        toast.success(
+          `${res?.usedSample ? "Sample" : "Last"} lead replayed → ${res?.pipelineName ?? "?"} · ${res?.stageName ?? "?"}` +
+            (res?.duplicate ? " (existing opportunity reused)" : ""),
+        );
+      qc.invalidateQueries({ queryKey: ["meta-lead-ad-events", subId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -92,11 +133,23 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
                     {f.pageName} · form {f.formId}
                   </p>
                 </div>
-                {route ? (
-                  <Badge variant="secondary">Custom</Badge>
-                ) : (
-                  <Badge variant="outline">Default pipeline</Badge>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {route ? (
+                    <Badge variant="secondary">Custom</Badge>
+                  ) : (
+                    <Badge variant="outline">Default pipeline</Badge>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    disabled={replay.isPending}
+                    onClick={() => replay.mutate({ formId: f.formId, formName: f.formName, pageId: f.pageId })}
+                  >
+                    <PlayCircle className="size-3.5 mr-1" />
+                    Replay last test webhook
+                  </Button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -165,6 +218,68 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
           );
         })
       )}
+
+      <div className="p-4 border-t border-border space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ScrollText className="size-4" />
+            <div>
+              <h4 className="text-sm font-medium">Lead Ad audit trail</h4>
+              <p className="text-[11px] text-muted-foreground">
+                Every lead we received or replayed, the pipeline and stage used, and the webhook payload behind it.
+              </p>
+            </div>
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => events.refetch()}>
+            <RefreshCw className={`size-4 ${events.isFetching ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
+
+        {(events.data?.events ?? []).length === 0 ? (
+          <p className="text-[11px] text-muted-foreground">
+            No Lead Ad activity recorded yet. Use “Replay last test webhook” above to create a test entry.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {((events.data?.events ?? []) as AuditEvent[]).map((ev) => {
+              const pipelineName = ev.pipeline_id ? events.data?.pipelineNames?.[ev.pipeline_id] : null;
+              const stageName = ev.stage_id ? events.data?.stageNames?.[ev.stage_id] : null;
+              return (
+                <details key={ev.id} className="rounded border border-border bg-muted/30 px-3 py-2">
+                  <summary className="cursor-pointer text-xs flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{ev.form_name ?? ev.form_id ?? "Unknown form"}</span>
+                    <Badge variant={ev.status === "ok" ? "secondary" : ev.status === "error" ? "destructive" : "outline"}>
+                      {ev.status}
+                    </Badge>
+                    {ev.is_test && <Badge variant="outline">test</Badge>}
+                    <Badge variant="outline">{ev.routing_source === "mapped" ? "custom mapping" : ev.routing_source}</Badge>
+                    <span className="text-muted-foreground">
+                      {pipelineName ?? "—"} · {stageName ?? "—"}
+                    </span>
+                    <span className="text-muted-foreground ml-auto">
+                      {new Date(ev.created_at).toLocaleString()}
+                    </span>
+                  </summary>
+                  <div className="mt-2 space-y-2 text-[11px]">
+                    {ev.error && <p className="text-destructive">{ev.error}</p>}
+                    <p className="text-muted-foreground">
+                      lead {ev.leadgen_id ?? "—"} · contact {ev.contact_id ?? "—"} · opportunity {ev.deal_id ?? "—"}
+                    </p>
+                    <div>
+                      <p className="text-muted-foreground mb-1">Lead fields</p>
+                      <pre className="overflow-auto rounded bg-background p-2">{JSON.stringify(ev.lead_fields, null, 2)}</pre>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground mb-1">Webhook payload</p>
+                      <pre className="overflow-auto rounded bg-background p-2">{JSON.stringify(ev.payload, null, 2)}</pre>
+                    </div>
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {errors.length > 0 && (
         <div className="p-4 border-t border-border space-y-1">
