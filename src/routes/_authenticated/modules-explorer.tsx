@@ -21,7 +21,8 @@ import { PageBody, PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/ui/states";
 import { Button } from "@/components/ui/button";
 import { restartTour } from "@/components/OnboardingTour";
-import { useTenancy } from "@/lib/tenancy";
+import { useQuery } from "@tanstack/react-query";
+import { fetchMySubAccounts, useTenancy } from "@/lib/tenancy";
 import {
   COVERAGE_LABEL,
   GHL_CATEGORIES,
@@ -81,7 +82,10 @@ const SORTS: { key: SortKey; label: string }[] = [
 ];
 
 function ModuleExplorerPage() {
-  const workspace = useTenancy((s) => s.currentSubAccountName) ?? "This workspace";
+  const subId = useTenancy((s) => s.currentSubAccountId);
+  const subAccountsQuery = useQuery({ queryKey: ["my-sub-accounts"], queryFn: fetchMySubAccounts });
+  const workspace =
+    subAccountsQuery.data?.find((s) => s.id === subId)?.name ?? "This workspace";
   const [query, setQuery] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [coverages, setCoverages] = useState<Coverage[]>([]);
