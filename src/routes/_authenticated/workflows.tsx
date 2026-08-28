@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing, Copy, PlayCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, Zap, CircleDot, ListChecks, Tag, ArrowRightCircle, BellRing, Copy, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
@@ -19,6 +19,8 @@ import {
   type WorkflowInput,
 } from "@/lib/workflows";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { ListSkeleton, EmptyState, ErrorState } from "@/components/ui/states";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -104,14 +106,15 @@ function WorkflowsPage() {
       headerActions={
         <button
           onClick={() => { setEditing(null); setDialogOpen(true); }}
-          className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors"
+          className="flex min-h-11 sm:min-h-0 items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Plus className="size-3.5" /> New Workflow
         </button>
       }
     >
-      <div className="h-full flex">
-        <div className="flex-1 overflow-auto">
+      <div className="h-full flex flex-col lg:flex-row">
+        <h1 className="sr-only">Workflows</h1>
+        <div className="flex-1 overflow-auto min-w-0">
           <QuickTemplates
             onPick={(tpl) => {
               setEditing(null);
@@ -119,28 +122,33 @@ function WorkflowsPage() {
               createMut.mutate(tpl);
             }}
           />
-          {wfQ.isLoading ? (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              <Loader2 className="size-4 animate-spin mr-2" /><span className="text-xs">Loading…</span>
+          {wfQ.isError ? (
+            <div className="p-6">
+              <ErrorState onRetry={() => wfQ.refetch()} />
+            </div>
+          ) : wfQ.isLoading ? (
+            <div className="p-4">
+              <ListSkeleton rows={5} />
             </div>
           ) : workflows.length === 0 ? (
-            <div className="py-16 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-              <Zap className="size-8 opacity-40" />
-              <p className="text-xs">No workflows yet — pick a template above or</p>
-              <button
-                onClick={() => { setEditing(null); setDialogOpen(true); }}
-                className="text-xs text-primary hover:underline"
-              >
-                Create your first workflow
-              </button>
-            </div>
+            <EmptyState
+              icon={Zap}
+              title="No workflows yet"
+              description="Pick a quick template above, or build one from scratch."
+              action={
+                <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true); }}>
+                  <Plus className="size-3.5 mr-1.5" /> Create your first workflow
+                </Button>
+              }
+            />
           ) : (
             <ul className="divide-y divide-border">
               {workflows.map((w) => (
-                <li key={w.id} className="px-6 py-4 flex items-center gap-4 hover:bg-secondary/40">
+                <li key={w.id} className="px-4 sm:px-6 py-4 flex items-center gap-3 sm:gap-4 hover:bg-secondary/40 flex-wrap sm:flex-nowrap">
                   <Switch
                     checked={w.enabled}
                     onCheckedChange={(v) => updateMut.mutate({ id: w.id, input: { enabled: v } })}
+                    aria-label={`${w.enabled ? "Disable" : "Enable"} ${w.name}`}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -162,8 +170,9 @@ function WorkflowsPage() {
                   </div>
                   <button
                     onClick={() => setTesting(w)}
-                    className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="Test / preview"
+                    aria-label={`Test ${w.name}`}
                   >
                     <PlayCircle className="size-3" />
                   </button>
@@ -177,22 +186,25 @@ function WorkflowsPage() {
                         actions: w.actions,
                       })
                     }
-                    className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="Duplicate"
+                    aria-label={`Duplicate ${w.name}`}
                   >
                     <Copy className="size-3" />
                   </button>
                   <button
                     onClick={() => { setEditing(w); setDialogOpen(true); }}
-                    className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="Edit"
+                    aria-label={`Edit ${w.name}`}
                   >
                     <Pencil className="size-3" />
                   </button>
                   <button
                     onClick={() => { if (confirm(`Delete "${w.name}"?`)) deleteMut.mutate(w.id); }}
-                    className="size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive"
+                    className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="Delete"
+                    aria-label={`Delete ${w.name}`}
                   >
                     <Trash2 className="size-3" />
                   </button>
@@ -202,7 +214,7 @@ function WorkflowsPage() {
           )}
         </div>
 
-        <aside className="w-80 border-l border-border bg-card flex flex-col">
+        <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col min-w-0">
           <div className="px-4 py-3 border-b border-border space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
@@ -217,8 +229,9 @@ function WorkflowsPage() {
                 <button
                   key={k}
                   onClick={() => setRunFilter(k)}
+                  aria-pressed={runFilter === k}
                   className={
-                    "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded transition-colors " +
+                    "text-[10px] font-mono uppercase tracking-wider px-2 py-1.5 min-h-9 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
                     (runFilter === k
                       ? "bg-secondary text-foreground"
                       : "text-muted-foreground hover:text-foreground")

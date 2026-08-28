@@ -136,14 +136,14 @@ export function DealDetailPanel({
   return (
     <div className="flex flex-col overflow-hidden max-h-[80vh]">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-border flex items-start gap-4">
+      <div className="px-4 sm:px-6 py-5 border-b border-border flex items-start gap-4">
         <span
           className="size-2 mt-2 rounded-full shrink-0"
           style={{ backgroundColor: stage?.color ?? "#6b7280" }}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-lg font-semibold truncate">{d.title}</h2>
+            <h1 className="text-lg font-semibold truncate">{d.title}</h1>
             {stage && (
               <span className="inline-block bg-secondary rounded px-1.5 py-0.5 text-[10px] font-mono uppercase">
                 {stage.name}
@@ -177,7 +177,8 @@ export function DealDetailPanel({
             onClick={() => {
               if (confirm(`Delete "${d.title}"?`)) deleteMut.mutate();
             }}
-            className="size-8 rounded-md hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive"
+            aria-label={`Delete ${d.title}`}
+            className="min-h-11 min-w-11 sm:size-8 rounded-md hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Delete"
           >
             <Trash2 className="size-3.5" />

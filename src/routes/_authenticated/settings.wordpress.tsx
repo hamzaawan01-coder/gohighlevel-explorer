@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, PageBody } from "@/components/PageHeader";
-import { EmptyState, ListSkeleton } from "@/components/ui/states";
+import { EmptyState, ListSkeleton, ErrorState, PanelSkeleton } from "@/components/ui/states";
+import { ConsoleSection, ConsoleSplit, ConsoleStat, ConsoleTips, StatusPill } from "@/components/console";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,6 +74,13 @@ function WordPressPage() {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
+  const statusQ = useQuery({
+    queryKey: ["wp-webhooks", subId],
+    enabled: !!subId,
+    queryFn: () => fetchWebhooks(subId!),
+  });
+  const hasLiveWebhook = (statusQ.data ?? []).some((h) => h.enabled);
+
   return (
     <AppShell>
       <PageHeader
@@ -85,6 +93,11 @@ function WordPressPage() {
           </>
         }
         crumbs={[{ label: "Settings" }, { label: "WordPress" }]}
+        meta={
+          subId && statusQ.data ? (
+            <StatusPill ok={hasLiveWebhook} label={hasLiveWebhook ? "Live" : "No live webhook"} />
+          ) : null
+        }
       />
       <PageBody width="full">
         {!subId || !userId ? (
@@ -119,50 +132,79 @@ function WebhooksPanel({ subId, userId }: { subId: string; userId: string }) {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to create"),
   });
 
+  if (q.isError) return <ErrorState onRetry={() => q.refetch()} error={q.error} />;
+  if (q.isLoading) return <PanelSkeleton />;
+
   const rows = q.data ?? [];
+  const liveCount = rows.filter((h) => h.enabled).length;
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-md border border-border p-5 space-y-3">
-        <h2 className="font-medium">Create webhook</h2>
-        <div className="flex gap-2 items-end flex-wrap">
-          <div className="flex-1 min-w-56">
-            <Label className="text-xs">Site or form name</Label>
-            <Input
-              placeholder="e.g. Main site — Contact form"
-              value={newName}
-              maxLength={80}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center gap-2 pb-2">
-            <Switch checked={withSecret} onCheckedChange={setWithSecret} id="wp-secret" />
-            <Label htmlFor="wp-secret" className="text-sm">
-              Generate HMAC secret
-            </Label>
-          </div>
-          <Button disabled={create.isPending} onClick={() => create.mutate()}>
-            Create
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          An HMAC secret is recommended: WordPress signs each request and the endpoint verifies
-          the signature before creating a lead.
-        </p>
-      </div>
+    <ConsoleSplit
+      main={
+        <>
+          <ConsoleSection title="Create webhook" icon={Plus} hint="Generate a URL to paste into WordPress">
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="min-w-56 flex-1 space-y-1.5">
+                <Label htmlFor="wp-new-name" className="text-xs">Site or form name</Label>
+                <Input
+                  id="wp-new-name"
+                  placeholder="e.g. Main site — Contact form"
+                  value={newName}
+                  maxLength={80}
+                  onChange={(e) => setNewName(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2 pb-2">
+                <Switch checked={withSecret} onCheckedChange={setWithSecret} id="wp-secret" />
+                <Label htmlFor="wp-secret" className="text-sm">
+                  Generate HMAC secret
+                </Label>
+              </div>
+              <Button disabled={create.isPending} onClick={() => create.mutate()}>
+                Create
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              An HMAC secret is recommended: WordPress signs each request and the endpoint verifies
+              the signature before creating a lead.
+            </p>
+          </ConsoleSection>
 
-      {q.isLoading ? (
-        <ListSkeleton rows={3} />
-      ) : rows.length === 0 ? (
-        <EmptyState icon={Webhook} title="No webhooks yet" description="Create one above to get a URL you can paste into WordPress." />
-      ) : (
-        <div className="space-y-4">
-          {rows.map((h) => (
-            <WebhookRow key={h.id} hook={h} subId={subId} />
-          ))}
-        </div>
-      )}
-    </div>
+          <ConsoleSection title="Webhooks" icon={Webhook} hint={`${rows.length} configured`}>
+            {rows.length === 0 ? (
+              <EmptyState
+                compact
+                icon={Webhook}
+                title="No webhooks yet"
+                description="Create one above to get a URL you can paste into WordPress."
+              />
+            ) : (
+              <div className="space-y-4">
+                {rows.map((h) => (
+                  <WebhookRow key={h.id} hook={h} subId={subId} />
+                ))}
+              </div>
+            )}
+          </ConsoleSection>
+        </>
+      }
+      side={
+        <>
+          <ConsoleSection title="Webhook health">
+            <ConsoleStat label="Total webhooks" value={rows.length} />
+            <ConsoleStat label="Live" value={liveCount} tone={liveCount > 0 ? "ok" : "muted"} />
+            <ConsoleStat label="Disabled" value={rows.length - liveCount} tone={rows.length - liveCount > 0 ? "warn" : "muted"} />
+          </ConsoleSection>
+          <ConsoleTips
+            items={[
+              "An HMAC secret lets the endpoint verify each request actually came from your WordPress site.",
+              "Use the setup instructions on each webhook for form-plugin-specific steps.",
+              "Field mapping controls which WordPress form fields become contact fields vs. payload extras.",
+            ]}
+          />
+        </>
+      }
+    />
   );
 }
 

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, Loader2, Trash2, Send, Copy, ExternalLink, Mail, MessageSquare, Link2, Share2, DollarSign, FileText } from "lucide-react";
+import { ListSkeleton, EmptyState, ErrorState } from "@/components/ui/states";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useTenancy } from "@/lib/tenancy";
@@ -52,12 +53,12 @@ function MarketingPage() {
   return (
     <AppShell>
       <div className="p-6 overflow-y-auto h-full">
-        <div className="mb-4">
-          <h1 className="text-xl font-semibold">Marketing</h1>
+        <div className="mb-4 min-w-0">
+          <h1 className="text-xl font-semibold truncate">Marketing</h1>
           <p className="text-xs text-muted-foreground">Campaigns, templates, trackable links, social & ads — all in one place.</p>
         </div>
         <Tabs defaultValue="campaigns">
-          <TabsList>
+          <TabsList className="flex w-full overflow-x-auto">
             <TabsTrigger value="campaigns"><Send className="size-3.5 mr-1.5" />Campaigns</TabsTrigger>
             <TabsTrigger value="templates"><FileText className="size-3.5 mr-1.5" />Templates</TabsTrigger>
             <TabsTrigger value="links"><Link2 className="size-3.5 mr-1.5" />Trigger Links</TabsTrigger>
@@ -103,10 +104,11 @@ function CampaignsTab({ subId, userId }: { subId: string; userId: string }) {
       </div>
 
       <div className="border border-border rounded-md divide-y">
-        {q.isLoading ? <div className="p-6 text-center"><Loader2 className="size-4 animate-spin inline" /></div> :
-         !q.data?.length ? <div className="p-6 text-center text-sm text-muted-foreground">No campaigns yet.</div> :
+        {q.isError ? <div className="p-6"><ErrorState compact onRetry={() => q.refetch()} /></div> :
+         q.isLoading ? <div className="p-4"><ListSkeleton rows={4} /></div> :
+         !q.data?.length ? <EmptyState compact title="No campaigns yet." /> :
          q.data.map((c) => (
-          <div key={c.id} className="p-3 flex items-center justify-between gap-4">
+          <div key={c.id} className="p-3 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 {c.channel === "email" ? <Mail className="size-3.5 text-muted-foreground" /> : <MessageSquare className="size-3.5 text-muted-foreground" />}
@@ -124,7 +126,7 @@ function CampaignsTab({ subId, userId }: { subId: string; userId: string }) {
                 </Button>
               )}
               <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setDialogOpen(true); }}>Edit</Button>
-              <Button size="sm" variant="ghost" onClick={() => del.mutate(c.id)}><Trash2 className="size-3.5" /></Button>
+              <Button size="sm" variant="ghost" aria-label="Delete campaign" onClick={() => del.mutate(c.id)}><Trash2 className="size-3.5" /></Button>
             </div>
           </div>
         ))}
@@ -277,10 +279,11 @@ function TemplatesTab({ subId, userId }: { subId: string; userId: string }) {
         <Button size="sm" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-3.5 mr-1.5" />New template</Button>
       </div>
       <div className="border border-border rounded-md divide-y">
-        {q.isLoading ? <div className="p-6 text-center"><Loader2 className="size-4 animate-spin inline" /></div> :
-         !q.data?.length ? <div className="p-6 text-center text-sm text-muted-foreground">No templates yet.</div> :
+        {q.isError ? <div className="p-6"><ErrorState compact onRetry={() => q.refetch()} /></div> :
+         q.isLoading ? <div className="p-4"><ListSkeleton rows={4} /></div> :
+         !q.data?.length ? <EmptyState compact title="No templates yet." /> :
          q.data.map((t) => (
-          <div key={t.id} className="p-3 flex items-center justify-between">
+          <div key={t.id} className="p-3 flex flex-wrap items-center justify-between gap-2">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 {t.channel === "email" ? <Mail className="size-3.5 text-muted-foreground" /> : <MessageSquare className="size-3.5 text-muted-foreground" />}
@@ -290,7 +293,7 @@ function TemplatesTab({ subId, userId }: { subId: string; userId: string }) {
             </div>
             <div className="flex gap-1">
               <Button size="sm" variant="ghost" onClick={() => { setEditing(t); setOpen(true); }}>Edit</Button>
-              <Button size="sm" variant="ghost" onClick={() => del.mutate(t.id)}><Trash2 className="size-3.5" /></Button>
+              <Button size="sm" variant="ghost" aria-label="Delete template" onClick={() => del.mutate(t.id)}><Trash2 className="size-3.5" /></Button>
             </div>
           </div>
         ))}
@@ -392,12 +395,13 @@ function LinksTab({ subId, userId }: { subId: string; userId: string }) {
         <Button size="sm" onClick={() => setOpen(true)}><Plus className="size-3.5 mr-1.5" />New link</Button>
       </div>
       <div className="border border-border rounded-md divide-y">
-        {q.isLoading ? <div className="p-6 text-center"><Loader2 className="size-4 animate-spin inline" /></div> :
-         !q.data?.length ? <div className="p-6 text-center text-sm text-muted-foreground">No links yet.</div> :
+        {q.isError ? <div className="p-6"><ErrorState compact onRetry={() => q.refetch()} /></div> :
+         q.isLoading ? <div className="p-4"><ListSkeleton rows={4} /></div> :
+         !q.data?.length ? <EmptyState compact title="No links yet." /> :
          q.data.map((l) => {
           const shortUrl = `${origin}/api/public/l/${l.slug}`;
           return (
-            <div key={l.id} className="p-3 flex items-center justify-between gap-3">
+            <div key={l.id} className="p-3 flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{l.name}</span>
@@ -406,16 +410,16 @@ function LinksTab({ subId, userId }: { subId: string; userId: string }) {
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <code className="text-[10px] bg-secondary px-1.5 py-0.5 rounded truncate">{shortUrl}</code>
-                  <button onClick={() => { navigator.clipboard.writeText(shortUrl); toast.success("Copied"); }} className="text-muted-foreground hover:text-foreground">
+                  <button onClick={() => { navigator.clipboard.writeText(shortUrl); toast.success("Copied"); }} aria-label="Copy link" className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                     <Copy className="size-3" />
                   </button>
-                  <a href={l.target_url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground"><ExternalLink className="size-3" /></a>
+                  <a href={l.target_url} target="_blank" rel="noreferrer" aria-label="Open target URL" className="text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ExternalLink className="size-3" /></a>
                   <span className="text-[10px] text-muted-foreground truncate">→ {l.target_url}</span>
                 </div>
               </div>
               <div className="flex gap-1">
                 <Button size="sm" variant="ghost" onClick={() => toggle.mutate({ id: l.id, enabled: !l.enabled })}>{l.enabled ? "Disable" : "Enable"}</Button>
-                <Button size="sm" variant="ghost" onClick={() => del.mutate(l.id)}><Trash2 className="size-3.5" /></Button>
+                <Button size="sm" variant="ghost" aria-label="Delete link" onClick={() => del.mutate(l.id)}><Trash2 className="size-3.5" /></Button>
               </div>
             </div>
           );
@@ -458,10 +462,11 @@ function SocialTab({ subId, userId }: { subId: string; userId: string }) {
         <Button size="sm" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-3.5 mr-1.5" />New post</Button>
       </div>
       <div className="border border-border rounded-md divide-y">
-        {q.isLoading ? <div className="p-6 text-center"><Loader2 className="size-4 animate-spin inline" /></div> :
-         !q.data?.length ? <div className="p-6 text-center text-sm text-muted-foreground">No posts yet.</div> :
+        {q.isError ? <div className="p-6"><ErrorState compact onRetry={() => q.refetch()} /></div> :
+         q.isLoading ? <div className="p-4"><ListSkeleton rows={4} /></div> :
+         !q.data?.length ? <EmptyState compact title="No posts yet." /> :
          q.data.map((p) => (
-          <div key={p.id} className="p-3 flex items-start justify-between gap-3">
+          <div key={p.id} className="p-3 flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-[10px]">{SOCIAL_LABELS[p.platform]}</Badge>
@@ -472,7 +477,7 @@ function SocialTab({ subId, userId }: { subId: string; userId: string }) {
             </div>
             <div className="flex gap-1">
               <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}>Edit</Button>
-              <Button size="sm" variant="ghost" onClick={() => del.mutate(p.id)}><Trash2 className="size-3.5" /></Button>
+              <Button size="sm" variant="ghost" aria-label="Delete post" onClick={() => del.mutate(p.id)}><Trash2 className="size-3.5" /></Button>
             </div>
           </div>
         ))}
@@ -584,7 +589,7 @@ function AdsTab({ subId, userId }: { subId: string; userId: string }) {
         <Button size="sm" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-3.5 mr-1.5" />New campaign</Button>
       </div>
 
-      <div className="grid grid-cols-5 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
         {[
           ["Spend", `$${totals.spend.toFixed(2)}`],
           ["Budget", `$${totals.budget.toFixed(2)}`],
@@ -600,10 +605,11 @@ function AdsTab({ subId, userId }: { subId: string; userId: string }) {
       </div>
 
       <div className="border border-border rounded-md divide-y">
-        {q.isLoading ? <div className="p-6 text-center"><Loader2 className="size-4 animate-spin inline" /></div> :
-         !q.data?.length ? <div className="p-6 text-center text-sm text-muted-foreground">No ad campaigns yet.</div> :
+        {q.isError ? <div className="p-6"><ErrorState compact onRetry={() => q.refetch()} /></div> :
+         q.isLoading ? <div className="p-4"><ListSkeleton rows={4} /></div> :
+         !q.data?.length ? <EmptyState compact title="No ad campaigns yet." /> :
          q.data.map((a) => (
-          <div key={a.id} className="p-3 flex items-center justify-between gap-3">
+          <div key={a.id} className="p-3 flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="font-medium text-sm">{a.name}</span>
@@ -616,7 +622,7 @@ function AdsTab({ subId, userId }: { subId: string; userId: string }) {
             </div>
             <div className="flex gap-1">
               <Button size="sm" variant="ghost" onClick={() => { setEditing(a); setOpen(true); }}>Edit</Button>
-              <Button size="sm" variant="ghost" onClick={() => del.mutate(a.id)}><Trash2 className="size-3.5" /></Button>
+              <Button size="sm" variant="ghost" aria-label="Delete ad campaign" onClick={() => del.mutate(a.id)}><Trash2 className="size-3.5" /></Button>
             </div>
           </div>
         ))}

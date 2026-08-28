@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CardGridSkeleton, EmptyState, ErrorState, ListSkeleton } from "@/components/ui/states";
+import { Inbox } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
@@ -45,11 +47,13 @@ function FormsPage() {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
-  const { data: forms = [], isLoading } = useQuery({
+  const formsQ = useQuery({
     queryKey: ["forms", subId],
     enabled: !!subId,
     queryFn: () => fetchForms(subId!),
   });
+  const forms = formsQ.data ?? [];
+  const isLoading = formsQ.isLoading;
 
   const createMut = useMutation({
     mutationFn: () => createForm({ name: newName, subAccountId: subId!, ownerId: userId! }),
@@ -93,16 +97,22 @@ function FormsPage() {
             </p>
           </div>
 
+          <h2 className="sr-only">Your forms</h2>
           {isLoading ? (
-            <div className="h-32 flex items-center justify-center">
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
-            </div>
+            <CardGridSkeleton count={4} />
+          ) : formsQ.isError ? (
+            <ErrorState onRetry={() => formsQ.refetch()} />
           ) : forms.length === 0 ? (
-            <div className="bg-card ring-1 ring-black/5 rounded-lg p-10 text-center">
-              <p className="text-sm text-muted-foreground mb-4">No forms yet.</p>
-              <Button onClick={() => setNewOpen(true)}>
-                <Plus className="size-3.5 mr-1" /> Create your first form
-              </Button>
+            <div className="bg-card ring-1 ring-black/5 rounded-lg">
+              <EmptyState
+                title="No forms yet"
+                description="Create a hosted lead-capture form to start collecting submissions."
+                action={
+                  <Button onClick={() => setNewOpen(true)}>
+                    <Plus className="size-3.5 mr-1" /> Create your first form
+                  </Button>
+                }
+              />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -110,9 +120,9 @@ function FormsPage() {
                 const url = `${window.location.origin}/f/${f.slug}`;
                 return (
                   <div key={f.id} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:flex sm:justify-between">
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 min-w-0">
                           <h3 className="text-sm font-semibold truncate">{f.name}</h3>
                           {f.enabled ? (
                             <span className="text-[9px] font-mono bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded">LIVE</span>
@@ -128,8 +138,9 @@ function FormsPage() {
                             navigator.clipboard.writeText(url);
                             toast.success("Link copied");
                           }}
-                          className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                          aria-label={`Copy link for ${f.name}`}
                           title="Copy link"
+                          className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <Copy className="size-3.5" />
                         </button>
@@ -137,8 +148,9 @@ function FormsPage() {
                           to="/f/$slug"
                           params={{ slug: f.slug }}
                           target="_blank"
-                          className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                          aria-label={`Open ${f.name} in a new tab`}
                           title="Open"
+                          className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <ExternalLink className="size-3.5" />
                         </Link>
@@ -147,8 +159,9 @@ function FormsPage() {
                             if (confirm("Delete this form and all its submissions?"))
                               deleteMut.mutate(f.id);
                           }}
-                          className="size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive"
+                          aria-label={`Delete ${f.name}`}
                           title="Delete"
+                          className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -179,8 +192,9 @@ function FormsPage() {
             <DialogTitle>New form</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <Label className="text-xs">Form name</Label>
+            <Label htmlFor="new-form-name" className="text-xs">Form name</Label>
             <Input
+              id="new-form-name"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="e.g. Website contact"
@@ -265,20 +279,20 @@ function FormEditor({ form, onSaved }: { form: LeadForm; onSaved: () => void }) 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
         <div className="space-y-4">
           <div>
-            <Label className="text-xs">Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
+            <Label htmlFor="edit-form-name" className="text-xs">Name</Label>
+            <Input id="edit-form-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
           </div>
           <div>
-            <Label className="text-xs">Description</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} maxLength={500} />
+            <Label htmlFor="edit-form-description" className="text-xs">Description</Label>
+            <Textarea id="edit-form-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} maxLength={500} />
           </div>
           <div>
-            <Label className="text-xs">Success message</Label>
-            <Textarea value={successMessage} onChange={(e) => setSuccessMessage(e.target.value)} rows={2} maxLength={300} />
+            <Label htmlFor="edit-form-success" className="text-xs">Success message</Label>
+            <Textarea id="edit-form-success" value={successMessage} onChange={(e) => setSuccessMessage(e.target.value)} rows={2} maxLength={300} />
           </div>
           <div>
-            <Label className="text-xs">Redirect URL (optional)</Label>
-            <Input value={redirectUrl} onChange={(e) => setRedirectUrl(e.target.value)} placeholder="https://…" maxLength={500} />
+            <Label htmlFor="edit-form-redirect" className="text-xs">Redirect URL (optional)</Label>
+            <Input id="edit-form-redirect" value={redirectUrl} onChange={(e) => setRedirectUrl(e.target.value)} placeholder="https://…" maxLength={500} />
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -301,6 +315,7 @@ function FormEditor({ form, onSaved }: { form: LeadForm; onSaved: () => void }) 
                     <select
                       value={f.type}
                       onChange={(e) => updateField(i, { type: e.target.value as FormField["type"] })}
+                      aria-label={`Field type for ${f.label || "field"}`}
                       className="h-7 text-xs bg-background border border-input rounded px-2"
                     >
                       <option value="text">Text</option>
@@ -311,7 +326,8 @@ function FormEditor({ form, onSaved }: { form: LeadForm; onSaved: () => void }) 
                     </select>
                     <button
                       onClick={() => removeField(i)}
-                      className="size-6 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex items-center justify-center"
+                      aria-label={`Remove field ${f.label || i + 1}`}
+                      className="min-h-11 min-w-11 sm:size-6 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <Trash2 className="size-3" />
                     </button>
@@ -345,9 +361,9 @@ function FormEditor({ form, onSaved }: { form: LeadForm; onSaved: () => void }) 
             Submissions ({submissions.length})
           </h3>
           {subLoading ? (
-            <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            <ListSkeleton rows={3} />
           ) : submissions.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4">No submissions yet.</p>
+            <EmptyState compact icon={Inbox} title="No submissions yet" />
           ) : (
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {submissions.map((s) => (

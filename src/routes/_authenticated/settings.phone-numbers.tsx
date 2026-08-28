@@ -4,8 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, PageBody } from "@/components/PageHeader";
-import { ConsoleSection, StatusPill } from "@/components/console";
-import { EmptyState, ListSkeleton, ErrorState } from "@/components/ui/states";
+import { ConsoleSection, ConsoleSplit, ConsoleStat, ConsoleTips, StatusPill } from "@/components/console";
+import { EmptyState, ListSkeleton, ErrorState, PanelSkeleton } from "@/components/ui/states";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +37,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { CheckCircle2, Phone, Star, Trash2, Search, ExternalLink } from "lucide-react";
+import { CheckCircle2, Phone, Star, Trash2, Search, ExternalLink, Link2, PhoneCall } from "lucide-react";
 import { useTenancy } from "@/lib/tenancy";
 import {
   connectTwilio,
@@ -69,12 +69,24 @@ export const Route = createFileRoute("/_authenticated/settings/phone-numbers")({
 
 function PhoneNumbersPage() {
   const subId = useTenancy((s) => s.currentSubAccountId);
+  const getConn = useServerFn(getTwilioConnection);
+  const connQ = useQuery({
+    queryKey: ["twilio-connection", subId],
+    enabled: !!subId,
+    queryFn: () => getConn({ data: { subAccountId: subId! } }),
+  });
+
   return (
     <AppShell>
       <PageHeader
         title="Phone numbers"
         description="Buy and manage Twilio phone numbers for calls, SMS, and WhatsApp — right from your CRM."
         crumbs={[{ label: "Settings" }, { label: "Phone numbers" }]}
+        meta={
+          subId && connQ.data ? (
+            <StatusPill ok={connQ.data.connected} label={connQ.data.connected ? "Connected" : "Not connected"} />
+          ) : null
+        }
       />
       <PageBody width="full">
         {!subId ? (
@@ -87,10 +99,6 @@ function PhoneNumbersPage() {
   );
 }
 
-function EmptyBox({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-md border border-border p-6 text-sm text-muted-foreground">{children}</div>;
-}
-
 function PhonePanels({ subId }: { subId: string }) {
   const getConn = useServerFn(getTwilioConnection);
   const connQ = useQuery({
@@ -99,18 +107,57 @@ function PhonePanels({ subId }: { subId: string }) {
   });
 
   if (connQ.error) return <ErrorState onRetry={() => connQ.refetch()} error={connQ.error} />;
-  if (connQ.isLoading || !connQ.data) return <ListSkeleton rows={4} />;
+  if (connQ.isLoading || !connQ.data) return <PanelSkeleton />;
 
   return (
-    <div className="space-y-4">
-      <ConnectPanel subId={subId} conn={connQ.data} />
-      {connQ.data?.connected && (
+    <ConsoleSplit
+      main={
         <>
-          <SearchAndBuyPanel subId={subId} />
-          <OwnedNumbersPanel subId={subId} />
+          <ConsoleSection
+            title="Connect Twilio"
+            icon={Link2}
+            hint={connQ.data?.connected ? "Credentials verified" : "Connect an account to buy numbers"}
+          >
+            <ConnectPanel subId={subId} conn={connQ.data} />
+          </ConsoleSection>
+          {connQ.data?.connected && (
+            <>
+              <ConsoleSection title="Search & buy numbers" icon={Search} hint="Twilio inventory search">
+                <SearchAndBuyPanel subId={subId} />
+              </ConsoleSection>
+              <ConsoleSection title="Your numbers" icon={PhoneCall} hint="Owned numbers and their capabilities">
+                <OwnedNumbersPanel subId={subId} />
+              </ConsoleSection>
+            </>
+          )}
         </>
-      )}
-    </div>
+      }
+      side={
+        <>
+          <ConsoleSection title="Connection health">
+            <ConsoleStat
+              label="Twilio"
+              value={connQ.data?.connected ? "Connected" : "Not connected"}
+              tone={connQ.data?.connected ? "ok" : "muted"}
+            />
+            {connQ.data?.connected ? (
+              <>
+                <ConsoleStat label="Account" value={connQ.data.friendlyName ?? "—"} />
+                <ConsoleStat label="Status" value={connQ.data.status ?? "—"} />
+              </>
+            ) : null}
+          </ConsoleSection>
+          <ConsoleTips
+            items={[
+              "Charges for numbers, calls, and messages are billed by Twilio directly to your account.",
+              "Use an API Key (not the Auth Token) when connecting — it can be scoped and revoked independently.",
+              "Voice and SMS webhooks are auto-configured whenever you buy a new number.",
+              "Releasing a number stops Twilio billing immediately and cannot be undone.",
+            ]}
+          />
+        </>
+      }
+    />
   );
 }
 
@@ -155,19 +202,19 @@ function ConnectPanel({
 
   if (conn?.connected) {
     return (
-      <div className="rounded-md border border-border p-5 space-y-3">
+      <div className="space-y-3">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-medium">
               <CheckCircle2 className="size-4 shrink-0 text-primary" /> Twilio connected
             </div>
-            <div className="text-xs text-muted-foreground mt-1 truncate">
+            <div className="mt-1 truncate text-xs text-muted-foreground">
               {conn.friendlyName} · <span className="font-mono">{conn.accountSid}</span> · {conn.status}
             </div>
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm">Disconnect</Button>
+              <Button variant="outline" size="sm" className="shrink-0">Disconnect</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -186,7 +233,7 @@ function ConnectPanel({
         </div>
         <details className="text-xs text-muted-foreground">
           <summary className="cursor-pointer">Webhook URLs (auto-configured on new numbers)</summary>
-          <div className="mt-2 font-mono space-y-1 break-all">
+          <div className="mt-2 space-y-1 break-all font-mono">
             <div>Voice: {conn.webhookVoiceUrl}</div>
             <div>SMS:   {conn.webhookSmsUrl}</div>
             <div>Status: {conn.webhookStatusUrl}</div>
@@ -197,34 +244,31 @@ function ConnectPanel({
   }
 
   return (
-    <div className="rounded-md border border-border p-5 space-y-4">
-      <div>
-        <h2 className="text-base font-medium">Connect your Twilio account</h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          Charges for numbers, calls, and messages are billed by Twilio directly to your account.
-          Create an <strong>API Key</strong> (not the Auth Token) in the Twilio console for the credentials below.{" "}
-          <a
-            href="https://console.twilio.com/us1/account/keys-credentials/api-keys"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 underline"
-          >
-            Twilio API Keys <ExternalLink className="size-3" />
-          </a>
-        </p>
-      </div>
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">
+        Charges for numbers, calls, and messages are billed by Twilio directly to your account.
+        Create an <strong>API Key</strong> (not the Auth Token) in the Twilio console for the credentials below.{" "}
+        <a
+          href="https://console.twilio.com/us1/account/keys-credentials/api-keys"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 underline"
+        >
+          Twilio API Keys <ExternalLink className="size-3" />
+        </a>
+      </p>
       <div className="grid gap-3">
-        <div>
-          <Label>Account SID (starts with AC)</Label>
-          <Input value={accountSid} onChange={(e) => setAccountSid(e.target.value.trim())} placeholder="AC…" />
+        <div className="space-y-1.5">
+          <Label htmlFor="twilio-account-sid">Account SID (starts with AC)</Label>
+          <Input id="twilio-account-sid" value={accountSid} onChange={(e) => setAccountSid(e.target.value.trim())} placeholder="AC…" />
         </div>
-        <div>
-          <Label>API Key SID (starts with SK)</Label>
-          <Input value={apiKeySid} onChange={(e) => setApiKeySid(e.target.value.trim())} placeholder="SK…" />
+        <div className="space-y-1.5">
+          <Label htmlFor="twilio-api-key-sid">API Key SID (starts with SK)</Label>
+          <Input id="twilio-api-key-sid" value={apiKeySid} onChange={(e) => setApiKeySid(e.target.value.trim())} placeholder="SK…" />
         </div>
-        <div>
-          <Label>API Key Secret</Label>
-          <Input type="password" value={apiKeySecret} onChange={(e) => setApiKeySecret(e.target.value)} placeholder="Your API Key Secret" />
+        <div className="space-y-1.5">
+          <Label htmlFor="twilio-api-key-secret">API Key Secret</Label>
+          <Input id="twilio-api-key-secret" type="password" value={apiKeySecret} onChange={(e) => setApiKeySecret(e.target.value)} placeholder="Your API Key Secret" />
         </div>
         <div>
           <Button
@@ -299,19 +343,16 @@ function SearchAndBuyPanel({ subId }: { subId: string }) {
   });
 
   return (
-    <div className="rounded-md border border-border p-5 space-y-4">
-      <div>
-        <h2 className="text-base font-medium">Buy a phone number</h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          Search Twilio's inventory. Voice + SMS webhooks are auto-configured on purchase.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">
+        Search Twilio's inventory. Voice + SMS webhooks are auto-configured on purchase.
+      </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div>
-          <Label>Country</Label>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="pn-country">Country</Label>
           <Select value={country} onValueChange={setCountry}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="pn-country"><SelectValue /></SelectTrigger>
             <SelectContent>
               {COUNTRIES.map((c) => (
                 <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
@@ -319,10 +360,10 @@ function SearchAndBuyPanel({ subId }: { subId: string }) {
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label>Type</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="pn-type">Type</Label>
           <Select value={type} onValueChange={(v) => setType(v as any)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="pn-type"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Local">Local</SelectItem>
               <SelectItem value="TollFree">Toll-Free</SelectItem>
@@ -330,13 +371,13 @@ function SearchAndBuyPanel({ subId }: { subId: string }) {
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label>Area code</Label>
-          <Input value={areaCode} onChange={(e) => setAreaCode(e.target.value)} placeholder="e.g. 415" />
+        <div className="space-y-1.5">
+          <Label htmlFor="pn-area-code">Area code</Label>
+          <Input id="pn-area-code" value={areaCode} onChange={(e) => setAreaCode(e.target.value)} placeholder="e.g. 415" />
         </div>
-        <div>
-          <Label>Contains digits</Label>
-          <Input value={contains} onChange={(e) => setContains(e.target.value)} placeholder="e.g. 777" />
+        <div className="space-y-1.5">
+          <Label htmlFor="pn-contains">Contains digits</Label>
+          <Input id="pn-contains" value={contains} onChange={(e) => setContains(e.target.value)} placeholder="e.g. 777" />
         </div>
       </div>
 
@@ -352,9 +393,9 @@ function SearchAndBuyPanel({ subId }: { subId: string }) {
         </label>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => searchM.mutate()} disabled={searchM.isPending}>
-          <Search className="size-4 mr-2" />
+          <Search className="mr-2 size-4" />
           {searchM.isPending ? "Searching…" : "Search"}
         </Button>
         {price && (
@@ -365,54 +406,56 @@ function SearchAndBuyPanel({ subId }: { subId: string }) {
       </div>
 
       {results.length > 0 && (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Number</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Capabilities</TableHead>
-              <TableHead className="text-right">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {results.map((n) => (
-              <TableRow key={n.phone_number}>
-                <TableCell className="font-mono">{n.friendly_name}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">
-                  {[n.locality, n.region, n.iso_country].filter(Boolean).join(", ")}
-                </TableCell>
-                <TableCell className="text-xs space-x-1">
-                  {n.capabilities.voice && <Badge variant="secondary">Voice</Badge>}
-                  {n.capabilities.SMS && <Badge variant="secondary">SMS</Badge>}
-                  {n.capabilities.MMS && <Badge variant="secondary">MMS</Badge>}
-                </TableCell>
-                <TableCell className="text-right">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="sm" disabled={buyM.isPending}>Buy</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Buy {n.friendly_name}?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Your Twilio account will be charged{" "}
-                          {price ? `${price.currency} ${price.monthly.toFixed(2)}` : "the current monthly rate"} for this
-                          number, plus per-use rates for calls and messages. You can release it any time.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => buyM.mutate(n.phone_number)}>
-                          Buy number
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Number</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Capabilities</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {results.map((n) => (
+                <TableRow key={n.phone_number}>
+                  <TableCell className="font-mono">{n.friendly_name}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {[n.locality, n.region, n.iso_country].filter(Boolean).join(", ")}
+                  </TableCell>
+                  <TableCell className="space-x-1 text-xs">
+                    {n.capabilities.voice && <Badge variant="secondary">Voice</Badge>}
+                    {n.capabilities.SMS && <Badge variant="secondary">SMS</Badge>}
+                    {n.capabilities.MMS && <Badge variant="secondary">MMS</Badge>}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" disabled={buyM.isPending}>Buy</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Buy {n.friendly_name}?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Your Twilio account will be charged{" "}
+                            {price ? `${price.currency} ${price.monthly.toFixed(2)}` : "the current monthly rate"} for this
+                            number, plus per-use rates for calls and messages. You can release it any time.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => buyM.mutate(n.phone_number)}>
+                            Buy number
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );
@@ -449,10 +492,14 @@ function OwnedNumbersPanel({ subId }: { subId: string }) {
   });
 
   return (
-    <div className="rounded-md border border-border p-5 space-y-3">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
-        <h2 className="truncate text-base font-medium">Your numbers</h2>
-        <Button variant="ghost" size="sm" aria-label="Refresh numbers" onClick={() => qc.invalidateQueries({ queryKey: ["twilio-numbers", subId] })}>
+    <div className="space-y-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label="Refresh numbers"
+          onClick={() => qc.invalidateQueries({ queryKey: ["twilio-numbers", subId] })}
+        >
           Refresh
         </Button>
       </div>
@@ -462,72 +509,77 @@ function OwnedNumbersPanel({ subId }: { subId: string }) {
       ) : q.isLoading ? (
         <ListSkeleton rows={3} />
       ) : (q.data ?? []).length === 0 ? (
-        <EmptyState compact icon={Phone} title="No numbers yet" description="Search above and buy your first one." />
+        <EmptyState
+          compact
+          icon={Phone}
+          title="No numbers yet"
+          description="Search above and buy your first one."
+        />
       ) : (
         <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Number</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Capabilities</TableHead>
-              <TableHead>WhatsApp</TableHead>
-              <TableHead>Monthly</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(q.data ?? []).map((n: any) => (
-              <TableRow key={n.id}>
-                <TableCell className="font-mono">
-                  {n.phone_number}
-                  {n.is_default && <Badge className="ml-2" variant="default">Default</Badge>}
-                </TableCell>
-                <TableCell>{n.friendly_name}</TableCell>
-                <TableCell className="text-xs space-x-1">
-                  {n.capabilities?.voice && <Badge variant="secondary">Voice</Badge>}
-                  {(n.capabilities?.sms ?? n.capabilities?.SMS) && <Badge variant="secondary">SMS</Badge>}
-                  {(n.capabilities?.mms ?? n.capabilities?.MMS) && <Badge variant="secondary">MMS</Badge>}
-                </TableCell>
-                <TableCell>
-                  <WhatsAppCell subId={subId} number={n} />
-                </TableCell>
-                <TableCell className="text-xs">
-                  {n.monthly_cost ? `${n.cost_currency ?? ""} ${Number(n.monthly_cost).toFixed(2)}` : "—"}
-                </TableCell>
-                <TableCell className="text-right space-x-1">
-                  {!n.is_default && (
-                    <Button variant="ghost" size="sm" aria-label={`Set ${n.phone_number} as default`} onClick={() => defaultM.mutate(n.id)}>
-                      <Star className="size-4" />
-                    </Button>
-                  )}
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" aria-label={`Release ${n.phone_number}`}>
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Release {n.phone_number}?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This immediately releases the number from your Twilio account. Twilio stops billing you for
-                          it, and it cannot be recovered. Any inbound calls or SMS to this number will fail.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => releaseM.mutate(n.id)}>
-                          Release number
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </TableCell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Number</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Capabilities</TableHead>
+                <TableHead>WhatsApp</TableHead>
+                <TableHead>Monthly</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {(q.data ?? []).map((n: any) => (
+                <TableRow key={n.id}>
+                  <TableCell className="font-mono">
+                    {n.phone_number}
+                    {n.is_default && <Badge className="ml-2" variant="default">Default</Badge>}
+                  </TableCell>
+                  <TableCell>{n.friendly_name}</TableCell>
+                  <TableCell className="space-x-1 text-xs">
+                    {n.capabilities?.voice && <Badge variant="secondary">Voice</Badge>}
+                    {(n.capabilities?.sms ?? n.capabilities?.SMS) && <Badge variant="secondary">SMS</Badge>}
+                    {(n.capabilities?.mms ?? n.capabilities?.MMS) && <Badge variant="secondary">MMS</Badge>}
+                  </TableCell>
+                  <TableCell>
+                    <WhatsAppCell subId={subId} number={n} />
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {n.monthly_cost ? `${n.cost_currency ?? ""} ${Number(n.monthly_cost).toFixed(2)}` : "—"}
+                  </TableCell>
+                  <TableCell className="space-x-1 text-right">
+                    {!n.is_default && (
+                      <Button variant="ghost" size="sm" aria-label={`Set ${n.phone_number} as default`} onClick={() => defaultM.mutate(n.id)}>
+                        <Star className="size-4" />
+                      </Button>
+                    )}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" aria-label={`Release ${n.phone_number}`}>
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Release {n.phone_number}?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This immediately releases the number from your Twilio account. Twilio stops billing you for
+                            it, and it cannot be recovered. Any inbound calls or SMS to this number will fail.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => releaseM.mutate(n.id)}>
+                            Release number
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
@@ -593,9 +645,9 @@ function WhatsAppCell({ subId, number }: { subId: string; number: any }) {
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label>Inbound webhook URL (paste in Twilio)</Label>
+            <Label htmlFor="wa-inbound-url">Inbound webhook URL (paste in Twilio)</Label>
             <div className="flex items-center gap-2">
-              <Input readOnly value={inboundUrl} className="font-mono text-xs" />
+              <Input id="wa-inbound-url" readOnly value={inboundUrl} className="font-mono text-xs" />
               <Button
                 type="button"
                 variant="outline"
@@ -622,14 +674,15 @@ function WhatsAppCell({ subId, number }: { subId: string; number: any }) {
               <code>whatsapp:</code> automatically.
             </p>
           </div>
-          <div className="flex items-center justify-between rounded-md border p-3">
-            <div>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border p-3 sm:flex sm:justify-between">
+            <div className="min-w-0">
               <div className="text-sm font-medium">Enable WhatsApp</div>
               <div className="text-xs text-muted-foreground">
                 Turn this on after the sender is approved in Twilio.
               </div>
             </div>
             <Switch
+              aria-label="Enable WhatsApp"
               checked={number.whatsapp_enabled}
               onCheckedChange={(val) => enableM.mutate(val)}
               disabled={enableM.isPending}

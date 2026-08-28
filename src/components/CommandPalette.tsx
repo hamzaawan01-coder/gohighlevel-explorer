@@ -108,8 +108,8 @@ export function CommandPalette() {
                   navigate({ to: m.paths[0] as never });
                 }}
               >
-                <ArrowRight className="size-4 mr-2" />
-                <span className="flex-1">{m.label}</span>
+                <ArrowRight aria-hidden className="size-4 mr-2 shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{m.label}</span>
               </CommandItem>
             ))}
           </CommandGroup>
@@ -118,9 +118,9 @@ export function CommandPalette() {
           <CommandGroup heading="Contacts">
             {groups.contact.map((h) => (
               <CommandItem key={h.id} value={`contact-${h.id}-${h.title}`} onSelect={() => go(h)}>
-                <Users className="size-4 mr-2" />
-                <span className="flex-1">{h.title}</span>
-                {h.subtitle && <span className="text-xs text-muted-foreground">{h.subtitle}</span>}
+                <Users aria-hidden className="size-4 mr-2 shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{h.title}</span>
+                {h.subtitle && <span className="shrink-0 text-xs text-muted-foreground">{h.subtitle}</span>}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -129,9 +129,9 @@ export function CommandPalette() {
           <CommandGroup heading="Deals">
             {groups.deal.map((h) => (
               <CommandItem key={h.id} value={`deal-${h.id}-${h.title}`} onSelect={() => go(h)}>
-                <Briefcase className="size-4 mr-2" />
-                <span className="flex-1">{h.title}</span>
-                {h.subtitle && <span className="text-xs text-muted-foreground">{h.subtitle}</span>}
+                <Briefcase aria-hidden className="size-4 mr-2 shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{h.title}</span>
+                {h.subtitle && <span className="shrink-0 text-xs text-muted-foreground">{h.subtitle}</span>}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -140,9 +140,9 @@ export function CommandPalette() {
           <CommandGroup heading="Tasks">
             {groups.task.map((h) => (
               <CommandItem key={h.id} value={`task-${h.id}-${h.title}`} onSelect={() => go(h)}>
-                <CheckSquare className="size-4 mr-2" />
-                <span className="flex-1">{h.title}</span>
-                {h.subtitle && <span className="text-xs text-muted-foreground">{h.subtitle}</span>}
+                <CheckSquare aria-hidden className="size-4 mr-2 shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{h.title}</span>
+                {h.subtitle && <span className="shrink-0 text-xs text-muted-foreground">{h.subtitle}</span>}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -151,9 +151,9 @@ export function CommandPalette() {
           <CommandGroup heading="Events">
             {groups.event.map((h) => (
               <CommandItem key={h.id} value={`event-${h.id}-${h.title}`} onSelect={() => go(h)}>
-                <CalIcon className="size-4 mr-2" />
-                <span className="flex-1">{h.title}</span>
-                {h.subtitle && <span className="text-xs text-muted-foreground">{h.subtitle}</span>}
+                <CalIcon aria-hidden className="size-4 mr-2 shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{h.title}</span>
+                {h.subtitle && <span className="shrink-0 text-xs text-muted-foreground">{h.subtitle}</span>}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -171,8 +171,8 @@ export function CommandPalette() {
                 }
                 className="opacity-60"
               >
-                <Ban className="size-4 mr-2" />
-                <span className="flex-1">{m.label}</span>
+                <Ban aria-hidden className="size-4 mr-2 shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{m.label}</span>
                 <span className="text-xs text-muted-foreground">disabled</span>
               </CommandItem>
             ))}

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { ErrorState, PanelSkeleton } from "@/components/ui/states";
 import { DealDetailPanel } from "@/components/DealDetailPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDeal, type Stage } from "@/lib/pipeline";
@@ -41,19 +42,22 @@ function DealDetailPage() {
       headerActions={
         <Link
           to="/opportunities"
-          className="flex items-center gap-1.5 border border-border rounded-md py-1.5 px-2.5 text-xs font-medium hover:bg-secondary transition-colors"
+          aria-label="Back to opportunities"
+          className="flex items-center gap-1.5 border border-border rounded-md py-1.5 px-2.5 text-xs font-medium hover:bg-secondary transition-colors min-h-11 sm:min-h-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <ArrowLeft className="size-3.5" /> Back to opportunities
+          <ArrowLeft className="size-3.5 shrink-0" /> <span className="truncate">Back to opportunities</span>
         </Link>
       }
     >
       <div className="h-full overflow-auto">
         {dealQ.isLoading || stagesQ.isLoading ? (
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-          </div>
+          <PanelSkeleton />
         ) : dealQ.error || !dealQ.data ? (
-          <div className="p-6 text-sm text-destructive">Deal not found.</div>
+          <ErrorState
+            title="Deal not found"
+            description="This deal may have been deleted, or failed to load."
+            onRetry={() => dealQ.refetch()}
+          />
         ) : (
           <DealDetailPanel
             dealId={id}
