@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Loader2,
   Trophy,
+import { PageBody, PageHeader } from "@/components/PageHeader";
+import { CardGridSkeleton, KpiSkeleton } from "@/components/ui/states";
   Clock,
   Target,
   DollarSign,
