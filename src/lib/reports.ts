@@ -18,8 +18,32 @@ function weekKey(d: Date): string {
   return day.toISOString().slice(0, 10);
 }
 
+/**
+ * Teammate names come from an agency-scoped, signed-in-only function. Resolve
+ * the workspace's real agency first and skip the lookup when there is no
+ * session, so reports never fire a call that can only fail.
+ */
+async function fetchMemberNames(subAccountId: string): Promise<Map<string, string>> {
+  const names = new Map<string, string>();
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session) return names;
+
+  const { data: sub } = await supabase
+    .from("sub_accounts")
+    .select("agency_id")
+    .eq("id", subAccountId)
+    .maybeSingle();
+  if (!sub?.agency_id) return names;
+
+  const { data } = await supabase.rpc("list_agency_members", { _agency: sub.agency_id });
+  for (const m of (data ?? []) as { user_id: string; full_name: string | null }[]) {
+    if (m.user_id) names.set(m.user_id, m.full_name || "Teammate");
+  }
+  return names;
+}
+
 export async function fetchReports(subAccountId: string): Promise<ReportData> {
-  const [stagesRes, dealsRes, contactsRes, tasksRes, membersRes] = await Promise.all([
+  const [stagesRes, dealsRes, contactsRes, tasksRes, memberMap] = await Promise.all([
     supabase
       .from("pipeline_stages")
       .select("id,name,position")
@@ -37,20 +61,14 @@ export async function fetchReports(subAccountId: string): Promise<ReportData> {
       .from("tasks")
       .select("id,assigned_to,status,completed_at")
       .eq("sub_account_id", subAccountId),
-    supabase.rpc("list_agency_members", { _agency: "00000000-0000-0000-0000-000000000000" }),
+    fetchMemberNames(subAccountId),
   ]);
 
   const stages = stagesRes.data ?? [];
   const deals = dealsRes.data ?? [];
   const contacts = contactsRes.data ?? [];
   const tasks = tasksRes.data ?? [];
-  // members RPC needs agency id; not critical — fall back to user_id strings
-  const memberMap = new Map<string, string>();
-  if (Array.isArray(membersRes.data)) {
-    for (const m of membersRes.data as { user_id: string; full_name: string | null }[]) {
-      if (m.user_id) memberMap.set(m.user_id, m.full_name || "Teammate");
-    }
-  }
+
 
   const wonStageId = stages.length ? stages[stages.length - 1].id : null;
   const lostStageId = stages.find((s) => /lost/i.test(s.name))?.id ?? null;
