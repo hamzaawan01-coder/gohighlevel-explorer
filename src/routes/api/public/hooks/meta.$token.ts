@@ -158,7 +158,10 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
             const pageId = ch.value.page_id ?? entry.id;
             const { data: pageRows } = await (supabaseAdmin as any)
               .from("meta_pages").select("*")
-              .eq("sub_account_id", conn.sub_account_id).eq("page_id", pageId).limit(1);
+              .eq("sub_account_id", conn.sub_account_id).eq("page_id", pageId)
+              .order("sync_lead_ads", { ascending: false })
+              .order("webhook_subscribed", { ascending: false })
+              .limit(1);
             const page = (pageRows ?? [])[0] as { page_access_token: string; sync_lead_ads: boolean } | undefined;
             if (!page || !page.sync_lead_ads) continue;
 
