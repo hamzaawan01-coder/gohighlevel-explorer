@@ -11,6 +11,7 @@ import {
   ToggleLeft,
   Compass,
   Building2,
+  Bot,
 } from "lucide-react";
 import { PageHeader, PageBody } from "@/components/PageHeader";
 import { isModuleEnabled, useModules } from "@/lib/modules";
