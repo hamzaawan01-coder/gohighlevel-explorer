@@ -81,9 +81,15 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
             const pageId = entry.id;
             const senderId = m.sender.id;
 
+            // A page can be stored more than once (multiple connections) — prefer the
+            // row that is actually subscribed / has routing enabled.
+            const routeCol = channel === "messenger" ? "route_messenger_to_inbox" : "route_instagram_to_inbox";
             const { data: pageRows } = await (supabaseAdmin as any)
               .from("meta_pages").select("*")
-              .eq("sub_account_id", conn.sub_account_id).eq("page_id", pageId).limit(1);
+              .eq("sub_account_id", conn.sub_account_id).eq("page_id", pageId)
+              .order(routeCol, { ascending: false })
+              .order("webhook_subscribed", { ascending: false })
+              .limit(1);
             const page = (pageRows ?? [])[0] as { id: string; route_messenger_to_inbox: boolean; route_instagram_to_inbox: boolean } | undefined;
             if (!page) continue;
             if (channel === "messenger" && !page.route_messenger_to_inbox) continue;
@@ -96,10 +102,35 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
               .eq("sub_account_id", conn.sub_account_id).eq("external_thread_id", externalKey).limit(1);
             let convId = (convRows ?? [])[0]?.id as string | undefined;
             if (!convId) {
+              // conversations.contact_id is required, so make sure a contact exists for
+              // this social sender (deduped by the platform sender id in meta_lead_id).
+              const senderKey = `${channel}:${senderId}`;
+              const { data: existingContacts } = await (supabaseAdmin as any)
+                .from("contacts").select("id")
+                .eq("sub_account_id", conn.sub_account_id).eq("meta_lead_id", senderKey).limit(1);
+              let contactId = (existingContacts ?? [])[0]?.id as string | undefined;
+              if (!contactId) {
+                const { data: newContact, error: contactErr } = await (supabaseAdmin as any)
+                  .from("contacts")
+                  .insert({
+                    sub_account_id: conn.sub_account_id,
+                    owner_id: conn.created_by,
+                    first_name: channel === "instagram" ? "Instagram" : "Messenger",
+                    last_name: `user ${senderId.slice(-6)}`,
+                    tags: [channel],
+                    lead_source: channel === "instagram" ? "instagram_dm" : "messenger_dm",
+                    meta_lead_id: senderKey,
+                  })
+                  .select("id").single();
+                if (contactErr || !newContact) continue;
+                contactId = newContact.id as string;
+              }
+
               const { data: newConv, error: convErr } = await (supabaseAdmin as any)
                 .from("conversations")
                 .insert({
                   sub_account_id: conn.sub_account_id,
+                  contact_id: contactId,
                   channel,
                   external_thread_id: externalKey,
                   last_message_at: new Date((m.timestamp ?? Date.now())).toISOString(),
@@ -127,7 +158,10 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
             const pageId = ch.value.page_id ?? entry.id;
             const { data: pageRows } = await (supabaseAdmin as any)
               .from("meta_pages").select("*")
-              .eq("sub_account_id", conn.sub_account_id).eq("page_id", pageId).limit(1);
+              .eq("sub_account_id", conn.sub_account_id).eq("page_id", pageId)
+              .order("sync_lead_ads", { ascending: false })
+              .order("webhook_subscribed", { ascending: false })
+              .limit(1);
             const page = (pageRows ?? [])[0] as { page_access_token: string; sync_lead_ads: boolean } | undefined;
             if (!page || !page.sync_lead_ads) continue;
 
