@@ -116,6 +116,39 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  /** One-click: subscribe every page to webhooks and route everything to the inbox. */
+  const enableAll = useMutation({
+    mutationFn: async () => {
+      const pages = (q.data?.pages ?? []) as PageRow[];
+      let ok = 0;
+      const failures: string[] = [];
+      for (const p of pages) {
+        try {
+          await updatePageFn({
+            data: {
+              pageRowId: p.id,
+              subAccountId: subId,
+              subscribe: true,
+              route_messenger_to_inbox: true,
+              route_instagram_to_inbox: Boolean(p.instagram_business_account_id),
+              sync_lead_ads: true,
+            },
+          });
+          ok++;
+        } catch (e) {
+          failures.push(`${p.page_name}: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      }
+      return { ok, failures };
+    },
+    onSuccess: ({ ok, failures }) => {
+      if (ok > 0) toast.success(`Enabled ${ok} page${ok === 1 ? "" : "s"}`);
+      if (failures.length > 0) toast.error(`${failures.length} failed — ${failures[0]}`);
+      qc.invalidateQueries({ queryKey: ["meta-connection", subId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const data = q.data;
   const conn = data?.connection;
 
@@ -192,12 +225,25 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
 
           {/* Pages */}
           <div className="rounded-md border border-border overflow-hidden">
-            <div className="p-4 border-b border-border">
-              <h3 className="font-medium text-sm">Facebook Pages & Instagram accounts</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                {(data.pages ?? []).length === 0 ? "No pages found. Click Refresh above." : "Toggle what should flow into this workspace."}
-              </p>
+            <div className="p-4 border-b border-border flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-medium text-sm">Facebook Pages & Instagram accounts</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {(data.pages ?? []).length === 0 ? "No pages found. Click Refresh above." : "Toggle what should flow into this workspace."}
+                </p>
+              </div>
+              {(data.pages ?? []).length > 0 && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={enableAll.isPending}
+                  onClick={() => enableAll.mutate()}
+                >
+                  {enableAll.isPending ? "Enabling…" : "Enable all pages"}
+                </Button>
+              )}
             </div>
+
             {(data.pages ?? []).map((p: PageRow) => (
               <div key={p.id} className="p-4 border-t border-border first:border-t-0 space-y-3">
                 <div className="flex items-center justify-between gap-3">
