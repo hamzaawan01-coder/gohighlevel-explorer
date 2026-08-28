@@ -276,6 +276,7 @@ export function DataTable<T>({
       <div className="surface-card overflow-hidden">
         <div className="overflow-auto" style={{ maxHeight: maxBodyHeight }}>
           <table className="w-full border-collapse text-left">
+            {caption ? <caption className="sr-only">{caption}</caption> : null}
             <thead className="sticky top-0 z-10">
               <tr className="bg-secondary/80 backdrop-blur-sm">
                 {visibleColumns.map((c) => {
