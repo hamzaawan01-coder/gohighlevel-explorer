@@ -56,6 +56,7 @@ import { Route as ApiPublicHooksAppointmentsRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
 import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta.data-deletion'
+import { Route as ApiPublicPaymentsReconcileRouteImport } from './routes/api/public/payments/reconcile'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicBookingRescheduleTokenRouteImport } from './routes/api/public/booking.reschedule.$token'
 import { Route as ApiPublicHooksMetaTokenRouteImport } from './routes/api/public/hooks/meta.$token'
@@ -328,6 +329,12 @@ const ApiPublicMetaDataDeletionRoute =
     path: '/api/public/meta/data-deletion',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPaymentsReconcileRoute =
+  ApiPublicPaymentsReconcileRouteImport.update({
+    id: '/api/public/payments/reconcile',
+    path: '/api/public/payments/reconcile',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -458,6 +465,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/payments/reconcile': typeof ApiPublicPaymentsReconcileRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
@@ -520,6 +528,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/payments/reconcile': typeof ApiPublicPaymentsReconcileRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
@@ -584,6 +593,7 @@ export interface FileRoutesById {
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/payments/reconcile': typeof ApiPublicPaymentsReconcileRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
@@ -648,6 +658,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
+    | '/api/public/payments/reconcile'
     | '/api/public/payments/webhook'
     | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
@@ -710,6 +721,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
+    | '/api/public/payments/reconcile'
     | '/api/public/payments/webhook'
     | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
@@ -773,6 +785,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
+    | '/api/public/payments/reconcile'
     | '/api/public/payments/webhook'
     | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
@@ -806,6 +819,7 @@ export interface RootRouteChildren {
   ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
   ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
+  ApiPublicPaymentsReconcileRoute: typeof ApiPublicPaymentsReconcileRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicBookingRescheduleTokenRoute: typeof ApiPublicBookingRescheduleTokenRoute
   ApiPublicHooksMetaTokenRoute: typeof ApiPublicHooksMetaTokenRoute
@@ -1153,6 +1167,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMetaDataDeletionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/reconcile': {
+      id: '/api/public/payments/reconcile'
+      path: '/api/public/payments/reconcile'
+      fullPath: '/api/public/payments/reconcile'
+      preLoaderRoute: typeof ApiPublicPaymentsReconcileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -1345,6 +1366,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
   ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,
+  ApiPublicPaymentsReconcileRoute: ApiPublicPaymentsReconcileRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicBookingRescheduleTokenRoute: ApiPublicBookingRescheduleTokenRoute,
   ApiPublicHooksMetaTokenRoute: ApiPublicHooksMetaTokenRoute,
