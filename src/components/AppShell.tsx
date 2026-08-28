@@ -78,6 +78,18 @@ export function AppShell({
   headerStatus?: ReactNode;
   headerActions?: ReactNode;
 }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { state, isLoading: modulesLoading } = useModules();
+  const visible = (items: NavItem[]) =>
+    items.filter((i) => !i.module || isModuleEnabled(state, i.module));
+
+  const currentModule = moduleForPath(pathname);
+  const blocked =
+    !modulesLoading &&
+    !!currentModule &&
+    !isModuleEnabled(state, currentModule.key) &&
+    !pathname.startsWith("/settings/modules");
+
   return (
     <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
       <aside className="w-64 border-r border-border bg-sidebar flex flex-col shrink-0">
@@ -85,8 +97,8 @@ export function AppShell({
           <SubAccountSwitcher />
         </div>
         <nav className="flex-1 py-4 overflow-y-auto">
-          <NavGroup label="Sales" items={salesNav} />
-          <NavGroup label="Automations" items={automationNav} />
+          <NavGroup label="Sales" items={visible(salesNav)} />
+          <NavGroup label="Automations" items={visible(automationNav)} />
         </nav>
         <div className="p-4 border-t border-border">
           <UserMenu />
