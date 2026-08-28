@@ -705,14 +705,28 @@ function ConversationsPage() {
                     }}
                     className="flex-1 resize-none"
                   />
-                  <Button
-                    onClick={() => sendMut.mutate()}
-                    disabled={!body.trim() || sendMut.isPending}
-                    className="self-end"
-                  >
-                    <Send className="size-3.5 mr-1" />
-                    {composeChannel === "note" ? "Post" : "Send"}
-                  </Button>
+                  <div className="flex flex-col gap-2 self-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => draftMut.mutate()}
+                      disabled={draftMut.isPending || !selectedConvoId}
+                      title="Draft a reply with AI — nothing sends automatically"
+                    >
+                      {draftMut.isPending ? (
+                        <Loader2 className="size-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <Bot className="size-3.5 mr-1" />
+                      )}
+                      AI draft
+                    </Button>
+                    <Button
+                      onClick={() => sendMut.mutate()}
+                      disabled={!body.trim() || sendMut.isPending}
+                    >
+                      <Send className="size-3.5 mr-1" />
+                      {composeChannel === "note" ? "Post" : "Send"}
+                    </Button>
+                  </div>
                 </div>
                 {isRealChannel && (
                   <p className="text-[10px] text-muted-foreground">
