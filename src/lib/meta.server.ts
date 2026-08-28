@@ -252,3 +252,60 @@ export function verifyMetaSignature(rawBody: string, signatureHeader: string | n
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
 }
+
+/**
+ * Creates an opportunity (deal) for a freshly captured lead so it shows up on
+ * the Opportunities board, not just in Contacts. Uses the sub-account's first
+ * pipeline and its first stage. Safe no-op when no pipeline exists.
+ */
+export async function createOpportunityForLead(
+  admin: { from: (t: string) => any },
+  args: { subAccountId: string; contactId: string | null; title: string; source: string },
+): Promise<string | null> {
+  const { data: pipes } = await admin
+    .from("pipelines")
+    .select("id, owner_id")
+    .eq("sub_account_id", args.subAccountId)
+    .order("created_at", { ascending: true })
+    .limit(1);
+  const pipeline = (pipes ?? [])[0] as { id: string; owner_id: string } | undefined;
+  if (!pipeline) return null;
+
+  const { data: stages } = await admin
+    .from("pipeline_stages")
+    .select("id")
+    .eq("pipeline_id", pipeline.id)
+    .order("position", { ascending: true })
+    .limit(1);
+  const stage = (stages ?? [])[0] as { id: string } | undefined;
+  if (!stage) return null;
+
+  if (args.contactId) {
+    const { data: dupe } = await admin
+      .from("deals")
+      .select("id")
+      .eq("sub_account_id", args.subAccountId)
+      .eq("contact_id", args.contactId)
+      .limit(1);
+    if ((dupe ?? [])[0]?.id) return (dupe ?? [])[0].id as string;
+  }
+
+  const { data: created, error } = await admin
+    .from("deals")
+    .insert({
+      sub_account_id: args.subAccountId,
+      owner_id: pipeline.owner_id,
+      pipeline_id: pipeline.id,
+      stage_id: stage.id,
+      contact_id: args.contactId,
+      title: args.title,
+      notes: `Auto-created from ${args.source}`,
+    })
+    .select("id")
+    .single();
+  if (error) {
+    console.error("createOpportunityForLead failed", error);
+    return null;
+  }
+  return created.id as string;
+}

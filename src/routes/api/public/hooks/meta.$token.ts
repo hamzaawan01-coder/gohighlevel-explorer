@@ -11,7 +11,7 @@
  * events to the right workspace when multiple accounts share our app.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { verifyMetaSignature, fetchLeadById } from "@/lib/meta.server";
+import { verifyMetaSignature, fetchLeadById, createOpportunityForLead } from "@/lib/meta.server";
 
 type MessagingEntry = {
   id: string; // page id
@@ -64,7 +64,7 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
 
         const { data: connRows } = await (supabaseAdmin as any)
           .from("meta_connections").select("*").eq("id", connectionId).limit(1);
-        const conn = (connRows ?? [])[0] as { id: string; sub_account_id: string } | undefined;
+        const conn = (connRows ?? [])[0] as { id: string; sub_account_id: string; created_by: string } | undefined;
         if (!conn) {
           // Always ack 200 so Meta doesn't retry — the connection was removed.
           return new Response("ok", { status: 200 });
@@ -139,22 +139,55 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
               const first = fields["first_name"] ?? (fields["full_name"] ? String(fields["full_name"]).split(" ")[0] : null);
               const last = fields["last_name"] ?? (fields["full_name"] ? String(fields["full_name"]).split(" ").slice(1).join(" ") : null);
 
-              await (supabaseAdmin as any).from("contacts").upsert(
-                {
-                  sub_account_id: conn.sub_account_id,
-                  meta_lead_id: lead.id,
-                  first_name: first,
-                  last_name: last,
-                  email,
-                  phone,
-                  lead_source: "meta_lead_ads",
-                  lifecycle_stage: "lead",
-                },
-                { onConflict: "sub_account_id,meta_lead_id" },
-              );
+              // Manual upsert: the (sub_account_id, meta_lead_id) unique index is
+              // partial, so PostgREST on_conflict cannot be used here.
+              const { data: existingRows } = await (supabaseAdmin as any)
+                .from("contacts").select("id")
+                .eq("sub_account_id", conn.sub_account_id).eq("meta_lead_id", lead.id).limit(1);
+              let contactId = (existingRows ?? [])[0]?.id as string | undefined;
+
+              const patch = {
+                first_name: first,
+                last_name: last,
+                email,
+                phone,
+                lead_source: "meta_lead_ads",
+                lifecycle_stage: "lead",
+              };
+
+              if (contactId) {
+                await (supabaseAdmin as any).from("contacts").update(patch).eq("id", contactId);
+              } else {
+                const { data: created, error: cErr } = await (supabaseAdmin as any)
+                  .from("contacts")
+                  .insert({
+                    ...patch,
+                    sub_account_id: conn.sub_account_id,
+                    owner_id: conn.created_by,
+                    meta_lead_id: lead.id,
+                    tags: [],
+                  })
+                  .select("id")
+                  .single();
+                if (cErr) {
+                  console.error("meta leadgen contact insert failed", cErr);
+                  continue;
+                }
+                contactId = created.id as string;
+              }
+
+              const name = [first, last].filter(Boolean).join(" ").trim();
+              await createOpportunityForLead(supabaseAdmin as any, {
+                subAccountId: conn.sub_account_id,
+                contactId: contactId ?? null,
+                title: name || email || phone || "Facebook lead",
+                source: "Facebook Lead Ad",
+              });
             } catch (e) {
               console.error("meta leadgen fetch failed", e);
             }
+
+
           }
         }
 
