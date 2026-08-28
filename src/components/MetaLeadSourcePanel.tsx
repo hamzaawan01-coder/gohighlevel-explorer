@@ -418,6 +418,76 @@ export function MetaLeadSourcePanel({
         </div>
       )}
 
+      {bulkOpen && events.length > 1 && (
+        <div className="px-4 py-3 border-b border-border space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+              Select leads to export · {bulkIds.length}/{events.length}
+            </div>
+            <div className="ml-auto flex gap-1.5">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px]"
+                onClick={() => setBulkIds(events.map((e) => e.id))}
+              >
+                All
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px]"
+                onClick={() => setBulkIds([])}
+              >
+                None
+              </Button>
+            </div>
+          </div>
+          <div className="max-h-48 overflow-auto rounded border border-border divide-y divide-border">
+            {events.map((ev) => (
+              <label key={ev.id} className="flex items-center gap-2 px-3 py-2 text-xs">
+                <Checkbox
+                  checked={bulkIds.includes(ev.id)}
+                  onCheckedChange={(v) =>
+                    setBulkIds((ids) =>
+                      v ? [...new Set([...ids, ev.id])] : ids.filter((i) => i !== ev.id),
+                    )
+                  }
+                />
+                <span className="min-w-0 truncate">
+                  {ev.form_name ?? ev.form_id ?? "Lead"} · {ev.leadgen_id ?? ev.id}
+                </span>
+                <span className="ml-auto text-muted-foreground shrink-0">
+                  {new Date(ev.created_at).toLocaleDateString()}
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Uses the same columns as the CSV picker above.
+          </p>
+          <div className="flex gap-1.5">
+            <Button
+              size="sm"
+              className="h-7 px-2 text-[11px]"
+              disabled={bulkIds.length === 0 || !anyColumn}
+              onClick={exportBulkCsv}
+            >
+              <Download className="size-3 mr-1" /> Export CSV
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-[11px]"
+              disabled={bulkIds.length === 0 || !anyColumn}
+              onClick={exportBulkJson}
+            >
+              <Download className="size-3 mr-1" /> Export JSON
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="px-4 py-2.5 border-b border-border">
         <div className="relative">
           <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -428,6 +498,68 @@ export function MetaLeadSourcePanel({
             className="h-8 pl-8 text-xs"
           />
         </div>
+
+        <div className="mt-2 flex items-center gap-1.5">
+          <Input
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            placeholder="Name this filter to save it…"
+            className="h-7 text-xs"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-[11px] shrink-0"
+            disabled={!searchName.trim() || !query.trim()}
+            onClick={() => {
+              saveSearch({
+                name: searchName.trim(),
+                query,
+                columns,
+                timelineKinds,
+              });
+              setSearchName("");
+            }}
+          >
+            <Save className="size-3 mr-1" /> Save
+          </Button>
+        </div>
+
+        {searches.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {searches.map((s) => (
+              <span
+                key={s.id}
+                className="inline-flex items-center gap-1 rounded-full border border-border pl-2 pr-1 py-0.5 text-[11px]"
+              >
+                <button
+                  type="button"
+                  className="hover:text-accent"
+                  onClick={() => {
+                    setQuery(s.query);
+                    setColumns((c) => ({ ...c, ...(s.columns as Record<ColumnKey, boolean>) }));
+                    setTimelineKinds(
+                      (s.timelineKinds as TimelineKind[] | undefined)?.length
+                        ? (s.timelineKinds as TimelineKind[])
+                        : TIMELINE_KINDS.map((k) => k.key),
+                    );
+                  }}
+                >
+                  {s.name}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Delete saved filter ${s.name}`}
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => removeSearch(s.id)}
+                >
+                  <Trash2 className="size-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
         {q && (
           <div className="mt-2 rounded border border-border divide-y divide-border max-h-60 overflow-auto">
             {searchResults.length === 0 ? (
@@ -440,6 +572,7 @@ export function MetaLeadSourcePanel({
                   </Badge>
                   <span className="text-muted-foreground shrink-0">{k}</span>
                   <span className="ml-auto min-w-0 break-words text-right">{v || "—"}</span>
+                  <CopyField value={v} label={k} />
                 </div>
               ))
             )}
