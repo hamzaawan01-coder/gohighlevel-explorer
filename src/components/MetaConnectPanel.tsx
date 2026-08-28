@@ -289,33 +289,81 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         </div>
 
         {conn && (
-          <div className="grid grid-cols-2 divide-x divide-border border-t border-border sm:grid-cols-4">
-            <Stat label="Pages" value={pages.length} />
-            <Stat label="Subscribed" value={`${subscribedCount}/${pages.length}`} />
-            <Stat label="Instagram" value={igCount} />
-            <Stat label="Lead Ads on" value={leadAdsCount} />
-          </div>
+          <>
+            <div className="grid grid-cols-2 divide-x divide-y divide-border border-t border-border sm:grid-cols-4 sm:divide-y-0">
+              <Stat label="Pages" value={pages.length} />
+              <Stat label="Subscribed" value={`${subscribedCount}/${pages.length}`} />
+              <Stat label="Instagram" value={igCount} />
+              <Stat label="Lead Ads on" value={leadAdsCount} />
+            </div>
+            {/* Quick actions */}
+            <div className="flex flex-wrap gap-2 border-t border-border bg-muted/30 p-3">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => refresh.mutate()}
+                disabled={refresh.isPending}
+              >
+                <RefreshCw className={`size-3.5 ${refresh.isPending ? "animate-spin" : ""}`} />
+                {refresh.isPending ? "Refreshing…" : "Refresh counts"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => configureWebhooks.mutate()}
+                disabled={configureWebhooks.isPending}
+              >
+                <Webhook className="size-3.5" />
+                {configureWebhooks.isPending ? "Resyncing…" : "Resync webhooks"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => connect.mutate()}
+                disabled={connect.isPending}
+              >
+                <Link2 className="size-3.5" />
+                {connect.isPending ? "Opening…" : "Reconnect"}
+              </Button>
+              {pages.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 sm:flex-none"
+                  disabled={enableAll.isPending}
+                  onClick={() => enableAll.mutate()}
+                >
+                  <CheckCircle2 className="size-3.5" />
+                  {enableAll.isPending ? "Enabling…" : "Enable everything"}
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
 
       {!conn && data?.setup && <MetaSetupGuide setup={data.setup} />}
 
       {conn && (
-        <Tabs defaultValue="channels">
-          <TabsList>
-            <TabsTrigger value="channels">
+        <Tabs value={ui.tab} onValueChange={(v) => patchUi({ tab: v })}>
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:h-9 sm:w-auto">
+            <TabsTrigger value="channels" className="w-full py-1.5 text-xs sm:w-auto sm:text-sm">
               <MessageSquare className="mr-1.5 size-3.5" /> Channels
             </TabsTrigger>
-            <TabsTrigger value="leads">
+            <TabsTrigger value="leads" className="w-full py-1.5 text-xs sm:w-auto sm:text-sm">
               <Users className="mr-1.5 size-3.5" /> Lead Ads
             </TabsTrigger>
-            <TabsTrigger value="ads">
+            <TabsTrigger value="ads" className="w-full py-1.5 text-xs sm:w-auto sm:text-sm">
               <BarChart3 className="mr-1.5 size-3.5" /> Ad accounts
             </TabsTrigger>
-            <TabsTrigger value="advanced">
+            <TabsTrigger value="advanced" className="w-full py-1.5 text-xs sm:w-auto sm:text-sm">
               <Webhook className="mr-1.5 size-3.5" /> Webhooks
             </TabsTrigger>
           </TabsList>
+
 
           {/* ── Channels: pages & routing ───────────────── */}
           <TabsContent value="channels" className="mt-4 space-y-3">
