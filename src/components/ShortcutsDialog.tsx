@@ -22,7 +22,7 @@ const GROUPS: { title: string; items: Shortcut[] }[] = [
       { keys: ["G", "C"], label: "Go to contacts" },
       { keys: ["G", "T"], label: "Go to tasks" },
       { keys: ["G", "I"], label: "Go to inbox" },
-      { keys: ["G", "S"], label: "Go to settings — integrations" },
+      { keys: ["G", "S"], label: "Go to settings hub" },
     ],
   },
   {
