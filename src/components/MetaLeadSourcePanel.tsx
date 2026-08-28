@@ -145,22 +145,104 @@ export function MetaLeadSourcePanel({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rawOpen, setRawOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
+  const [draftQuery, setDraftQuery] = useState("");
   const [query, setQuery] = useState("");
   const [csvOpen, setCsvOpen] = useState(false);
-  const [columns, setColumns] = useState<Record<ColumnKey, boolean>>({
-    contact: true,
-    answers: true,
-    attachments: true,
-    metadata: true,
-    raw: false,
-  });
-  const [timelineKinds, setTimelineKinds] = useState<TimelineKind[]>(
-    TIMELINE_KINDS.map((k) => k.key),
-  );
+  const [columns, setColumns] = useState<Record<ColumnKey, boolean>>(DEFAULT_COLUMNS);
+  const [timelineKinds, setTimelineKinds] = useState<TimelineKind[]>(DEFAULT_TIMELINE_KINDS);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkIds, setBulkIds] = useState<string[]>([]);
   const [searchName, setSearchName] = useState("");
+  const [busy, setBusy] = useState<null | "json" | "csv" | "bulk-csv" | "bulk-json" | "save">(null);
+  const [hydrated, setHydrated] = useState(false);
   const { searches, save: saveSearch, remove: removeSearch } = useSavedLeadSearches();
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
+
+  // Restore the last-used filter state so searches survive refreshes and sessions.
+  useEffect(() => {
+    const saved = readLeadFilterState();
+    if (saved) {
+      setDraftQuery(saved.query);
+      setQuery(saved.query);
+      setColumns((c) => ({ ...c, ...(saved.columns as Record<ColumnKey, boolean>) }));
+      if (saved.timelineKinds.length) setTimelineKinds(saved.timelineKinds as TimelineKind[]);
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    writeLeadFilterState({ query, columns, timelineKinds });
+  }, [hydrated, query, columns, timelineKinds]);
+
+  // Debounced live search; Enter applies immediately.
+  useEffect(() => {
+    const t = window.setTimeout(() => setQuery(draftQuery), 300);
+    return () => window.clearTimeout(t);
+  }, [draftQuery]);
+
+  const isDefaultFilters =
+    query.trim() === "" &&
+    draftQuery.trim() === "" &&
+    COLUMN_KEYS.every((k) => columns[k] === DEFAULT_COLUMNS[k]) &&
+    timelineKinds.length === DEFAULT_TIMELINE_KINDS.length;
+
+  const resetFilters = useCallback(() => {
+    setDraftQuery("");
+    setQuery("");
+    setColumns(DEFAULT_COLUMNS);
+    setTimelineKinds(DEFAULT_TIMELINE_KINDS);
+    setSearchName("");
+    setBulkIds([]);
+    clearLeadFilterState();
+  }, []);
+
+  // Keyboard shortcuts: "/" focuses search, Esc clears the search or closes panels.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing =
+        !!target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (e.key === "/" && !typing) {
+        e.preventDefault();
+        searchRef.current?.focus();
+        return;
+      }
+      if (e.key === "Escape") {
+        const inside = !!rootRef.current && !!target && rootRef.current.contains(target);
+        if (!inside) return;
+        e.preventDefault();
+        if (draftQuery || query) {
+          setDraftQuery("");
+          setQuery("");
+        } else if (csvOpen || bulkOpen || rawOpen || sourceOpen) {
+          setCsvOpen(false);
+          setBulkOpen(false);
+          setRawOpen(false);
+          setSourceOpen(false);
+        }
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [draftQuery, query, csvOpen, bulkOpen, rawOpen, sourceOpen]);
+
+  const runBusy = useCallback(
+    async (kind: "json" | "csv" | "bulk-csv" | "bulk-json" | "save", action: () => void) => {
+      setBusy(kind);
+      try {
+        action();
+        await new Promise((r) => window.setTimeout(r, 250));
+      } finally {
+        setBusy(null);
+      }
+    },
+    [],
+  );
 
   const selected = useMemo(
     () => events.find((e) => e.id === selectedId) ?? events[0] ?? null,
