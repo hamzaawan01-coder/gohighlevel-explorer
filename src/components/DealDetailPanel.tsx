@@ -194,7 +194,7 @@ export function DealDetailPanel({
           <TabsTrigger value="files">Files · {files.length}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="flex-1 overflow-auto px-6 py-4">
+        <TabsContent value="overview" className="flex-1 overflow-auto px-6 py-4 space-y-4">
           <OverviewTab
             deal={d}
             stages={stages}
@@ -202,6 +202,7 @@ export function DealDetailPanel({
             onSave={(patch) => updateMut.mutate(patch)}
             saving={updateMut.isPending}
           />
+          {subId && <MetaLeadSourcePanel subId={subId} dealId={d.id} />}
         </TabsContent>
 
         <TabsContent value="messages" className="flex-1 overflow-auto px-6 py-4">
