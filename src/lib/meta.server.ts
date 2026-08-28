@@ -59,7 +59,7 @@ export function buildAuthorizeUrl(state: string): string {
   u.searchParams.set("redirect_uri", metaRedirectUri());
   u.searchParams.set("state", state);
   u.searchParams.set("response_type", "code");
-  u.searchParams.set("scope", META_SCOPES.join(","));
+  u.searchParams.set("scope", metaScopes().join(","));
   return u.toString();
 }
 
