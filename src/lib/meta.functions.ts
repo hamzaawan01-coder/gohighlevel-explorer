@@ -564,9 +564,17 @@ export const importPastMetaLeads = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false }).limit(1);
     const ownerId = ((conns ?? [])[0]?.created_by as string | undefined) ?? context.userId;
 
+    const sinceMs = data.since ? Date.parse(data.since) : null;
+    const untilRaw = data.until ? Date.parse(data.until) : null;
+    // Treat `until` as inclusive of the whole selected day.
+    const untilMs = untilRaw !== null && !Number.isNaN(untilRaw) ? untilRaw + 24 * 60 * 60 * 1000 - 1 : null;
+
     let leads: Awaited<ReturnType<typeof fetchFormLeads>>;
     try {
-      leads = await fetchFormLeads(data.formId, page.page_access_token, data.maxLeads ?? 200);
+      leads = await fetchFormLeads(data.formId, page.page_access_token, data.maxLeads ?? 200, {
+        sinceMs: sinceMs !== null && !Number.isNaN(sinceMs) ? sinceMs : null,
+        untilMs,
+      });
     } catch (e) {
       throw new Error(`Meta rejected the lead history request: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -601,7 +609,7 @@ export const importPastMetaLeads = createServerFn({ method: "POST" })
           formName: data.formName ?? null,
           leadgenId: lead.id,
           fields,
-          payload: { source: "import", lead },
+          payload: { source: "import", lead, window: { since: data.since ?? null, until: data.until ?? null } },
           isTest: false,
         });
         if (res.error) { failed++; if (errors.length < 5) errors.push(res.error); }
@@ -612,8 +620,125 @@ export const importPastMetaLeads = createServerFn({ method: "POST" })
       }
     }
 
-    return { total: leads.length, imported, skipped, failed, errors, pageName: page.page_name };
+    return {
+      total: leads.length,
+      imported,
+      skipped,
+      failed,
+      errors,
+      pageName: page.page_name,
+      pageId: page.page_id,
+      formId: data.formId,
+      formName: data.formName ?? null,
+      since: data.since ?? null,
+      until: data.until ?? null,
+    };
   });
+
+/**
+ * Re-run ingestion for Lead Ads that previously failed. Reads the audit trail
+ * for error rows, re-fetches each lead from Meta when possible (falling back to
+ * the stored fields) and runs the same ingestion path — deduplication by Meta
+ * lead ID keeps this safe to repeat.
+ */
+export const retryFailedMetaLeads = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string; formId?: string | null; limit?: number }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      formId: z.string().nullish(),
+      limit: z.number().int().min(1).max(200).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { fetchLeadById, flattenLeadFields, ingestLeadAdLead } = await import("./meta.server");
+
+    let eq = (supabaseAdmin as any)
+      .from("meta_lead_ad_events")
+      .select("id, page_id, form_id, form_name, leadgen_id, lead_fields, payload, created_at")
+      .eq("sub_account_id", data.subAccountId)
+      .eq("status", "error")
+      .eq("is_test", false)
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 50);
+    if (data.formId) eq = eq.eq("form_id", data.formId);
+    const { data: rows, error: evErr } = await eq;
+    if (evErr) throw new Error(evErr.message);
+
+    type Row = {
+      id: string; page_id: string | null; form_id: string | null; form_name: string | null;
+      leadgen_id: string | null; lead_fields: Record<string, string> | null; payload: unknown;
+    };
+    // One attempt per lead — newest failure wins.
+    const byLead = new Map<string, Row>();
+    for (const r of (rows ?? []) as Row[]) {
+      if (!r.leadgen_id || r.leadgen_id.startsWith("test:")) continue;
+      if (!byLead.has(r.leadgen_id)) byLead.set(r.leadgen_id, r);
+    }
+    const targets = [...byLead.values()];
+
+    const { data: pageRows } = await (supabaseAdmin as any)
+      .from("meta_pages")
+      .select("page_id, page_name, page_access_token")
+      .eq("sub_account_id", data.subAccountId)
+      .order("sync_lead_ads", { ascending: false });
+    const pages = (pageRows ?? []) as Array<{ page_id: string; page_name: string; page_access_token: string }>;
+    const tokenFor = (pageId: string | null) =>
+      (pageId ? pages.find((p) => p.page_id === pageId) : undefined) ?? pages[0];
+
+    const { data: conns } = await (supabaseAdmin as any)
+      .from("meta_connections").select("created_by")
+      .eq("sub_account_id", data.subAccountId)
+      .order("created_at", { ascending: false }).limit(1);
+    const ownerId = ((conns ?? [])[0]?.created_by as string | undefined) ?? context.userId;
+
+    let recovered = 0;
+    let stillFailing = 0;
+    const errors: string[] = [];
+    for (const row of targets) {
+      const page = tokenFor(row.page_id);
+      let fields: Record<string, string> = row.lead_fields ?? {};
+      if (page) {
+        try {
+          const fresh = await fetchLeadById(row.leadgen_id!, page.page_access_token);
+          const flat = flattenLeadFields(fresh.field_data);
+          if (Object.keys(flat).length > 0) fields = flat;
+        } catch {
+          // Meta may no longer expose the lead — fall back to stored fields.
+        }
+      }
+      if (Object.keys(fields).length === 0) {
+        stillFailing++;
+        if (errors.length < 5) errors.push(`Lead ${row.leadgen_id} has no recoverable fields`);
+        continue;
+      }
+      try {
+        const res = await ingestLeadAdLead(supabaseAdmin as any, {
+          subAccountId: data.subAccountId,
+          ownerId,
+          pageId: row.page_id ?? page?.page_id ?? null,
+          formId: row.form_id ?? null,
+          formName: row.form_name ?? null,
+          leadgenId: row.leadgen_id!,
+          fields,
+          payload: { source: "retry", original: row.payload ?? null },
+          isTest: false,
+        });
+        if (res.error) {
+          stillFailing++;
+          if (errors.length < 5) errors.push(res.error);
+        } else recovered++;
+      } catch (e) {
+        stillFailing++;
+        if (errors.length < 5) errors.push(e instanceof Error ? e.message : String(e));
+      }
+    }
+
+    return { attempted: targets.length, recovered, stillFailing, errors };
+  });
+
 
 /**
  * Where did this contact / opportunity come from? Returns the Meta Page, Lead Ad
