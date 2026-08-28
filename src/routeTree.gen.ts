@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -40,6 +41,7 @@ import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_au
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsCallFlowsRouteImport } from './routes/_authenticated/settings.call-flows'
 import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
+import { Route as AuthenticatedSettingsAppReviewRouteImport } from './routes/_authenticated/settings.app-review'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
 import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta.data-deletion'
@@ -60,6 +62,11 @@ import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/ap
 import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
 import { Route as ApiPublicHooksMetaTokenRouteImport } from './routes/api/public/hooks/meta.$token'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -227,6 +234,12 @@ const AuthenticatedSettingsBookingRoute =
     path: '/settings/booking',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsAppReviewRoute =
+  AuthenticatedSettingsAppReviewRouteImport.update({
+    id: '/settings/app-review',
+    path: '/settings/app-review',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDealsIdRoute = AuthenticatedDealsIdRouteImport.update({
   id: '/deals/$id',
   path: '/deals/$id',
@@ -340,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/data-deletion': typeof DataDeletionRoute
   '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
@@ -357,6 +371,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/settings/app-review': typeof AuthenticatedSettingsAppReviewRoute
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
@@ -391,6 +406,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/data-deletion': typeof DataDeletionRoute
   '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
@@ -408,6 +424,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/settings/app-review': typeof AuthenticatedSettingsAppReviewRoute
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
@@ -444,6 +461,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/data-deletion': typeof DataDeletionRoute
   '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/calls': typeof AuthenticatedCallsRoute
   '/_authenticated/conversations': typeof AuthenticatedConversationsRoute
@@ -461,6 +479,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/_authenticated/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/_authenticated/settings/app-review': typeof AuthenticatedSettingsAppReviewRoute
   '/_authenticated/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/_authenticated/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
@@ -497,6 +516,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/data-deletion'
     | '/privacy'
+    | '/terms'
     | '/calendar'
     | '/calls'
     | '/conversations'
@@ -514,6 +534,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/contacts/$id'
     | '/deals/$id'
+    | '/settings/app-review'
     | '/settings/booking'
     | '/settings/call-flows'
     | '/settings/integrations'
@@ -548,6 +569,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/data-deletion'
     | '/privacy'
+    | '/terms'
     | '/calendar'
     | '/calls'
     | '/conversations'
@@ -565,6 +587,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/contacts/$id'
     | '/deals/$id'
+    | '/settings/app-review'
     | '/settings/booking'
     | '/settings/call-flows'
     | '/settings/integrations'
@@ -600,6 +623,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/data-deletion'
     | '/privacy'
+    | '/terms'
     | '/_authenticated/calendar'
     | '/_authenticated/calls'
     | '/_authenticated/conversations'
@@ -617,6 +641,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_authenticated/contacts/$id'
     | '/_authenticated/deals/$id'
+    | '/_authenticated/settings/app-review'
     | '/_authenticated/settings/booking'
     | '/_authenticated/settings/call-flows'
     | '/_authenticated/settings/integrations'
@@ -653,6 +678,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DataDeletionRoute: typeof DataDeletionRoute
   PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   BSlugRoute: typeof BSlugRoute
   FSlugRoute: typeof FSlugRoute
   InviteTokenRoute: typeof InviteTokenRoute
@@ -678,6 +704,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -895,6 +928,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsBookingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/app-review': {
+      id: '/_authenticated/settings/app-review'
+      path: '/settings/app-review'
+      fullPath: '/settings/app-review'
+      preLoaderRoute: typeof AuthenticatedSettingsAppReviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/deals/$id': {
       id: '/_authenticated/deals/$id'
       path: '/deals/$id'
@@ -1046,6 +1086,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
   AuthenticatedContactsIdRoute: typeof AuthenticatedContactsIdRoute
   AuthenticatedDealsIdRoute: typeof AuthenticatedDealsIdRoute
+  AuthenticatedSettingsAppReviewRoute: typeof AuthenticatedSettingsAppReviewRoute
   AuthenticatedSettingsBookingRoute: typeof AuthenticatedSettingsBookingRoute
   AuthenticatedSettingsCallFlowsRoute: typeof AuthenticatedSettingsCallFlowsRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
@@ -1073,6 +1114,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
   AuthenticatedContactsIdRoute: AuthenticatedContactsIdRoute,
   AuthenticatedDealsIdRoute: AuthenticatedDealsIdRoute,
+  AuthenticatedSettingsAppReviewRoute: AuthenticatedSettingsAppReviewRoute,
   AuthenticatedSettingsBookingRoute: AuthenticatedSettingsBookingRoute,
   AuthenticatedSettingsCallFlowsRoute: AuthenticatedSettingsCallFlowsRoute,
   AuthenticatedSettingsIntegrationsRoute:
@@ -1096,6 +1138,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DataDeletionRoute: DataDeletionRoute,
   PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   BSlugRoute: BSlugRoute,
   FSlugRoute: FSlugRoute,
   InviteTokenRoute: InviteTokenRoute,

@@ -21,6 +21,7 @@ import {
   PhoneCall,
   ToggleLeft,
   Ban,
+  ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Softphone } from "@/components/Softphone";
 import { isModuleEnabled, moduleForPath, useModules } from "@/lib/modules";
+import { SiteFooter } from "@/components/SiteFooter";
 
 function openPalette() {
   (window as unknown as { __openPalette?: () => void }).__openPalette?.();
@@ -65,6 +67,7 @@ const automationNav: NavItem[] = [
   { label: "Call flows", icon: PhoneCall, to: "/settings/call-flows", module: "calls" },
   { label: "Integrations", icon: Settings, to: "/settings/integrations", module: "integrations" },
   { label: "Quiet hours", icon: Settings, to: "/settings/messaging", module: "integrations" },
+  { label: "App review", icon: ShieldCheck, to: "/settings/app-review", module: "integrations" },
   { label: "Modules", icon: ToggleLeft, to: "/settings/modules" },
 ];
 
@@ -133,7 +136,9 @@ export function AppShell({
         <div className="flex-1 overflow-auto min-h-0">
           {blocked ? <ModuleDisabled label={currentModule!.label} /> : children}
         </div>
+        <SiteFooter />
       </main>
+
 
       {rightPane && !blocked ? (
         <aside className="w-80 border-l border-border bg-card flex flex-col shrink-0">{rightPane}</aside>

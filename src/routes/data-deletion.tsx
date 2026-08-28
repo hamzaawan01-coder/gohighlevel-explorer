@@ -1,7 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { CheckCircle2, Clock, XCircle, Loader2, Copy, Check } from "lucide-react";
 
-type Status = { found: boolean; confirmation_code?: string; status?: string; created_at?: string };
+type Status = {
+  found: boolean;
+  confirmation_code?: string;
+  status?: string;
+  created_at?: string;
+};
 
 export const Route = createFileRoute("/data-deletion")({
   head: () => ({
@@ -28,6 +34,8 @@ function DataDeletionPage() {
   const [code, setCode] = useState("");
   const [status, setStatus] = useState<Status | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const initial = new URLSearchParams(window.location.search).get("code");
@@ -40,15 +48,50 @@ function DataDeletionPage() {
 
   async function lookup(value: string) {
     setLoading(true);
+    setError(null);
+    setStatus(null);
     try {
       const res = await fetch(`/api/public/meta/data-deletion?code=${encodeURIComponent(value)}`);
-      setStatus((await res.json()) as Status);
+      if (res.status === 404) {
+        setStatus({ found: false });
+      } else if (!res.ok) {
+        setError("We couldn't check that code right now. Please try again in a moment.");
+      } else {
+        setStatus((await res.json()) as Status);
+      }
     } catch {
-      setStatus({ found: false });
+      setError("We couldn't reach the server. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
   }
+
+  const resultText = status?.found
+    ? [
+        `Data deletion request: ${status.status ?? "completed"}`,
+        `Confirmation code: ${status.confirmation_code ?? ""}`,
+        status.created_at ? `Received: ${new Date(status.created_at).toLocaleString()}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "";
+
+  async function copyResult() {
+    try {
+      await navigator.clipboard.writeText(resultText);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = resultText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
+
+  const isCompleted = (status?.status ?? "completed") === "completed";
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
@@ -69,34 +112,82 @@ function DataDeletionPage() {
         <input
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder="Confirmation code"
+          placeholder="Confirmation code, e.g. del_abc123"
+          aria-label="Confirmation code"
           className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
         />
         <button
           type="submit"
           disabled={loading || !code.trim()}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
+          {loading && <Loader2 className="size-3.5 animate-spin" />}
           {loading ? "Checking…" : "Check status"}
         </button>
       </form>
 
-      {status && (
+      {error && (
+        <div className="mt-8 flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
+          <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+          <p>{error}</p>
+        </div>
+      )}
+
+      {status && !error && (
         <div className="mt-8 rounded-lg border border-border p-4 text-sm">
           {status.found ? (
             <>
-              <p className="font-medium">Request {status.status ?? "completed"}</p>
-              <p className="mt-1 text-muted-foreground">Confirmation code: {status.confirmation_code}</p>
-              {status.created_at && (
-                <p className="text-muted-foreground">
-                  Received: {new Date(status.created_at).toLocaleString()}
-                </p>
-              )}
+              <div className="flex items-start gap-3">
+                {isCompleted ? (
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+                ) : (
+                  <Clock className="mt-0.5 size-4 shrink-0 text-amber-500" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">
+                    {isCompleted
+                      ? "Your data has been deleted."
+                      : `Your request is ${status.status ?? "in progress"}.`}
+                  </p>
+                  <p className="mt-1 text-muted-foreground">
+                    {isCompleted
+                      ? "We removed the messaging data stored for your account in our CRM. Nothing further is needed from you."
+                      : "We have received your request and are processing it. Check back shortly."}
+                  </p>
+                  <dl className="mt-3 space-y-1 text-xs text-muted-foreground">
+                    <div>
+                      <dt className="inline">Confirmation code: </dt>
+                      <dd className="inline font-mono text-foreground">{status.confirmation_code}</dd>
+                    </div>
+                    {status.created_at && (
+                      <div>
+                        <dt className="inline">Received: </dt>
+                        <dd className="inline">{new Date(status.created_at).toLocaleString()}</dd>
+                      </div>
+                    )}
+                  </dl>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void copyResult()}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-secondary"
+                >
+                  {copied ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                  {copied ? "Copied" : "Copy result"}
+                </button>
+              </div>
             </>
           ) : (
-            <p className="text-muted-foreground">
-              No request found for that code. Check the code and try again.
-            </p>
+            <div className="flex items-start gap-3">
+              <XCircle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="font-medium">No request found for that code.</p>
+                <p className="mt-1 text-muted-foreground">
+                  Double-check the code from your confirmation message, or email us and we'll look it up for
+                  you.
+                </p>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -107,9 +198,13 @@ function DataDeletionPage() {
           info@clickawayfinance.com
         </a>
         . See our{" "}
-        <a className="underline" href="/privacy">
+        <Link className="underline" to="/privacy">
           Privacy Policy
-        </a>{" "}
+        </Link>{" "}
+        and{" "}
+        <Link className="underline" to="/terms">
+          Terms of Service
+        </Link>{" "}
         for more detail.
       </p>
     </main>
