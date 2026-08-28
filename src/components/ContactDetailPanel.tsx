@@ -51,6 +51,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { initials, stringHue } from "@/lib/initials";
+import { MetaLeadSourcePanel } from "@/components/MetaLeadSourcePanel";
 
 export function ContactDetailPanel({
   contactId,
@@ -271,6 +272,7 @@ export function ContactDetailPanel({
             openTaskCount={openTasks.length}
             dealCount={deals.length}
           />
+          {subId && <MetaLeadSourcePanel subId={subId} contactId={contactId} />}
         </TabsContent>
 
         <TabsContent value="deals" className="flex-1 overflow-auto px-6 py-4">

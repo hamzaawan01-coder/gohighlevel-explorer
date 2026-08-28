@@ -254,6 +254,48 @@ export async function fetchPageLeadForms(
   return res.data ?? [];
 }
 
+export type MetaFormLead = {
+  id: string;
+  created_time?: string;
+  field_data?: Array<{ name: string; values: string[] }>;
+};
+
+/**
+ * List existing (historical) leads for a Lead Ad form, following Graph paging.
+ * Used by the "Import past leads" action — the webhook only catches new leads.
+ */
+export async function fetchFormLeads(
+  formId: string,
+  pageAccessToken: string,
+  maxLeads = 500,
+): Promise<MetaFormLead[]> {
+  const out: MetaFormLead[] = [];
+  let after: string | undefined;
+  for (let page = 0; page < 20 && out.length < maxLeads; page++) {
+    const params: Record<string, string> = { fields: "id,created_time,field_data", limit: "100" };
+    if (after) params.after = after;
+    const res = await graph<{ data?: MetaFormLead[]; paging?: { cursors?: { after?: string }; next?: string } }>(
+      `/${formId}/leads`,
+      params,
+      pageAccessToken,
+    );
+    const batch = res.data ?? [];
+    out.push(...batch);
+    after = res.paging?.next ? res.paging?.cursors?.after : undefined;
+    if (!after || batch.length === 0) break;
+  }
+  return out.slice(0, maxLeads);
+}
+
+/** Flatten Meta field_data into a simple { field: value } map. */
+export function flattenLeadFields(fieldData: Array<{ name: string; values: string[] }> | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const f of fieldData ?? []) {
+    if (f?.name && Array.isArray(f.values) && f.values.length > 0) out[f.name] = String(f.values[0]);
+  }
+  return out;
+}
+
 /** Verify Meta X-Hub-Signature-256 header against the raw request body. */
 export function verifyMetaSignature(rawBody: string, signatureHeader: string | null): boolean {
   const appSecret = process.env.META_APP_SECRET;

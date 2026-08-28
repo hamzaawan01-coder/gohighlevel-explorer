@@ -1,11 +1,18 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listMetaLeadFormRoutes, setMetaLeadFormRoute, replayMetaLeadAdTest, listMetaLeadAdEvents } from "@/lib/meta.functions";
+import {
+  listMetaLeadFormRoutes,
+  setMetaLeadFormRoute,
+  replayMetaLeadAdTest,
+  listMetaLeadAdEvents,
+  importPastMetaLeads,
+} from "@/lib/meta.functions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ClipboardList, RefreshCw, PlayCircle, ScrollText } from "lucide-react";
+import { ClipboardList, RefreshCw, PlayCircle, ScrollText, DownloadCloud } from "lucide-react";
 
 type Form = { pageId: string; pageName: string; formId: string; formName: string; status?: string };
 type Route = { id: string; page_id: string | null; form_id: string; pipeline_id: string; stage_id: string };
@@ -39,6 +46,27 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
   const setFn = useServerFn(setMetaLeadFormRoute);
   const replayFn = useServerFn(replayMetaLeadAdTest);
   const eventsFn = useServerFn(listMetaLeadAdEvents);
+  const importFn = useServerFn(importPastMetaLeads);
+  const [importing, setImporting] = useState<string | null>(null);
+
+  const importLeads = useMutation({
+    mutationFn: (input: { formId: string; formName?: string | null; pageId?: string | null }) =>
+      importFn({ data: { subAccountId: subId, ...input } }),
+    onSuccess: (res: { total: number; imported: number; skipped: number; failed: number; errors: string[] }) => {
+      if (res.total === 0) toast.info("Meta returned no past leads for this form");
+      else
+        toast.success(
+          `Imported ${res.imported} of ${res.total} leads · ${res.skipped} already in CRM${res.failed ? ` · ${res.failed} failed` : ""}`,
+        );
+      if (res.errors?.length) toast.error(res.errors[0]);
+      qc.invalidateQueries({ queryKey: ["meta-lead-ad-events", subId] });
+      qc.invalidateQueries({ queryKey: ["contacts"] });
+      qc.invalidateQueries({ queryKey: ["deals"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSettled: () => setImporting(null),
+  });
+
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["meta-lead-form-routes", subId],
@@ -148,6 +176,19 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
                   >
                     <PlayCircle className="size-3.5 mr-1" />
                     Replay last test webhook
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    disabled={importing === f.formId}
+                    onClick={() => {
+                      setImporting(f.formId);
+                      importLeads.mutate({ formId: f.formId, formName: f.formName, pageId: f.pageId });
+                    }}
+                  >
+                    <DownloadCloud className={`size-3.5 mr-1 ${importing === f.formId ? "animate-pulse" : ""}`} />
+                    {importing === f.formId ? "Importing…" : "Import past leads"}
                   </Button>
                 </div>
               </div>
