@@ -126,7 +126,7 @@ export const suggestReply = createServerFn({ method: "POST" })
         ? await query.eq("id", settings.booking_page_id).maybeSingle()
         : await query.limit(1).maybeSingle();
       const slug = (bRow as unknown as { slug: string } | null)?.slug;
-      if (slug) bookingUrl = `${data.origin.replace(/\/$/, "")}/book/${slug}`;
+      if (slug) bookingUrl = `${data.origin.replace(/\/$/, "")}/b/${slug}`;
     }
 
     const { generateReplyDraft } = await import("@/lib/ai-assistant.server");
