@@ -134,6 +134,8 @@ function AiAssistantSettingsPage() {
                 />
               </section>
 
+              <KnowledgeBaseSection subId={subId} />
+
               <section className="rounded-lg border border-border bg-card p-4 space-y-3">
                 <Label htmlFor="extra">Extra instructions (optional)</Label>
                 <Textarea
