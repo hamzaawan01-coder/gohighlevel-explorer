@@ -17,6 +17,7 @@ import { EmptyState, ErrorState, KpiSkeleton, ListSkeleton, SkeletonBlock } from
 import { Button } from "@/components/ui/button";
 import { useTenancy } from "@/lib/tenancy";
 import { fetchDashboardStats } from "@/lib/dashboard-stats";
+import { SetupChecklist } from "@/components/SetupChecklist";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -64,6 +65,7 @@ function DashboardHome() {
       />
 
       <PageBody>
+        {subId ? <SetupChecklist subAccountId={subId} /> : null}
         {isError ? (
           <div className="surface-card">
             <ErrorState
