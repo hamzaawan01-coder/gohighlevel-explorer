@@ -118,20 +118,10 @@ export async function fetchRemindersForEvents(eventIds: string[]): Promise<Remin
   return (data ?? []) as unknown as ReminderRow[];
 }
 
+/** Status change goes through a server fn so it is audited and threaded. */
 export async function setAppointmentStatus(id: string, status: AppointmentStatus) {
-  const { error } = await supabase
-    .from("calendar_events")
-    .update({ status } as never)
-    .eq("id", id);
-  if (error) throw error;
-  if (status === "cancelled") {
-    // Stop any reminder that hasn't gone out yet.
-    await supabase
-      .from("appointment_reminders" as never)
-      .update({ status: "skipped", error: "Appointment cancelled" } as never)
-      .eq("event_id", id)
-      .eq("status", "pending");
-  }
+  const { changeAppointmentStatus } = await import("@/lib/appointments.functions");
+  await changeAppointmentStatus({ data: { eventId: id, status } });
 }
 
 export function reminderChannelLabel(channel: ReminderChannel): string {
