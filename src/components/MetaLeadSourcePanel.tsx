@@ -375,6 +375,16 @@ export function MetaLeadSourcePanel({
           >
             <Download className="size-3 mr-1" /> CSV
           </Button>
+          {events.length > 1 && (
+            <Button
+              size="sm"
+              variant={bulkOpen ? "secondary" : "outline"}
+              className="h-7 px-2 text-[11px]"
+              onClick={() => setBulkOpen((o) => !o)}
+            >
+              <ListChecks className="size-3 mr-1" /> Bulk
+            </Button>
+          )}
         </div>
       </div>
 
