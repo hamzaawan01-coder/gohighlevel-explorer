@@ -560,6 +560,7 @@ export function MetaLeadSourcePanel({
                 size="sm"
                 variant="ghost"
                 className="h-6 px-2 text-[11px]"
+                disabled={busy !== null || bulkIds.length === events.length}
                 onClick={() => setBulkIds(events.map((e) => e.id))}
               >
                 All
@@ -568,6 +569,7 @@ export function MetaLeadSourcePanel({
                 size="sm"
                 variant="ghost"
                 className="h-6 px-2 text-[11px]"
+                disabled={busy !== null || bulkIds.length === 0}
                 onClick={() => setBulkIds([])}
               >
                 None
@@ -579,6 +581,7 @@ export function MetaLeadSourcePanel({
               <label key={ev.id} className="flex items-center gap-2 px-3 py-2 text-xs">
                 <Checkbox
                   checked={bulkIds.includes(ev.id)}
+                  disabled={busy !== null}
                   onCheckedChange={(v) =>
                     setBulkIds((ids) =>
                       v ? [...new Set([...ids, ev.id])] : ids.filter((i) => i !== ev.id),
@@ -601,19 +604,29 @@ export function MetaLeadSourcePanel({
             <Button
               size="sm"
               className="h-7 px-2 text-[11px]"
-              disabled={bulkIds.length === 0 || !anyColumn}
-              onClick={exportBulkCsv}
+              disabled={bulkIds.length === 0 || !anyColumn || busy !== null}
+              onClick={() => runBusy("bulk-csv", exportBulkCsv)}
             >
-              <Download className="size-3 mr-1" /> Export CSV
+              {busy === "bulk-csv" ? (
+                <Loader2 className="size-3 mr-1 animate-spin" />
+              ) : (
+                <Download className="size-3 mr-1" />
+              )}{" "}
+              Export CSV
             </Button>
             <Button
               size="sm"
               variant="outline"
               className="h-7 px-2 text-[11px]"
-              disabled={bulkIds.length === 0 || !anyColumn}
-              onClick={exportBulkJson}
+              disabled={bulkIds.length === 0 || !anyColumn || busy !== null}
+              onClick={() => runBusy("bulk-json", exportBulkJson)}
             >
-              <Download className="size-3 mr-1" /> Export JSON
+              {busy === "bulk-json" ? (
+                <Loader2 className="size-3 mr-1 animate-spin" />
+              ) : (
+                <Download className="size-3 mr-1" />
+              )}{" "}
+              Export JSON
             </Button>
           </div>
         </div>
@@ -623,9 +636,25 @@ export function MetaLeadSourcePanel({
         <div className="relative">
           <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search any field, custom label or answer…"
+            ref={searchRef}
+            value={draftQuery}
+            onChange={(e) => setDraftQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                setQuery(draftQuery);
+              }
+              if (e.key === "Escape") {
+                e.preventDefault();
+                if (draftQuery || query) {
+                  setDraftQuery("");
+                  setQuery("");
+                } else {
+                  searchRef.current?.blur();
+                }
+              }
+            }}
+            placeholder="Search any field, custom label or answer…  ( / to focus, Enter to apply, Esc to clear )"
             className="h-8 pl-8 text-xs"
           />
         </div>
@@ -634,6 +663,21 @@ export function MetaLeadSourcePanel({
           <Input
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && searchName.trim() && draftQuery.trim()) {
+                e.preventDefault();
+                setQuery(draftQuery);
+                void runBusy("save", () => {
+                  saveSearch({
+                    name: searchName.trim(),
+                    query: draftQuery,
+                    columns,
+                    timelineKinds,
+                  });
+                  setSearchName("");
+                });
+              }
+            }}
             placeholder="Name this filter to save it…"
             className="h-7 text-xs"
           />
@@ -641,53 +685,73 @@ export function MetaLeadSourcePanel({
             size="sm"
             variant="outline"
             className="h-7 px-2 text-[11px] shrink-0"
-            disabled={!searchName.trim() || !query.trim()}
-            onClick={() => {
-              saveSearch({
-                name: searchName.trim(),
-                query,
-                columns,
-                timelineKinds,
-              });
-              setSearchName("");
-            }}
+            disabled={!searchName.trim() || !draftQuery.trim() || busy !== null}
+            onClick={() =>
+              runBusy("save", () => {
+                setQuery(draftQuery);
+                saveSearch({
+                  name: searchName.trim(),
+                  query: draftQuery,
+                  columns,
+                  timelineKinds,
+                });
+                setSearchName("");
+              })
+            }
           >
-            <Save className="size-3 mr-1" /> Save
+            {busy === "save" ? (
+              <Loader2 className="size-3 mr-1 animate-spin" />
+            ) : (
+              <Save className="size-3 mr-1" />
+            )}{" "}
+            Save
           </Button>
         </div>
 
         {searches.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {searches.map((s) => (
-              <span
-                key={s.id}
-                className="inline-flex items-center gap-1 rounded-full border border-border pl-2 pr-1 py-0.5 text-[11px]"
-              >
-                <button
-                  type="button"
-                  className="hover:text-accent"
-                  onClick={() => {
-                    setQuery(s.query);
-                    setColumns((c) => ({ ...c, ...(s.columns as Record<ColumnKey, boolean>) }));
-                    setTimelineKinds(
-                      (s.timelineKinds as TimelineKind[] | undefined)?.length
-                        ? (s.timelineKinds as TimelineKind[])
-                        : TIMELINE_KINDS.map((k) => k.key),
-                    );
-                  }}
+            {searches.map((s) => {
+              const active =
+                s.query === query &&
+                (s.timelineKinds?.length ? s.timelineKinds : DEFAULT_TIMELINE_KINDS).every((k) =>
+                  timelineKinds.includes(k as TimelineKind),
+                );
+              return (
+                <span
+                  key={s.id}
+                  className={`inline-flex items-center gap-1 rounded-full border pl-2 pr-1 py-0.5 text-[11px] ${
+                    active ? "border-accent text-accent" : "border-border"
+                  }`}
                 >
-                  {s.name}
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Delete saved filter ${s.name}`}
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={() => removeSearch(s.id)}
-                >
-                  <Trash2 className="size-3" />
-                </button>
-              </span>
-            ))}
+                  <button
+                    type="button"
+                    className="hover:text-accent disabled:opacity-50"
+                    disabled={busy !== null}
+                    onClick={() => {
+                      setDraftQuery(s.query);
+                      setQuery(s.query);
+                      setColumns((c) => ({ ...c, ...(s.columns as Record<ColumnKey, boolean>) }));
+                      setTimelineKinds(
+                        (s.timelineKinds as TimelineKind[] | undefined)?.length
+                          ? (s.timelineKinds as TimelineKind[])
+                          : DEFAULT_TIMELINE_KINDS,
+                      );
+                    }}
+                  >
+                    {s.name}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Delete saved filter ${s.name}`}
+                    className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+                    disabled={busy !== null}
+                    onClick={() => removeSearch(s.id)}
+                  >
+                    <Trash2 className="size-3" />
+                  </button>
+                </span>
+              );
+            })}
           </div>
         )}
 
