@@ -10,6 +10,7 @@ import {
   disconnectMeta,
   configureMetaWebhooks,
 } from "@/lib/meta.functions";
+import { MetaLeadFormRouting } from "@/components/MetaLeadFormRouting";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -309,6 +310,8 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
               </div>
             ))}
           </div>
+
+          <MetaLeadFormRouting subId={subId} />
 
           {/* Ad accounts */}
           <div className="rounded-md border border-border overflow-hidden">
