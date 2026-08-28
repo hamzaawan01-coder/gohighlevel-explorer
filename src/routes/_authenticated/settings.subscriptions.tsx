@@ -9,6 +9,8 @@ import { HeaderStat, PageBody, PageHeader } from "@/components/PageHeader";
 import { ConsoleSection, ConsoleSplit, ConsoleTips, StatusPill } from "@/components/console";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { PlanCheckoutDialog } from "@/components/PlanCheckoutDialog";
+import { AssignPlanDialog } from "@/components/AssignPlanDialog";
+import { ModuleInclusionPreview } from "@/components/ModuleInclusionPreview";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -112,6 +114,11 @@ function SubscriptionsSettingsPage() {
 
   const [draft, setDraft] = useState<Draft | null>(null);
   const [checkout, setCheckout] = useState<{ planId: string; name: string } | null>(null);
+  const [assignFlow, setAssignFlow] = useState<{
+    open: boolean;
+    workspaceId?: string | null;
+    planId?: string | null;
+  }>({ open: false });
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["subscription-plans", agencyId] });
@@ -227,9 +234,20 @@ function SubscriptionsSettingsPage() {
               icon={Package}
               hint="Agency-wide"
               actions={
-                <Button type="button" size="sm" onClick={() => setDraft({ ...emptyDraft })}>
-                  <Plus className="size-3.5" /> New plan
-                </Button>
+                <div className="flex flex-wrap gap-1.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={subs.length === 0}
+                    onClick={() => setAssignFlow({ open: true })}
+                  >
+                    <Layers className="size-3.5" /> Assign to workspace
+                  </Button>
+                  <Button type="button" size="sm" onClick={() => setDraft({ ...emptyDraft })}>
+                    <Plus className="size-3.5" /> New plan
+                  </Button>
+                </div>
               }
             >
               {isLoading ? (
@@ -261,6 +279,7 @@ function SubscriptionsSettingsPage() {
                       onSync={() => sync.mutate(plan.id)}
                       onDelete={() => remove.mutate(plan.id)}
                       onSubscribe={() => setCheckout({ planId: plan.id, name: plan.name })}
+                      onAssign={() => setAssignFlow({ open: true, planId: plan.id })}
                       syncing={sync.isPending}
                       canCharge={paymentsReady && plan.price_cents > 0 && !!plan.stripe_price_id}
                     />
@@ -306,6 +325,20 @@ function SubscriptionsSettingsPage() {
                             </SelectContent>
                           </Select>
                           <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                setAssignFlow({
+                                  open: true,
+                                  workspaceId: s.id,
+                                  planId: sub?.plan_id ?? null,
+                                })
+                              }
+                            >
+                              Change plan
+                            </Button>
                             {plan && paymentsReady && plan.price_cents > 0 ? (
                               <Button
                                 type="button"
@@ -352,9 +385,20 @@ function SubscriptionsSettingsPage() {
 
       <PlanEditorDialog
         draft={draft}
+        baseline={plans.find((p) => p.id === draft?.id)?.modules ?? null}
         onChange={setDraft}
         onSave={() => draft && savePlan.mutate(draft)}
         saving={savePlan.isPending}
+      />
+      <AssignPlanDialog
+        open={assignFlow.open}
+        onOpenChange={(o) => setAssignFlow((f) => ({ ...f, open: o }))}
+        workspaces={subs}
+        plans={plans}
+        assignments={assignments}
+        defaultWorkspaceId={assignFlow.workspaceId ?? currentSubId}
+        defaultPlanId={assignFlow.planId ?? null}
+        onAssigned={invalidate}
       />
       <PlanCheckoutDialog
         open={!!checkout}
@@ -373,6 +417,7 @@ function PlanRow({
   onSync,
   onDelete,
   onSubscribe,
+  onAssign,
   syncing,
   canCharge,
 }: {
@@ -381,6 +426,7 @@ function PlanRow({
   onSync: () => void;
   onDelete: () => void;
   onSubscribe: () => void;
+  onAssign: () => void;
   syncing: boolean;
   canCharge: boolean;
 }) {
@@ -398,6 +444,9 @@ function PlanRow({
         <div className="flex shrink-0 flex-wrap gap-1.5">
           <Button type="button" size="sm" variant="secondary" onClick={onEdit}>
             Edit
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={onAssign}>
+            <Layers className="size-3.5" /> Assign
           </Button>
           <Button type="button" size="sm" variant="ghost" disabled={syncing} onClick={onSync}>
             <RefreshCw className="size-3.5" /> Sync
@@ -438,11 +487,13 @@ function PlanRow({
 
 function PlanEditorDialog({
   draft,
+  baseline,
   onChange,
   onSave,
   saving,
 }: {
   draft: Draft | null;
+  baseline: string[] | null;
   onChange: (d: Draft | null) => void;
   onSave: () => void;
   saving: boolean;
@@ -548,6 +599,7 @@ function PlanEditorDialog({
               ))}
             </div>
           </div>
+          <ModuleInclusionPreview selected={draft.modules} baseline={baseline} />
         </div>
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => onChange(null)}>

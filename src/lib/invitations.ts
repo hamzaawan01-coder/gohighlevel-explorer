@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { requireSession } from "@/lib/session-ready";
+
 
 export type Invitation = {
   id: string;
@@ -100,10 +102,13 @@ export async function acceptInvitation(token: string) {
 }
 
 export async function fetchAgencyMembers(agencyId: string): Promise<AgencyMember[]> {
+  // Signed-in-only SECURITY DEFINER function: never call it before auth is ready.
+  await requireSession();
   const { data, error } = await supabase.rpc("list_agency_members", { _agency: agencyId });
   if (error) throw error;
   return (data ?? []) as AgencyMember[];
 }
+
 
 export function buildInviteUrl(token: string): string {
   if (typeof window === "undefined") return `/invite/${token}`;

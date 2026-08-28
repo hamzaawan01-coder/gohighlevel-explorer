@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useTenancy, fetchMySubAccounts } from "@/lib/tenancy";
 import { fetchAgencyMembers } from "@/lib/invitations";
+import { useSessionReady } from "@/lib/session-ready";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import {
   fetchConversations,
@@ -86,6 +87,7 @@ function ConversationsPage() {
     queryFn: () => fetchContacts(subId!),
     enabled: !!subId,
   });
+  const { ready: sessionReady } = useSessionReady();
   const subAccountsQ = useQuery({
     queryKey: ["my-sub-accounts"],
     queryFn: fetchMySubAccounts,
@@ -94,7 +96,7 @@ function ConversationsPage() {
   const membersQ = useQuery({
     queryKey: ["agency-members", agencyId],
     queryFn: () => fetchAgencyMembers(agencyId!),
-    enabled: !!agencyId,
+    enabled: !!agencyId && sessionReady,
   });
   const members = useMemo(() => {
     const seen = new Map<string, string>();

@@ -23,6 +23,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { useTenancy } from "@/lib/tenancy";
 import { fetchReports } from "@/lib/reports";
+import { useSessionReady } from "@/lib/session-ready";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
@@ -36,9 +37,11 @@ export const Route = createFileRoute("/_authenticated/reports")({
 
 function ReportsPage() {
   const subId = useTenancy((s) => s.currentSubAccountId);
+  const { ready: sessionReady } = useSessionReady();
   const { data, isLoading } = useQuery({
     queryKey: ["reports", subId],
-    enabled: !!subId,
+    // Reports resolve teammate names through a signed-in-only function.
+    enabled: !!subId && sessionReady,
     queryFn: () => fetchReports(subId!),
   });
 
@@ -51,7 +54,13 @@ function ReportsPage() {
       />
       <PageBody>
         <div className="space-y-6">
-          {isLoading || !data ? (
+          {!sessionReady ? (
+            <>
+              <p className="text-xs text-muted-foreground">Checking your session…</p>
+              <KpiSkeleton />
+              <CardGridSkeleton count={2} />
+            </>
+          ) : isLoading || !data ? (
             <>
               <KpiSkeleton />
               <CardGridSkeleton count={2} />

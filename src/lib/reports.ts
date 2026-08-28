@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { waitForSession } from "@/lib/session-ready";
+
 
 export type ReportData = {
   winRate: number;
@@ -25,8 +27,9 @@ function weekKey(d: Date): string {
  */
 async function fetchMemberNames(subAccountId: string): Promise<Map<string, string>> {
   const names = new Map<string, string>();
-  const { data: session } = await supabase.auth.getSession();
-  if (!session.session) return names;
+  const signedIn = await waitForSession();
+  if (!signedIn) return names;
+
 
   const { data: sub } = await supabase
     .from("sub_accounts")
