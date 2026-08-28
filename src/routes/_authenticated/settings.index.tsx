@@ -83,6 +83,13 @@ const GROUPS: { label: string; tiles: Tile[] }[] = [
         icon: Webhook,
         module: "integrations",
       },
+      {
+        label: "AI reply assistant",
+        description: "Teach the AI what to say when drafting customer replies.",
+        to: "/settings/ai-assistant",
+        icon: Bot,
+        module: "conversations",
+      },
     ],
   },
   {
