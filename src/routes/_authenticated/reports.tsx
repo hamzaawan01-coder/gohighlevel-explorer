@@ -54,7 +54,7 @@ function ReportsPage() {
           {isLoading || !data ? (
             <>
               <KpiSkeleton />
-              <CardGridSkeleton cards={2} />
+              <CardGridSkeleton count={2} />
             </>
           ) : (
             <>
