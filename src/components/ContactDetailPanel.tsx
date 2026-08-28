@@ -51,6 +51,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { initials, stringHue } from "@/lib/initials";
+import { MetaLeadSourcePanel } from "@/components/MetaLeadSourcePanel";
 
 export function ContactDetailPanel({
   contactId,
