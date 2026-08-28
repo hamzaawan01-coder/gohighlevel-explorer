@@ -31,6 +31,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedConversationsRouteImport } from './routes/_authenticated/conversations'
 import { Route as AuthenticatedCallsRouteImport } from './routes/_authenticated/calls'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedAppointmentLogRouteImport } from './routes/_authenticated/appointment-log'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
 import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
@@ -50,6 +51,7 @@ import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authentic
 import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta.data-deletion'
 import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
+import { Route as ApiPublicHooksAppointmentsRouteImport } from './routes/api/public/hooks/appointments'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
 import { Route as ApiPublicTwilioTokenWhatsappRouteImport } from './routes/api/public/twilio.$token.whatsapp'
@@ -64,6 +66,7 @@ import { Route as ApiPublicOauthMetaCallbackRouteImport } from './routes/api/pub
 import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/api/public/oauth.google-ads.callback'
 import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
 import { Route as ApiPublicHooksMetaTokenRouteImport } from './routes/api/public/hooks/meta.$token'
+import { Route as ApiPublicBookingRescheduleTokenRouteImport } from './routes/api/public/booking.reschedule.$token'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -177,6 +180,12 @@ const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAppointmentLogRoute =
+  AuthenticatedAppointmentLogRouteImport.update({
+    id: '/appointment-log',
+    path: '/appointment-log',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsIndexRoute =
   AuthenticatedSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -288,6 +297,12 @@ const ApiPublicHooksSyncGoogleAdsRoute =
     path: '/api/public/hooks/sync-google-ads',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAppointmentsRoute =
+  ApiPublicHooksAppointmentsRouteImport.update({
+    id: '/api/public/hooks/appointments',
+    path: '/api/public/hooks/appointments',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicFormsSlugRoute = ApiPublicFormsSlugRouteImport.update({
   id: '/api/public/forms/$slug',
   path: '/api/public/forms/$slug',
@@ -368,6 +383,12 @@ const ApiPublicHooksMetaTokenRoute = ApiPublicHooksMetaTokenRouteImport.update({
   path: '/api/public/hooks/meta/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBookingRescheduleTokenRoute =
+  ApiPublicBookingRescheduleTokenRouteImport.update({
+    id: '/api/public/booking/reschedule/$token',
+    path: '/api/public/booking/reschedule/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -375,6 +396,7 @@ export interface FileRoutesByFullPath {
   '/data-deletion': typeof DataDeletionRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/appointment-log': typeof AuthenticatedAppointmentLogRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
@@ -409,9 +431,11 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
+  '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -431,6 +455,7 @@ export interface FileRoutesByTo {
   '/data-deletion': typeof DataDeletionRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/appointment-log': typeof AuthenticatedAppointmentLogRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
@@ -465,9 +490,11 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
+  '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -489,6 +516,7 @@ export interface FileRoutesById {
   '/data-deletion': typeof DataDeletionRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/_authenticated/appointment-log': typeof AuthenticatedAppointmentLogRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/calls': typeof AuthenticatedCallsRoute
   '/_authenticated/conversations': typeof AuthenticatedConversationsRoute
@@ -523,9 +551,11 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
+  '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -547,6 +577,7 @@ export interface FileRouteTypes {
     | '/data-deletion'
     | '/privacy'
     | '/terms'
+    | '/appointment-log'
     | '/calendar'
     | '/calls'
     | '/conversations'
@@ -581,9 +612,11 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
+    | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
+    | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
@@ -603,6 +636,7 @@ export interface FileRouteTypes {
     | '/data-deletion'
     | '/privacy'
     | '/terms'
+    | '/appointment-log'
     | '/calendar'
     | '/calls'
     | '/conversations'
@@ -637,9 +671,11 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
+    | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
+    | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
@@ -660,6 +696,7 @@ export interface FileRouteTypes {
     | '/data-deletion'
     | '/privacy'
     | '/terms'
+    | '/_authenticated/appointment-log'
     | '/_authenticated/calendar'
     | '/_authenticated/calls'
     | '/_authenticated/conversations'
@@ -694,9 +731,11 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
+    | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
+    | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
@@ -724,9 +763,11 @@ export interface RootRouteChildren {
   ApiPublicProcessOutboundRoute: typeof ApiPublicProcessOutboundRoute
   ApiPublicBookingSlugRoute: typeof ApiPublicBookingSlugRoute
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
+  ApiPublicHooksAppointmentsRoute: typeof ApiPublicHooksAppointmentsRoute
   ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
   ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
+  ApiPublicBookingRescheduleTokenRoute: typeof ApiPublicBookingRescheduleTokenRoute
   ApiPublicHooksMetaTokenRoute: typeof ApiPublicHooksMetaTokenRoute
   ApiPublicHooksWordpressTokenRoute: typeof ApiPublicHooksWordpressTokenRoute
   ApiPublicOauthGoogleAdsCallbackRoute: typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -897,6 +938,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCalendarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/appointment-log': {
+      id: '/_authenticated/appointment-log'
+      path: '/appointment-log'
+      fullPath: '/appointment-log'
+      preLoaderRoute: typeof AuthenticatedAppointmentLogRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/': {
       id: '/_authenticated/settings/'
       path: '/settings'
@@ -1030,6 +1078,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncGoogleAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/appointments': {
+      id: '/api/public/hooks/appointments'
+      path: '/api/public/hooks/appointments'
+      fullPath: '/api/public/hooks/appointments'
+      preLoaderRoute: typeof ApiPublicHooksAppointmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/forms/$slug': {
       id: '/api/public/forms/$slug'
       path: '/api/public/forms/$slug'
@@ -1128,10 +1183,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksMetaTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/booking/reschedule/$token': {
+      id: '/api/public/booking/reschedule/$token'
+      path: '/api/public/booking/reschedule/$token'
+      fullPath: '/api/public/booking/reschedule/$token'
+      preLoaderRoute: typeof ApiPublicBookingRescheduleTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppointmentLogRoute: typeof AuthenticatedAppointmentLogRoute
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedCallsRoute: typeof AuthenticatedCallsRoute
   AuthenticatedConversationsRoute: typeof AuthenticatedConversationsRoute
@@ -1163,6 +1226,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppointmentLogRoute: AuthenticatedAppointmentLogRoute,
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedCallsRoute: AuthenticatedCallsRoute,
   AuthenticatedConversationsRoute: AuthenticatedConversationsRoute,
@@ -1211,9 +1275,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicProcessOutboundRoute: ApiPublicProcessOutboundRoute,
   ApiPublicBookingSlugRoute: ApiPublicBookingSlugRoute,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
+  ApiPublicHooksAppointmentsRoute: ApiPublicHooksAppointmentsRoute,
   ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
   ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,
+  ApiPublicBookingRescheduleTokenRoute: ApiPublicBookingRescheduleTokenRoute,
   ApiPublicHooksMetaTokenRoute: ApiPublicHooksMetaTokenRoute,
   ApiPublicHooksWordpressTokenRoute: ApiPublicHooksWordpressTokenRoute,
   ApiPublicOauthGoogleAdsCallbackRoute: ApiPublicOauthGoogleAdsCallbackRoute,

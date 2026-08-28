@@ -16,6 +16,7 @@ import {
   updateConversation,
   markConversationRead,
   isUnread,
+  filterConversations,
   CONVERSATION_STATUSES,
   type Conversation,
   type ConversationStatus,
@@ -110,16 +111,12 @@ function ConversationsPage() {
 
   const filteredConvos = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return convos
-      .filter((c) => filter === "all" || c.channel === filter)
-      .filter((c) => statusFilter === "all" || (c.status ?? "open") === statusFilter)
-      .filter((c) =>
-        assignFilter === "all"
-          ? true
-          : assignFilter === "mine"
-          ? c.assigned_to_user_id === userId
-          : !c.assigned_to_user_id,
-      )
+    return filterConversations(convos, {
+      channel: filter,
+      status: statusFilter,
+      assignee: assignFilter,
+      currentUserId: userId,
+    })
       .filter((c) => {
         if (!q) return true;
         const contact = contactById.get(c.contact_id);

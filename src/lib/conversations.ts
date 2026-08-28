@@ -42,6 +42,27 @@ export function isUnread(c: Conversation): boolean {
   return new Date(c.last_message_at).getTime() > new Date(c.last_read_at).getTime();
 }
 
+export type ConversationFilters = {
+  channel?: "all" | MessageChannel;
+  status?: "all" | ConversationStatus;
+  assignee?: "all" | "mine" | "unassigned";
+  currentUserId?: string | null;
+};
+
+/** Pure inbox filtering, shared by the UI and unit tests. */
+export function filterConversations(
+  rows: Conversation[],
+  f: ConversationFilters,
+): Conversation[] {
+  return rows.filter((c) => {
+    if (f.channel && f.channel !== "all" && c.channel !== f.channel) return false;
+    if (f.status && f.status !== "all" && (c.status ?? "open") !== f.status) return false;
+    if (f.assignee === "mine" && c.assigned_to_user_id !== f.currentUserId) return false;
+    if (f.assignee === "unassigned" && c.assigned_to_user_id) return false;
+    return true;
+  });
+}
+
 export async function updateConversation(
   id: string,
   patch: Partial<

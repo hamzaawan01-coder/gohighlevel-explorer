@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Users,
   Calendar,
+  ScrollText,
   MessageSquare,
   Workflow,
   Settings,
@@ -64,6 +65,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Conversations", icon: MessageSquare, to: "/conversations", module: "conversations", keywords: "sms whatsapp chat" },
       { label: "Calls", icon: PhoneCall, to: "/calls", module: "calls", keywords: "phone voice history" },
       { label: "Calendar", icon: Calendar, to: "/calendar", module: "calendar", keywords: "appointments bookings" },
+      { label: "Appointment log", icon: ScrollText, to: "/appointment-log", module: "calendar", keywords: "audit reschedule reminders history" },
     ],
   },
   {

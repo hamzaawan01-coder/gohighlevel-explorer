@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Bell, BellOff, AlertTriangle, Check, X } from "lucide-react";
+import { useState } from "react";
+import { CalendarClock, Bell, BellOff, AlertTriangle, Check, X, CalendarSync } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -8,14 +9,17 @@ import {
   fetchRemindersForEvents,
   setAppointmentStatus,
   offsetLabel,
+  reminderChannelLabel,
   type Appointment,
   type ReminderRow,
 } from "@/lib/appointments";
 import { ListSkeleton, EmptyState, ErrorState } from "@/components/ui/states";
+import { RescheduleDialog } from "@/components/RescheduleDialog";
 
 /** Upcoming booked appointments with per-appointment reminder status. */
 export function UpcomingAppointments({ subAccountId }: { subAccountId: string | null }) {
   const qc = useQueryClient();
+  const [rescheduling, setRescheduling] = useState<Appointment | null>(null);
 
   const apptQ = useQuery({
     queryKey: ["appointments", subAccountId],
@@ -78,6 +82,7 @@ export function UpcomingAppointments({ subAccountId }: { subAccountId: string | 
   }
 
   return (
+    <>
     <ul className="divide-y divide-border">
       {appointments.map((a) => {
         const reminders = byEvent.get(a.id) ?? [];
@@ -102,6 +107,17 @@ export function UpcomingAppointments({ subAccountId }: { subAccountId: string | 
               </div>
               {!cancelled && (
                 <div className="flex items-center gap-0.5">
+                  {a.reschedule_token && (
+                    <button
+                      type="button"
+                      title="Reschedule"
+                      aria-label={`Reschedule ${a.title}`}
+                      onClick={() => setRescheduling(a)}
+                      className="size-7 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <CalendarSync className="size-3.5" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     title="Mark completed"
@@ -130,6 +146,11 @@ export function UpcomingAppointments({ subAccountId }: { subAccountId: string | 
               )}
             </div>
 
+            {a.rescheduled_at && (
+              <p className="text-[10px] text-muted-foreground">
+                Rescheduled{a.original_starts_at ? ` from ${new Date(a.original_starts_at).toLocaleString()}` : ""}
+              </p>
+            )}
             {(a.attendee_email || a.attendee_phone) && (
               <p className="text-[10px] text-muted-foreground truncate">
                 {[a.attendee_email, a.attendee_phone].filter(Boolean).join(" · ")}
@@ -157,7 +178,8 @@ export function UpcomingAppointments({ subAccountId }: { subAccountId: string | 
                     }`}
                   >
                     {r.status === "failed" ? <AlertTriangle className="size-2.5" /> : <Bell className="size-2.5" />}
-                    {offsetLabel(r.offset_minutes)} · {r.channel} · {r.status}
+                    {offsetLabel(r.offset_minutes)} · {reminderChannelLabel(r.channel)} ·{" "}
+                    {r.delivery_status ?? r.status}
                   </span>
                 ))}
               </div>
@@ -166,5 +188,10 @@ export function UpcomingAppointments({ subAccountId }: { subAccountId: string | 
         );
       })}
     </ul>
+    <RescheduleDialog
+      appointment={rescheduling}
+      onOpenChange={(open) => { if (!open) setRescheduling(null); }}
+    />
+    </>
   );
 }
