@@ -56,6 +56,24 @@ export function MetaLeadSourcePanel({
           </div>
         ))}
       </dl>
+      {Object.keys(data?.leadFields ?? {}).length > 0 && (
+        <div className="border-t border-border">
+          <div className="px-4 py-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            Form answers
+          </div>
+          <dl className="divide-y divide-border">
+            {Object.entries(data!.leadFields).map(([k, v]) => (
+              <div key={k} className="px-4 py-2.5 grid grid-cols-[160px_1fr] gap-4 text-xs">
+                <dt className="text-muted-foreground break-words">
+                  {k.replace(/_/g, " ").replace(/\?$/, "?")}
+                </dt>
+                <dd className="min-w-0 break-words text-foreground">{String(v)}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+
       <details className="px-4 py-2.5 border-t border-border">
         <summary className="cursor-pointer text-[11px] text-muted-foreground">
           Webhook events · {events.length}
