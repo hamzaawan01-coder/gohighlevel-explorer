@@ -131,7 +131,8 @@ function ReportsPage() {
             </>
           )}
         </div>
-      </div>
+      </PageBody>
+
     </AppShell>
   );
 }
