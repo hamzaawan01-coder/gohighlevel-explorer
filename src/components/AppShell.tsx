@@ -197,7 +197,7 @@ function useGlobalShortcuts() {
       c: "/contacts",
       t: "/tasks",
       i: "/inbox",
-      s: "/settings/integrations",
+      s: "/settings",
     };
     function isTyping(target: EventTarget | null) {
       const el = target as HTMLElement | null;
