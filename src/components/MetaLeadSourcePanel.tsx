@@ -105,6 +105,18 @@ const TIMELINE_KINDS: Array<{ key: TimelineKind; label: string }> = [
   { key: "webhook_error", label: "Webhooks · failed" },
 ];
 
+const COLUMN_KEYS = COLUMN_LABELS.map((c) => c.key);
+
+const DEFAULT_COLUMNS: Record<ColumnKey, boolean> = {
+  contact: true,
+  answers: true,
+  attachments: true,
+  metadata: true,
+  raw: false,
+};
+
+const DEFAULT_TIMELINE_KINDS: TimelineKind[] = TIMELINE_KINDS.map((k) => k.key);
+
 /** Collects date-ish values from raw Meta fields for the timeline. */
 function timelineFromFields(fields: Record<string, string>) {
   const out: Array<{ label: string; at: Date; kind: TimelineKind }> = [];
