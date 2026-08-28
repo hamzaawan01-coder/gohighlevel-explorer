@@ -20,6 +20,12 @@ export type Invoice = {
   total: number;
   notes: string | null;
   paid_at: string | null;
+  amount_paid: number;
+  last_sent_at: string | null;
+  stripe_payment_link_url: string | null;
+  reminders_enabled: boolean;
+  reminder_interval_days: number;
+  max_reminders: number;
   created_at: string;
   updated_at: string;
 };
@@ -109,7 +115,17 @@ export async function updateInvoice(
   patch: Partial<
     Pick<
       Invoice,
-      "status" | "contact_id" | "deal_id" | "currency" | "issue_date" | "due_date" | "tax_rate" | "notes"
+      | "status"
+      | "contact_id"
+      | "deal_id"
+      | "currency"
+      | "issue_date"
+      | "due_date"
+      | "tax_rate"
+      | "notes"
+      | "reminders_enabled"
+      | "reminder_interval_days"
+      | "max_reminders"
     >
   >,
 ): Promise<void> {
