@@ -11,9 +11,11 @@ const esc = (s: string) => s.replace(/[%,]/g, " ").trim();
 export async function globalSearch(
   subAccountId: string,
   query: string,
+  opts?: { kinds?: SearchHit["kind"][] },
 ): Promise<SearchHit[]> {
   const q = esc(query);
   if (!q) return [];
+  const allow = (k: SearchHit["kind"]) => !opts?.kinds || opts.kinds.includes(k);
   const like = `%${q}%`;
 
   const [contacts, deals, tasks, events] = await Promise.all([
@@ -46,6 +48,7 @@ export async function globalSearch(
   ]);
 
   const hits: SearchHit[] = [];
+  void allow;
   for (const c of contacts.data ?? []) {
     const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || c.email || "Untitled";
     hits.push({ kind: "contact", id: c.id, title: name, subtitle: c.company ?? c.email });
@@ -69,5 +72,5 @@ export async function globalSearch(
       subtitle: e.starts_at ? new Date(e.starts_at).toLocaleString() : null,
     });
   }
-  return hits;
+  return hits.filter((h) => allow(h.kind));
 }
