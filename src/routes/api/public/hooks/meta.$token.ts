@@ -139,30 +139,54 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
               const first = fields["first_name"] ?? (fields["full_name"] ? String(fields["full_name"]).split(" ")[0] : null);
               const last = fields["last_name"] ?? (fields["full_name"] ? String(fields["full_name"]).split(" ").slice(1).join(" ") : null);
 
-              const { data: upserted } = await (supabaseAdmin as any).from("contacts").upsert(
-                {
-                  sub_account_id: conn.sub_account_id,
-                  meta_lead_id: lead.id,
-                  first_name: first,
-                  last_name: last,
-                  email,
-                  phone,
-                  lead_source: "meta_lead_ads",
-                  lifecycle_stage: "lead",
-                },
-                { onConflict: "sub_account_id,meta_lead_id" },
-              ).select("id").single();
+              // Manual upsert: the (sub_account_id, meta_lead_id) unique index is
+              // partial, so PostgREST on_conflict cannot be used here.
+              const { data: existingRows } = await (supabaseAdmin as any)
+                .from("contacts").select("id")
+                .eq("sub_account_id", conn.sub_account_id).eq("meta_lead_id", lead.id).limit(1);
+              let contactId = (existingRows ?? [])[0]?.id as string | undefined;
+
+              const patch = {
+                first_name: first,
+                last_name: last,
+                email,
+                phone,
+                lead_source: "meta_lead_ads",
+                lifecycle_stage: "lead",
+              };
+
+              if (contactId) {
+                await (supabaseAdmin as any).from("contacts").update(patch).eq("id", contactId);
+              } else {
+                const { data: created, error: cErr } = await (supabaseAdmin as any)
+                  .from("contacts")
+                  .insert({
+                    ...patch,
+                    sub_account_id: conn.sub_account_id,
+                    owner_id: conn.created_by,
+                    meta_lead_id: lead.id,
+                    tags: [],
+                  })
+                  .select("id")
+                  .single();
+                if (cErr) {
+                  console.error("meta leadgen contact insert failed", cErr);
+                  continue;
+                }
+                contactId = created.id as string;
+              }
 
               const name = [first, last].filter(Boolean).join(" ").trim();
               await createOpportunityForLead(supabaseAdmin as any, {
                 subAccountId: conn.sub_account_id,
-                contactId: (upserted?.id as string | undefined) ?? null,
+                contactId: contactId ?? null,
                 title: name || email || phone || "Facebook lead",
                 source: "Facebook Lead Ad",
               });
             } catch (e) {
               console.error("meta leadgen fetch failed", e);
             }
+
 
           }
         }
