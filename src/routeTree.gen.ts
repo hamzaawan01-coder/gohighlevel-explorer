@@ -36,6 +36,7 @@ import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
+import { Route as AuthenticatedSettingsAiAssistantRouteImport } from './routes/_authenticated/settings.ai-assistant'
 import { Route as AuthenticatedSettingsAppReviewRouteImport } from './routes/_authenticated/settings.app-review'
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings.appearance'
 import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
@@ -206,6 +207,12 @@ const AuthenticatedSettingsIndexRoute =
   AuthenticatedSettingsIndexRouteImport.update({
     id: '/settings/',
     path: '/settings/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsAiAssistantRoute =
+  AuthenticatedSettingsAiAssistantRouteImport.update({
+    id: '/settings/ai-assistant',
+    path: '/settings/ai-assistant',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSettingsAppReviewRoute =
@@ -415,6 +422,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantRoute
   '/settings/app-review': typeof AuthenticatedSettingsAppReviewRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
@@ -474,6 +482,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantRoute
   '/settings/app-review': typeof AuthenticatedSettingsAppReviewRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
@@ -535,6 +544,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/_authenticated/deals/$id': typeof AuthenticatedDealsIdRoute
+  '/_authenticated/settings/ai-assistant': typeof AuthenticatedSettingsAiAssistantRoute
   '/_authenticated/settings/app-review': typeof AuthenticatedSettingsAppReviewRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/booking': typeof AuthenticatedSettingsBookingRoute
@@ -596,6 +606,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/contacts/$id'
     | '/deals/$id'
+    | '/settings/ai-assistant'
     | '/settings/app-review'
     | '/settings/appearance'
     | '/settings/booking'
@@ -655,6 +666,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/contacts/$id'
     | '/deals/$id'
+    | '/settings/ai-assistant'
     | '/settings/app-review'
     | '/settings/appearance'
     | '/settings/booking'
@@ -715,6 +727,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_authenticated/contacts/$id'
     | '/_authenticated/deals/$id'
+    | '/_authenticated/settings/ai-assistant'
     | '/_authenticated/settings/app-review'
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/booking'
@@ -973,6 +986,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/ai-assistant': {
+      id: '/_authenticated/settings/ai-assistant'
+      path: '/settings/ai-assistant'
+      fullPath: '/settings/ai-assistant'
+      preLoaderRoute: typeof AuthenticatedSettingsAiAssistantRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/app-review': {
       id: '/_authenticated/settings/app-review'
       path: '/settings/app-review'
@@ -1210,6 +1230,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
   AuthenticatedContactsIdRoute: typeof AuthenticatedContactsIdRoute
   AuthenticatedDealsIdRoute: typeof AuthenticatedDealsIdRoute
+  AuthenticatedSettingsAiAssistantRoute: typeof AuthenticatedSettingsAiAssistantRoute
   AuthenticatedSettingsAppReviewRoute: typeof AuthenticatedSettingsAppReviewRoute
   AuthenticatedSettingsAppearanceRoute: typeof AuthenticatedSettingsAppearanceRoute
   AuthenticatedSettingsBookingRoute: typeof AuthenticatedSettingsBookingRoute
@@ -1242,6 +1263,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
   AuthenticatedContactsIdRoute: AuthenticatedContactsIdRoute,
   AuthenticatedDealsIdRoute: AuthenticatedDealsIdRoute,
+  AuthenticatedSettingsAiAssistantRoute: AuthenticatedSettingsAiAssistantRoute,
   AuthenticatedSettingsAppReviewRoute: AuthenticatedSettingsAppReviewRoute,
   AuthenticatedSettingsAppearanceRoute: AuthenticatedSettingsAppearanceRoute,
   AuthenticatedSettingsBookingRoute: AuthenticatedSettingsBookingRoute,

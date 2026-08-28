@@ -11,6 +11,7 @@ import {
   ToggleLeft,
   Compass,
   Building2,
+  Bot,
 } from "lucide-react";
 import { PageHeader, PageBody } from "@/components/PageHeader";
 import { isModuleEnabled, useModules } from "@/lib/modules";
@@ -82,6 +83,13 @@ const GROUPS: { label: string; tiles: Tile[] }[] = [
         to: "/settings/wordpress",
         icon: Webhook,
         module: "integrations",
+      },
+      {
+        label: "AI reply assistant",
+        description: "Teach the AI what to say when drafting customer replies.",
+        to: "/settings/ai-assistant",
+        icon: Bot,
+        module: "conversations",
       },
     ],
   },

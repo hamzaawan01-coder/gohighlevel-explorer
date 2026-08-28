@@ -235,6 +235,72 @@ export type Database = {
           },
         ]
       }
+      ai_assistant_settings: {
+        Row: {
+          booking_page_id: string | null
+          business_info: string
+          created_at: string
+          enabled: boolean
+          extra_instructions: string
+          id: string
+          offer_booking_link: boolean
+          signature: string
+          sub_account_id: string
+          suggest_escalation: boolean
+          tone: string
+          updated_at: string
+          use_contact_context: boolean
+          use_deal_context: boolean
+        }
+        Insert: {
+          booking_page_id?: string | null
+          business_info?: string
+          created_at?: string
+          enabled?: boolean
+          extra_instructions?: string
+          id?: string
+          offer_booking_link?: boolean
+          signature?: string
+          sub_account_id: string
+          suggest_escalation?: boolean
+          tone?: string
+          updated_at?: string
+          use_contact_context?: boolean
+          use_deal_context?: boolean
+        }
+        Update: {
+          booking_page_id?: string | null
+          business_info?: string
+          created_at?: string
+          enabled?: boolean
+          extra_instructions?: string
+          id?: string
+          offer_booking_link?: boolean
+          signature?: string
+          sub_account_id?: string
+          suggest_escalation?: boolean
+          tone?: string
+          updated_at?: string
+          use_contact_context?: boolean
+          use_deal_context?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_assistant_settings_booking_page_id_fkey"
+            columns: ["booking_page_id"]
+            isOneToOne: false
+            referencedRelation: "booking_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_assistant_settings_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: true
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_audit: {
         Row: {
           action: string

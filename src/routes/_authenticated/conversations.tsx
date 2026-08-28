@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Send, MessageSquare, Search, Inbox, ArrowLeft, Star, UserCheck } from "lucide-react";
+import { Loader2, Send, MessageSquare, Search, Inbox, ArrowLeft, Star, UserCheck, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useTenancy, fetchMySubAccounts } from "@/lib/tenancy";
@@ -23,6 +23,7 @@ import {
   type MessageChannel,
 } from "@/lib/conversations";
 import { sendTwilioSms, sendTwilioWhatsapp } from "@/lib/twilio.functions";
+import { suggestReply } from "@/lib/ai-assistant.functions";
 import { CHANNELS, CHANNEL_BY_KEY } from "@/lib/channels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -268,6 +269,27 @@ function ConversationsPage() {
       void supabase.removeChannel(channel);
     };
   }, [subId, qc]);
+
+  const suggestReplyFn = useServerFn(suggestReply);
+  const draftMut = useMutation({
+    mutationFn: async () => {
+      if (!selectedConvoId) throw new Error("Open a conversation first");
+      return suggestReplyFn({
+        data: { conversationId: selectedConvoId, origin: window.location.origin },
+      });
+    },
+    onSuccess: (res) => {
+      setBody(res.draft);
+      if (res.escalate) {
+        toast.warning("Suggested handing this to a human", {
+          description: res.escalation_reason || undefined,
+        });
+      } else {
+        toast.success("Draft ready — review before sending");
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const isRealChannel = composeChannel !== "note";
   const placeholder =
@@ -683,14 +705,28 @@ function ConversationsPage() {
                     }}
                     className="flex-1 resize-none"
                   />
-                  <Button
-                    onClick={() => sendMut.mutate()}
-                    disabled={!body.trim() || sendMut.isPending}
-                    className="self-end"
-                  >
-                    <Send className="size-3.5 mr-1" />
-                    {composeChannel === "note" ? "Post" : "Send"}
-                  </Button>
+                  <div className="flex flex-col gap-2 self-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => draftMut.mutate()}
+                      disabled={draftMut.isPending || !selectedConvoId}
+                      title="Draft a reply with AI — nothing sends automatically"
+                    >
+                      {draftMut.isPending ? (
+                        <Loader2 className="size-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <Bot className="size-3.5 mr-1" />
+                      )}
+                      AI draft
+                    </Button>
+                    <Button
+                      onClick={() => sendMut.mutate()}
+                      disabled={!body.trim() || sendMut.isPending}
+                    >
+                      <Send className="size-3.5 mr-1" />
+                      {composeChannel === "note" ? "Post" : "Send"}
+                    </Button>
+                  </div>
                 </div>
                 {isRealChannel && (
                   <p className="text-[10px] text-muted-foreground">
