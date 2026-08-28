@@ -408,10 +408,10 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 size="sm"
                 variant="outline"
                 className="flex-1 sm:flex-none"
-                onClick={() => configureWebhooks.mutate()}
+                onClick={() => setConfirmAction("webhooks")}
                 disabled={configureWebhooks.isPending}
               >
-                <Webhook className="size-3.5" />
+                <Webhook className={`size-3.5 ${configureWebhooks.isPending ? "animate-pulse" : ""}`} />
                 {configureWebhooks.isPending ? "Resyncing…" : "Resync webhooks"}
               </Button>
               <Button
@@ -421,7 +421,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 onClick={() => connect.mutate()}
                 disabled={connect.isPending}
               >
-                <Link2 className="size-3.5" />
+                <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
                 {connect.isPending ? "Opening…" : "Reconnect"}
               </Button>
               {pages.length > 0 && (
@@ -430,16 +430,76 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                   variant="outline"
                   className="flex-1 sm:flex-none"
                   disabled={enableAll.isPending}
-                  onClick={() => enableAll.mutate()}
+                  onClick={() => setConfirmAction("enableAll")}
                 >
                   <CheckCircle2 className="size-3.5" />
                   {enableAll.isPending ? "Enabling…" : "Enable everything"}
                 </Button>
               )}
             </div>
+            {/* Freshness */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Clock className="size-3" />
+                Counts checked{" "}
+                <span className={isStale(stamps.countsAt) ? "font-medium text-amber-600" : "font-medium text-foreground"}>
+                  {describeAge(stamps.countsAt)}
+                </span>
+                {stamps.countsAt && <>({new Date(stamps.countsAt).toLocaleTimeString()})</>}
+              </span>
+              <span className="flex items-center gap-1">
+                <Webhook className="size-3" />
+                Webhooks synced{" "}
+                <span className={isStale(stamps.webhooksAt, 24 * 60) ? "font-medium text-amber-600" : "font-medium text-foreground"}>
+                  {describeAge(stamps.webhooksAt)}
+                </span>
+              </span>
+              {isStale(stamps.countsAt) && (
+                <span>Data may be out of date — click Refresh counts.</span>
+              )}
+            </div>
           </>
         )}
       </div>
+
+      {/* Confirmation prompts for bulk / remote-changing actions */}
+      <AlertDialog open={confirmAction !== null} onOpenChange={(o) => !o && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === "enableAll" ? "Enable everything on all pages?" : "Resync webhooks with Meta?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === "enableAll" ? (
+                <>
+                  This subscribes all {pages.length} page{pages.length === 1 ? "" : "s"} to webhooks and
+                  turns on Messenger, Instagram and Lead Ads routing. You can undo it from the toast
+                  right after it finishes.
+                </>
+              ) : (
+                <>
+                  This re-registers Page and Instagram webhook subscriptions with Meta. It doesn't
+                  delete data, but incoming message routing may pause for a few seconds. This action
+                  can't be undone automatically — just resync again if needed.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmAction === "enableAll") enableAll.mutate();
+                else configureWebhooks.mutate();
+                setConfirmAction(null);
+              }}
+            >
+              {confirmAction === "enableAll" ? "Enable everything" : "Resync webhooks"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {!conn && data?.setup && <MetaSetupGuide setup={data.setup} />}
 
