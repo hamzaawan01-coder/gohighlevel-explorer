@@ -132,6 +132,7 @@ function TasksPage() {
       }
     >
       <div className="h-full flex flex-col">
+        <h1 className="sr-only">Tasks</h1>
         <div className="px-6 py-4 border-b border-border flex items-center gap-1.5 flex-wrap">
           {STATUS_FILTERS.map((f) => (
             <button
@@ -247,8 +248,12 @@ function TaskRow({
   const overdue = task.due_at && new Date(task.due_at) < new Date() && !done && !cancelled;
 
   return (
-    <li className="px-6 py-3 flex items-center gap-4 hover:bg-secondary/40 transition-colors">
-      <button onClick={onToggle} className="text-muted-foreground hover:text-foreground shrink-0">
+    <li className="px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3 sm:gap-4 hover:bg-secondary/40 transition-colors">
+      <button
+        onClick={onToggle}
+        aria-label={done ? "Mark task as not done" : "Mark task as done"}
+        className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0"
+      >
         {done ? <CheckCircle2 className="size-4 text-accent" /> : <Circle className="size-4" />}
       </button>
       <div className="flex-1 min-w-0">
@@ -276,14 +281,14 @@ function TaskRow({
       </div>
       <span
         className={
-          "text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded " +
+          "shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded " +
           PRIORITY_CLASS[task.priority]
         }
       >
         {task.priority}
       </span>
       <Select value={task.status} onValueChange={(v) => onStatus(v as TaskStatus)}>
-        <SelectTrigger className="h-7 w-32 text-xs">
+        <SelectTrigger aria-label="Task status" className="h-7 w-32 text-xs shrink-0">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -296,7 +301,8 @@ function TaskRow({
       </Select>
       <button
         onClick={onDelete}
-        className="size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive shrink-0"
+        aria-label={cancelled ? "Restore task" : "Delete task"}
+        className="min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 sm:size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive shrink-0"
         title="Delete"
       >
         {cancelled ? <XCircle className="size-3" /> : <Trash2 className="size-3" />}
@@ -372,7 +378,7 @@ function TaskDialog({
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
               <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>

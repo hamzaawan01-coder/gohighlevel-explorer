@@ -35,6 +35,7 @@ import {
   ChevronDown,
   Loader2,
 } from "lucide-react";
+import { DataTable, type Column } from "@/components/DataTable";
 import { MetaConnectPanel } from "@/components/MetaConnectPanel";
 import { LeadDisplaySettings } from "@/components/LeadDisplaySettings";
 import { useTenancy } from "@/lib/tenancy";
@@ -844,6 +845,18 @@ function SmsPanel({ subId }: { subId: string }) {
 
 /* ---------------- History panel ---------------- */
 
+type OutboundRow = {
+  id: string;
+  created_at: string;
+  channel: string;
+  to_address: string;
+  subject: string | null;
+  body_text: string | null;
+  status: string;
+  attempts: number;
+  error: string | null;
+};
+
 function HistoryPanel({ subId }: { subId: string }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["outbound", subId], queryFn: () => fetchOutbound(subId) });
@@ -860,88 +873,102 @@ function HistoryPanel({ subId }: { subId: string }) {
 
   const failed = rows.filter((r) => r.status === "failed").length;
 
+  const columns: Column<OutboundRow>[] = [
+    {
+      key: "when",
+      header: "When",
+      cell: (r) => (
+        <span className="block min-w-0 whitespace-nowrap text-xs text-muted-foreground">
+          {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+        </span>
+      ),
+      sortValue: (r) => new Date(r.created_at).getTime(),
+    },
+    {
+      key: "channel",
+      header: "Channel",
+      cell: (r) => <Badge variant="outline">{r.channel}</Badge>,
+      sortValue: (r) => r.channel,
+    },
+    {
+      key: "to",
+      header: "To",
+      cell: (r) => <span className="block min-w-0 truncate">{r.to_address}</span>,
+      sortValue: (r) => r.to_address,
+    },
+    {
+      key: "body",
+      header: "Subject / body",
+      cell: (r) => (
+        <span className="block max-w-[240px] min-w-0 truncate">{r.subject ?? r.body_text ?? "—"}</span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      cell: (r) => (
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge
+              variant={
+                r.status === "sent" ? "secondary" : r.status === "failed" ? "destructive" : "outline"
+              }
+            >
+              {r.status}
+            </Badge>
+            {r.attempts > 0 ? (
+              <span className="text-[10px] text-muted-foreground">×{r.attempts}</span>
+            ) : null}
+          </div>
+          {r.error ? (
+            <div className="mt-1 max-w-[240px] break-words text-[10px] text-destructive" title={r.error}>
+              {r.error}
+            </div>
+          ) : null}
+        </div>
+      ),
+      sortValue: (r) => r.status,
+    },
+    {
+      key: "actions",
+      header: "",
+      locked: true,
+      className: "text-right",
+      cell: (r) =>
+        r.status === "failed" ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+            disabled={retry.isPending}
+            onClick={() => retry.mutate(r.id)}
+            aria-label={`Retry send to ${r.to_address}`}
+          >
+            Retry
+          </Button>
+        ) : null,
+    },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="outline">{rows.length} sends</Badge>
         {failed > 0 ? <Badge variant="destructive">{failed} failed</Badge> : null}
       </div>
-      <div className="overflow-hidden rounded-xl border border-border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-xs text-muted-foreground">
-            <tr>
-              <th className="p-3 text-left font-medium">When</th>
-              <th className="p-3 text-left font-medium">Channel</th>
-              <th className="p-3 text-left font-medium">To</th>
-              <th className="p-3 text-left font-medium">Subject / body</th>
-              <th className="p-3 text-left font-medium">Status</th>
-              <th className="w-[80px] p-3 text-left font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="p-10 text-center text-muted-foreground">
-                  No sends yet. Run a test from the Email or SMS tab to see activity here.
-                </td>
-              </tr>
-            ) : (
-              rows.map((r) => (
-                <tr key={r.id} className="border-t border-border align-top hover:bg-muted/30">
-                  <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
-                  </td>
-                  <td className="p-3">
-                    <Badge variant="outline">{r.channel}</Badge>
-                  </td>
-                  <td className="p-3">{r.to_address}</td>
-                  <td className="max-w-[240px] truncate p-3">
-                    {r.subject ?? r.body_text ?? "—"}
-                  </td>
-                  <td className="p-3">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge
-                        variant={
-                          r.status === "sent"
-                            ? "secondary"
-                            : r.status === "failed"
-                              ? "destructive"
-                              : "outline"
-                        }
-                      >
-                        {r.status}
-                      </Badge>
-                      {r.attempts > 0 ? (
-                        <span className="text-[10px] text-muted-foreground">×{r.attempts}</span>
-                      ) : null}
-                    </div>
-                    {r.error ? (
-                      <div
-                        className="mt-1 max-w-[240px] break-words text-[10px] text-destructive"
-                        title={r.error}
-                      >
-                        {r.error}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td className="p-3 text-right">
-                    {r.status === "failed" ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 px-2 text-xs"
-                        disabled={retry.isPending}
-                        onClick={() => retry.mutate(r.id)}
-                      >
-                        Retry
-                      </Button>
-                    ) : null}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="overflow-x-auto">
+        <DataTable
+          tableKey="send-history"
+          caption="Outbound message history"
+          rows={rows as OutboundRow[]}
+          columns={columns}
+          rowKey={(r) => r.id}
+          isLoading={q.isLoading}
+          error={q.error}
+          onRetry={() => q.refetch()}
+          emptyTitle="No sends yet"
+          emptyDescription="Run a test from the Email or SMS tab to see activity here."
+        />
       </div>
     </div>
   );

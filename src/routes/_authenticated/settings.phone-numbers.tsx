@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader, PageBody } from "@/components/PageHeader";
+import { ConsoleSection, StatusPill } from "@/components/console";
+import { EmptyState, ListSkeleton, ErrorState } from "@/components/ui/states";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,21 +71,18 @@ function PhoneNumbersPage() {
   const subId = useTenancy((s) => s.currentSubAccountId);
   return (
     <AppShell>
-      <div className="max-w-5xl mx-auto p-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <Phone className="size-6" /> Phone Numbers
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Buy and manage Twilio phone numbers for calls, SMS, and WhatsApp — right from your CRM.
-          </p>
-        </div>
+      <PageHeader
+        title="Phone numbers"
+        description="Buy and manage Twilio phone numbers for calls, SMS, and WhatsApp — right from your CRM."
+        crumbs={[{ label: "Settings" }, { label: "Phone numbers" }]}
+      />
+      <PageBody width="full">
         {!subId ? (
-          <EmptyBox>Select a workspace to manage phone numbers.</EmptyBox>
+          <EmptyState icon={Phone} title="Select a workspace" description="Select a workspace to manage phone numbers." />
         ) : (
           <PhonePanels subId={subId} />
         )}
-      </div>
+      </PageBody>
     </AppShell>
   );
 }
@@ -98,11 +98,11 @@ function PhonePanels({ subId }: { subId: string }) {
     queryFn: () => getConn({ data: { subAccountId: subId } }),
   });
 
-  if (connQ.isLoading || !connQ.data) return <EmptyBox>Loading…</EmptyBox>;
-  if (connQ.error) return <EmptyBox>Failed to load: {(connQ.error as Error).message}</EmptyBox>;
+  if (connQ.error) return <ErrorState onRetry={() => connQ.refetch()} error={connQ.error} />;
+  if (connQ.isLoading || !connQ.data) return <ListSkeleton rows={4} />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <ConnectPanel subId={subId} conn={connQ.data} />
       {connQ.data?.connected && (
         <>
@@ -156,12 +156,12 @@ function ConnectPanel({
   if (conn?.connected) {
     return (
       <div className="rounded-md border border-border p-5 space-y-3">
-        <div className="flex items-start justify-between gap-4">
-          <div>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:justify-between">
+          <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <CheckCircle2 className="size-4 text-green-500" /> Twilio connected
+              <CheckCircle2 className="size-4 shrink-0 text-primary" /> Twilio connected
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-xs text-muted-foreground mt-1 truncate">
               {conn.friendlyName} · <span className="font-mono">{conn.accountSid}</span> · {conn.status}
             </div>
           </div>
@@ -450,20 +450,21 @@ function OwnedNumbersPanel({ subId }: { subId: string }) {
 
   return (
     <div className="rounded-md border border-border p-5 space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-medium">Your numbers</h2>
-        <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["twilio-numbers", subId] })}>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
+        <h2 className="truncate text-base font-medium">Your numbers</h2>
+        <Button variant="ghost" size="sm" aria-label="Refresh numbers" onClick={() => qc.invalidateQueries({ queryKey: ["twilio-numbers", subId] })}>
           Refresh
         </Button>
       </div>
 
-      {q.isLoading ? (
-        <div className="text-sm text-muted-foreground">Loading…</div>
+      {q.error ? (
+        <ErrorState compact onRetry={() => q.refetch()} error={q.error} />
+      ) : q.isLoading ? (
+        <ListSkeleton rows={3} />
       ) : (q.data ?? []).length === 0 ? (
-        <div className="text-sm text-muted-foreground">
-          No numbers yet. Search above and buy your first one.
-        </div>
+        <EmptyState compact icon={Phone} title="No numbers yet" description="Search above and buy your first one." />
       ) : (
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -496,13 +497,13 @@ function OwnedNumbersPanel({ subId }: { subId: string }) {
                 </TableCell>
                 <TableCell className="text-right space-x-1">
                   {!n.is_default && (
-                    <Button variant="ghost" size="sm" onClick={() => defaultM.mutate(n.id)}>
+                    <Button variant="ghost" size="sm" aria-label={`Set ${n.phone_number} as default`} onClick={() => defaultM.mutate(n.id)}>
                       <Star className="size-4" />
                     </Button>
                   )}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" aria-label={`Release ${n.phone_number}`}>
                         <Trash2 className="size-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
@@ -527,6 +528,7 @@ function OwnedNumbersPanel({ subId }: { subId: string }) {
             ))}
           </TableBody>
         </Table>
+        </div>
       )}
     </div>
   );

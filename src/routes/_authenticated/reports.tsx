@@ -59,7 +59,7 @@ function ReportsPage() {
           ) : (
             <>
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Kpi label="Win rate" value={`${data.winRate}%`} sub={`${data.wonCount} won · ${data.lostCount} lost`} icon={Target} tint="text-emerald-500" />
                 <Kpi label="Won value" value={`$${data.totalWonValue.toLocaleString()}`} sub={`${data.wonCount} deals`} icon={Trophy} tint="text-amber-500" />
                 <Kpi label="Avg cycle" value={data.avgCycleDays == null ? "—" : `${data.avgCycleDays}d`} sub="Created → won" icon={Clock} tint="text-blue-500" />
@@ -107,6 +107,7 @@ function ReportsPage() {
                   {data.repActivity.length === 0 ? (
                     <p className="text-xs text-muted-foreground py-8 text-center">No activity yet.</p>
                   ) : (
+                    <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
@@ -127,6 +128,7 @@ function ReportsPage() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   )}
                 </div>
               </div>

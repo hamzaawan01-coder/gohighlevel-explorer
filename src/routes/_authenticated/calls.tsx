@@ -3,13 +3,12 @@ import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
-import { Button } from "@/components/ui/button";
+import { PageHeader, HeaderStat, PageBody } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { Phone, PhoneIncoming, PhoneOutgoing, Voicemail, PlayCircle } from "lucide-react";
+import { DataTable, type Column } from "@/components/DataTable";
+import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/states";
+import { Phone, PhoneIncoming, PhoneOutgoing, Voicemail } from "lucide-react";
 import { useTenancy } from "@/lib/tenancy";
 import { listPhoneCalls, listVoicemails, markVoicemailListened } from "@/lib/twilio.functions";
 import { toast } from "sonner";
@@ -23,6 +22,17 @@ export const Route = createFileRoute("/_authenticated/calls")({
   }),
   component: CallsPage,
 });
+
+type CallRow = {
+  id: string;
+  direction: string;
+  from_number: string;
+  to_number: string;
+  status: string | null;
+  duration_seconds: number | null;
+  started_at: string | null;
+  recording_url: string | null;
+};
 
 function CallsPage() {
   const subId = useTenancy((s) => s.currentSubAccountId);
@@ -49,16 +59,81 @@ function CallsPage() {
     onError: (e: any) => toast.error(e.message ?? "Failed"),
   });
 
+  const columns: Column<CallRow>[] = [
+    {
+      key: "direction",
+      header: "Direction",
+      cell: (c) =>
+        c.direction === "inbound" ? (
+          <PhoneIncoming className="size-4 shrink-0 text-green-600" aria-label="Inbound call" />
+        ) : (
+          <PhoneOutgoing className="size-4 shrink-0 text-blue-600" aria-label="Outbound call" />
+        ),
+      sortValue: (c) => c.direction,
+    },
+    {
+      key: "from",
+      header: "From",
+      cell: (c) => <span className="block min-w-0 truncate font-mono text-xs">{c.from_number}</span>,
+      sortValue: (c) => c.from_number,
+    },
+    {
+      key: "to",
+      header: "To",
+      cell: (c) => <span className="block min-w-0 truncate font-mono text-xs">{c.to_number}</span>,
+      sortValue: (c) => c.to_number,
+    },
+    {
+      key: "status",
+      header: "Status",
+      cell: (c) => <Badge variant="outline">{c.status ?? "—"}</Badge>,
+      sortValue: (c) => c.status ?? "",
+    },
+    {
+      key: "duration",
+      header: "Duration",
+      cell: (c) => (c.duration_seconds ? `${c.duration_seconds}s` : "—"),
+      sortValue: (c) => c.duration_seconds ?? 0,
+    },
+    {
+      key: "started",
+      header: "Started",
+      cell: (c) => (
+        <span className="block min-w-0 truncate text-xs">
+          {c.started_at ? new Date(c.started_at).toLocaleString() : "—"}
+        </span>
+      ),
+      sortValue: (c) => (c.started_at ? new Date(c.started_at).getTime() : 0),
+    },
+    {
+      key: "recording",
+      header: "Recording",
+      cell: (c) =>
+        c.recording_url ? (
+          <audio controls src={c.recording_url} className="h-8 max-w-full" />
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        ),
+    },
+  ];
+
   return (
     <AppShell>
-      <div className="p-6 max-w-6xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2"><Phone className="h-6 w-6" /> Calls</h1>
-            <p className="text-sm text-muted-foreground">Every inbound & outbound call, recordings, transcripts, and voicemail.</p>
-          </div>
-        </header>
-
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Phone className="size-5 shrink-0" /> Calls
+          </span>
+        }
+        description="Every inbound & outbound call, recordings, transcripts, and voicemail."
+        meta={
+          <>
+            <HeaderStat label="Calls" value={calls.data?.length ?? 0} />
+            <HeaderStat label="Unread voicemail" value={unread} />
+          </>
+        }
+      />
+      <PageBody>
         <Tabs defaultValue="calls">
           <TabsList>
             <TabsTrigger value="calls">History ({calls.data?.length ?? 0})</TabsTrigger>
@@ -68,92 +143,71 @@ function CallsPage() {
           </TabsList>
 
           <TabsContent value="calls" className="mt-4">
-            <div className="border border-border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Direction</TableHead>
-                    <TableHead>From</TableHead>
-                    <TableHead>To</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Started</TableHead>
-                    <TableHead>Recording</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(calls.data ?? []).map((c: any) => (
-                    <TableRow key={c.id}>
-                      <TableCell>
-                        {c.direction === "inbound" ? (
-                          <PhoneIncoming className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <PhoneOutgoing className="h-4 w-4 text-blue-600" />
-                        )}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{c.from_number}</TableCell>
-                      <TableCell className="font-mono text-xs">{c.to_number}</TableCell>
-                      <TableCell><Badge variant="outline">{c.status ?? "—"}</Badge></TableCell>
-                      <TableCell>{c.duration_seconds ? `${c.duration_seconds}s` : "—"}</TableCell>
-                      <TableCell className="text-xs">
-                        {c.started_at ? new Date(c.started_at).toLocaleString() : "—"}
-                      </TableCell>
-                      <TableCell>
-                        {c.recording_url ? (
-                          <audio controls src={c.recording_url} className="h-8" />
-                        ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {!calls.data?.length && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                        No calls yet. Use the softphone in the bottom-right to make one.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+            <div className="overflow-x-auto">
+              <DataTable
+                tableKey="calls"
+                caption="Call history"
+                rows={(calls.data ?? []) as CallRow[]}
+                columns={columns}
+                rowKey={(c) => c.id}
+                isLoading={calls.isLoading}
+                error={calls.error}
+                onRetry={() => calls.refetch()}
+                emptyTitle="No calls yet"
+                emptyDescription="Use the softphone in the bottom-right corner to place your first call."
+              />
             </div>
           </TabsContent>
 
           <TabsContent value="voicemail" className="mt-4 space-y-3">
-            {(vms.data ?? []).map((v: any) => (
-              <div key={v.id} className={`border border-border rounded-lg p-4 ${v.listened_at ? "opacity-60" : "bg-accent/40"}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Voicemail className="h-4 w-4" />
-                      <span className="font-mono text-sm">{v.from_number}</span>
-                      {!v.listened_at && <Badge variant="destructive" className="text-xs">New</Badge>}
-                      <span className="text-xs text-muted-foreground ml-auto">
-                        {new Date(v.created_at).toLocaleString()} · {v.duration_seconds ?? 0}s
-                      </span>
-                    </div>
-                    {v.transcription && (
-                      <p className="text-sm mt-2 italic text-muted-foreground">"{v.transcription}"</p>
-                    )}
-                    {v.transcription_status === "in-progress" && (
-                      <p className="text-xs text-muted-foreground mt-1">Transcription pending…</p>
-                    )}
-                    <div className="mt-2 flex items-center gap-2">
-                      <audio controls src={v.recording_url} className="h-8" onPlay={() => !v.listened_at && markMut.mutate(v.id)} />
+            {vms.isLoading ? (
+              <ListSkeleton />
+            ) : vms.error ? (
+              <ErrorState error={vms.error} onRetry={() => vms.refetch()} />
+            ) : (vms.data ?? []).length === 0 ? (
+              <EmptyState
+                icon={Voicemail}
+                title="No voicemails"
+                description="Missed calls that leave a voicemail will show up here."
+              />
+            ) : (
+              (vms.data ?? []).map((v: any) => (
+                <div
+                  key={v.id}
+                  className={`border border-border rounded-lg p-4 ${v.listened_at ? "opacity-60" : "bg-accent/40"}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <Voicemail className="size-4 shrink-0" />
+                        <span className="truncate font-mono text-sm">{v.from_number}</span>
+                        {!v.listened_at && <Badge variant="destructive" className="text-xs">New</Badge>}
+                        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                          {new Date(v.created_at).toLocaleString()} · {v.duration_seconds ?? 0}s
+                        </span>
+                      </div>
+                      {v.transcription && (
+                        <p className="mt-2 text-sm italic text-muted-foreground">"{v.transcription}"</p>
+                      )}
+                      {v.transcription_status === "in-progress" && (
+                        <p className="mt-1 text-xs text-muted-foreground">Transcription pending…</p>
+                      )}
+                      <div className="mt-2 flex items-center gap-2">
+                        <audio
+                          controls
+                          src={v.recording_url}
+                          className="h-8 max-w-full"
+                          onPlay={() => !v.listened_at && markMut.mutate(v.id)}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            {!vms.data?.length && (
-              <div className="text-center text-muted-foreground py-12 border border-dashed border-border rounded-lg">
-                <Voicemail className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                No voicemails.
-              </div>
+              ))
             )}
           </TabsContent>
         </Tabs>
-      </div>
+      </PageBody>
     </AppShell>
   );
 }

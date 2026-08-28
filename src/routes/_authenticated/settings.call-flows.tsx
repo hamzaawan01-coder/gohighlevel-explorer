@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader, PageBody } from "@/components/PageHeader";
+import { ConsoleSection, ConsoleSplit, ConsoleTips, StatusPill } from "@/components/console";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,11 +15,12 @@ import { toast } from "sonner";
 import { Workflow } from "lucide-react";
 import { useTenancy } from "@/lib/tenancy";
 import { getCallFlow, saveCallFlow, listMyNumbers } from "@/lib/twilio.functions";
+import { EmptyState, PanelSkeleton } from "@/components/ui/states";
 
 export const Route = createFileRoute("/_authenticated/settings/call-flows")({
   head: () => ({
     meta: [
-      { title: "Call flows — CRM" },
+      { title: "Call flows — Settings" },
       { name: "description", content: "Configure IVR greeting, agent ringing, and voicemail per phone number." },
     ],
   }),
@@ -100,103 +103,147 @@ function CallFlowsPage() {
 
   return (
     <AppShell>
-      <div className="p-6 max-w-3xl mx-auto space-y-6">
-        <header>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Workflow className="h-6 w-6" /> Call flows</h1>
-          <p className="text-sm text-muted-foreground">Greeting, ringing behavior, and voicemail — per number or workspace default.</p>
-        </header>
-
-        <div className="space-y-2">
-          <Label>Applies to</Label>
-          <Select value={numberId ?? "default"} onValueChange={(v) => setNumberId(v === "default" ? null : v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Workspace default (all numbers)</SelectItem>
-              {(numbers.data ?? []).map((n: any) => (
-                <SelectItem key={n.id} value={n.id}>{n.friendly_name} · {n.phone_number}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-4 border border-border rounded-lg p-6">
-          <div className="space-y-2">
-            <Label>Flow name</Label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Greeting (Text-to-Speech)</Label>
-            <Textarea rows={3} value={form.greetingText} onChange={(e) => setForm({ ...form, greetingText: e.target.value })} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Voice</Label>
-              <Select value={form.voiceGender} onValueChange={(v) => setForm({ ...form, voiceGender: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="alice">Alice (female)</SelectItem>
-                  <SelectItem value="man">Man</SelectItem>
-                  <SelectItem value="woman">Woman</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Language</Label>
-              <Select value={form.voiceLanguage} onValueChange={(v) => setForm({ ...form, voiceLanguage: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en-US">English (US)</SelectItem>
-                  <SelectItem value="en-GB">English (UK)</SelectItem>
-                  <SelectItem value="es-ES">Spanish</SelectItem>
-                  <SelectItem value="fr-FR">French</SelectItem>
-                  <SelectItem value="de-DE">German</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Ring timeout (seconds)</Label>
-            <Input
-              type="number"
-              min={5}
-              max={120}
-              value={form.ringTimeoutSeconds}
-              onChange={(e) => setForm({ ...form, ringTimeoutSeconds: parseInt(e.target.value) || 20 })}
-            />
-            <p className="text-xs text-muted-foreground">All workspace members with the softphone open will be rung simultaneously.</p>
-          </div>
-
-          <div className="flex items-center justify-between border-t border-border pt-4">
-            <div>
-              <Label>Voicemail</Label>
-              <p className="text-xs text-muted-foreground">Record & transcribe when no agent answers.</p>
-            </div>
-            <Switch checked={form.voicemailEnabled} onCheckedChange={(v) => setForm({ ...form, voicemailEnabled: v })} />
-          </div>
-
-          {form.voicemailEnabled && (
-            <div className="space-y-2">
-              <Label>Voicemail prompt</Label>
-              <Textarea rows={2} value={form.voicemailPrompt} onChange={(e) => setForm({ ...form, voicemailPrompt: e.target.value })} />
-            </div>
-          )}
-
-          <div className="flex items-center justify-between border-t border-border pt-4">
-            <div>
-              <Label>Default flow</Label>
-              <p className="text-xs text-muted-foreground">Used for any number without its own flow.</p>
-            </div>
-            <Switch checked={form.isDefault} onCheckedChange={(v) => setForm({ ...form, isDefault: v })} />
-          </div>
-
-          <Button onClick={() => mut.mutate()} disabled={mut.isPending || !subId} className="w-full">
+      <PageHeader
+        title="Call flows"
+        description="Greeting, ringing behavior, and voicemail — per number or workspace default."
+        crumbs={[{ label: "Settings" }, { label: "Call flows" }]}
+        meta={form.id ? <StatusPill ok label="Saved" /> : <StatusPill ok={false} label="Unsaved" />}
+        actions={
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending || !subId}>
             {mut.isPending ? "Saving…" : "Save call flow"}
           </Button>
-        </div>
-      </div>
+        }
+      />
+      <PageBody width="full">
+        {!subId ? (
+          <EmptyState icon={Workflow} title="Select a workspace" description="Choose a workspace to configure call flows." />
+        ) : flow.isLoading ? (
+          <PanelSkeleton />
+        ) : (
+          <ConsoleSplit
+            main={
+              <ConsoleSection title="Call flow" icon={Workflow} hint={numberId ? "This number" : "Workspace default"}>
+                <div className="space-y-5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cf-applies">Applies to</Label>
+                    <Select value={numberId ?? "default"} onValueChange={(v) => setNumberId(v === "default" ? null : v)}>
+                      <SelectTrigger id="cf-applies"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Workspace default (all numbers)</SelectItem>
+                        {(numbers.data ?? []).map((n: any) => (
+                          <SelectItem key={n.id} value={n.id}>{n.friendly_name} · {n.phone_number}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cf-name">Flow name</Label>
+                    <Input id="cf-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cf-greeting">Greeting (Text-to-Speech)</Label>
+                    <Textarea
+                      id="cf-greeting"
+                      rows={3}
+                      value={form.greetingText}
+                      onChange={(e) => setForm({ ...form, greetingText: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cf-voice">Voice</Label>
+                      <Select value={form.voiceGender} onValueChange={(v) => setForm({ ...form, voiceGender: v })}>
+                        <SelectTrigger id="cf-voice"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="alice">Alice (female)</SelectItem>
+                          <SelectItem value="man">Man</SelectItem>
+                          <SelectItem value="woman">Woman</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cf-lang">Language</Label>
+                      <Select value={form.voiceLanguage} onValueChange={(v) => setForm({ ...form, voiceLanguage: v })}>
+                        <SelectTrigger id="cf-lang"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en-US">English (US)</SelectItem>
+                          <SelectItem value="en-GB">English (UK)</SelectItem>
+                          <SelectItem value="es-ES">Spanish</SelectItem>
+                          <SelectItem value="fr-FR">French</SelectItem>
+                          <SelectItem value="de-DE">German</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cf-timeout">Ring timeout (seconds)</Label>
+                    <Input
+                      id="cf-timeout"
+                      type="number"
+                      min={5}
+                      max={120}
+                      value={form.ringTimeoutSeconds}
+                      onChange={(e) => setForm({ ...form, ringTimeoutSeconds: parseInt(e.target.value) || 20 })}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      All workspace members with the softphone open will be rung simultaneously.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-border pt-4 sm:flex sm:justify-between">
+                    <div className="min-w-0">
+                      <Label>Voicemail</Label>
+                      <p className="text-[11px] text-muted-foreground">Record &amp; transcribe when no agent answers.</p>
+                    </div>
+                    <Switch
+                      aria-label="Enable voicemail"
+                      checked={form.voicemailEnabled}
+                      onCheckedChange={(v) => setForm({ ...form, voicemailEnabled: v })}
+                    />
+                  </div>
+
+                  {form.voicemailEnabled && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cf-vm-prompt">Voicemail prompt</Label>
+                      <Textarea
+                        id="cf-vm-prompt"
+                        rows={2}
+                        value={form.voicemailPrompt}
+                        onChange={(e) => setForm({ ...form, voicemailPrompt: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-border pt-4 sm:flex sm:justify-between">
+                    <div className="min-w-0">
+                      <Label>Default flow</Label>
+                      <p className="text-[11px] text-muted-foreground">Used for any number without its own flow.</p>
+                    </div>
+                    <Switch
+                      aria-label="Set as default flow"
+                      checked={form.isDefault}
+                      onCheckedChange={(v) => setForm({ ...form, isDefault: v })}
+                    />
+                  </div>
+                </div>
+              </ConsoleSection>
+            }
+            side={
+              <ConsoleTips
+                items={[
+                  "Numbers without their own flow fall back to the workspace default.",
+                  "Ring timeout applies before falling through to voicemail (if enabled).",
+                  "Greeting text is read with Twilio's text-to-speech — keep it short and clear.",
+                ]}
+              />
+            }
+          />
+        )}
+      </PageBody>
     </AppShell>
   );
 }

@@ -2,11 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader, PageBody } from "@/components/PageHeader";
+import { ConsoleSection, ConsoleSplit, ConsoleStat, ConsoleTips, StatusPill } from "@/components/console";
 import { CopyField } from "@/components/CopyField";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useModules } from "@/lib/modules";
 import { getAppReviewStatus, testDataDeletionCallback } from "@/lib/meta-review.functions";
-import { CheckCircle2, XCircle, ShieldCheck, Loader2, FlaskConical } from "lucide-react";
+import { CheckCircle2, XCircle, ShieldCheck, Loader2, FlaskConical, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState, ErrorState, PanelSkeleton } from "@/components/ui/states";
 
 export const Route = createFileRoute("/_authenticated/settings/app-review")({
   head: () => ({
@@ -33,21 +40,21 @@ function Health({ ok, label, detail }: { ok: boolean; label: string; detail?: st
   return (
     <div className="flex items-center gap-2 text-xs">
       {ok ? (
-        <CheckCircle2 className="size-3.5 text-emerald-500" />
+        <CheckCircle2 className="size-3.5 shrink-0 text-primary" />
       ) : (
-        <XCircle className="size-3.5 text-destructive" />
+        <XCircle className="size-3.5 shrink-0 text-destructive" />
       )}
       <span className="font-medium">{label}</span>
-      {detail && <span className="text-muted-foreground">{detail}</span>}
+      {detail && <span className="truncate text-muted-foreground">{detail}</span>}
     </div>
   );
 }
 
 function UrlRow({ label, url }: { label: string; url: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border px-3 py-2">
       <div className="min-w-0">
-        <p className="text-[11px] font-mono uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
         <p className="truncate text-xs">{url}</p>
       </div>
       <CopyField value={url} label={label} />
@@ -84,177 +91,183 @@ function AppReviewPage() {
   });
 
   const d = status.data;
+  const allHealthy = d
+    ? d.health.privacy.ok && d.health.terms.ok && d.health.callback.ok && d.config.appIdConfigured && d.config.appSecretConfigured
+    : false;
 
   return (
     <AppShell>
-      <div className="max-w-3xl p-6 space-y-8">
-        <header>
-          <h1 className="flex items-center gap-2 text-lg font-bold">
-            <ShieldCheck className="size-4" />
-            Meta App Review readiness
-          </h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            These are the exact URLs to paste into the Meta App Dashboard, with a live check that each one
-            responds correctly.
-          </p>
-        </header>
+      <PageHeader
+        title="Meta App Review readiness"
+        description="These are the exact URLs to paste into the Meta App Dashboard, with a live check that each one responds correctly."
+        crumbs={[{ label: "Settings" }, { label: "App review" }]}
+        meta={d ? <StatusPill ok={allHealthy} label={allHealthy ? "All checks passing" : "Needs attention"} /> : null}
+        actions={
+          d ? (
+            <Button variant="outline" size="sm" onClick={() => void status.refetch()} disabled={status.isFetching}>
+              <RefreshCw className={`size-3.5 ${status.isFetching ? "animate-spin" : ""}`} />
+              {status.isFetching ? "Re-checking…" : "Re-run health check"}
+            </Button>
+          ) : null
+        }
+      />
+      <PageBody width="full">
+        {!subId ? (
+          <EmptyState icon={ShieldCheck} title="Select a workspace" description="Choose a workspace to view App Review readiness." />
+        ) : status.isError ? (
+          <ErrorState onRetry={() => status.refetch()} error={status.error} />
+        ) : status.isLoading || !d ? (
+          <PanelSkeleton />
+        ) : (
+          <ConsoleSplit
+            main={
+              <>
+                <ConsoleSection title="Required URLs" icon={ShieldCheck} hint="Paste into Meta App Dashboard">
+                  <div className="space-y-2">
+                    <UrlRow label="Privacy Policy URL" url={d.urls.privacyPolicyUrl} />
+                    <UrlRow label="Terms of Service URL" url={d.urls.termsUrl} />
+                    <UrlRow label="Data Deletion Callback URL" url={d.urls.dataDeletionCallbackUrl} />
+                    <UrlRow label="Deletion status page" url={d.urls.dataDeletionStatusUrl} />
+                  </div>
+                </ConsoleSection>
 
-        {status.isLoading && (
-          <p className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="size-3.5 animate-spin" /> Running health checks…
-          </p>
-        )}
-        {status.error && (
-          <p className="text-xs text-destructive">{(status.error as Error).message}</p>
-        )}
+                <ConsoleSection title="Deletion callback tester" icon={FlaskConical} hint="signed_request">
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      Paste a real <span className="font-mono">signed_request</span> from Meta, or leave it blank to
+                      generate a valid test one signed with your App Secret. The request is sent to the live
+                      endpoint and the returned confirmation code is shown below.
+                    </p>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signed-request" className="text-xs">signed_request (optional)</Label>
+                      <Textarea
+                        id="signed-request"
+                        value={signedRequest}
+                        onChange={(e) => setSignedRequest(e.target.value)}
+                        rows={3}
+                        placeholder="signed_request (optional)"
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="meta-user-id" className="text-xs">Meta user id for generated test (optional)</Label>
+                      <Input
+                        id="meta-user-id"
+                        value={metaUserId}
+                        onChange={(e) => setMetaUserId(e.target.value)}
+                        placeholder="Meta user id for generated test (optional)"
+                      />
+                    </div>
+                    <Button onClick={() => test.mutate()} disabled={test.isPending || !subId}>
+                      {test.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {test.isPending ? "Testing…" : "Run end-to-end test"}
+                    </Button>
 
-        {d && (
-          <>
-            <section className="space-y-2">
-              <h2 className="text-sm font-bold">Required URLs</h2>
-              <UrlRow label="Privacy Policy URL" url={d.urls.privacyPolicyUrl} />
-              <UrlRow label="Terms of Service URL" url={d.urls.termsUrl} />
-              <UrlRow label="Data Deletion Callback URL" url={d.urls.dataDeletionCallbackUrl} />
-              <UrlRow label="Deletion status page" url={d.urls.dataDeletionStatusUrl} />
-            </section>
+                    {test.data && (
+                      <div className="space-y-1.5 rounded-lg border border-border p-3 text-xs">
+                        <Health
+                          ok={test.data.ok}
+                          label={test.data.generated ? "Generated signed_request accepted" : "Pasted signed_request accepted"}
+                          detail={`HTTP ${test.data.status} · ${test.data.ms}ms`}
+                        />
+                        <p>
+                          <span className="text-muted-foreground">Meta user id: </span>
+                          <span className="font-mono">{test.data.decodedUserId ?? "—"}</span>
+                        </p>
+                        <p className="flex flex-wrap items-center gap-2">
+                          <span className="text-muted-foreground">confirmation_code: </span>
+                          <span className="font-mono">{test.data.confirmationCode ?? "—"}</span>
+                          <CopyField value={test.data.confirmationCode ?? ""} label="confirmation code" />
+                        </p>
+                        {test.data.statusUrl && (
+                          <p className="flex flex-wrap items-center gap-2">
+                            <span className="text-muted-foreground">Status URL: </span>
+                            <a className="truncate underline" href={test.data.statusUrl}>
+                              {test.data.statusUrl}
+                            </a>
+                            <CopyField value={test.data.statusUrl} label="status URL" />
+                          </p>
+                        )}
+                        <details>
+                          <summary className="cursor-pointer text-muted-foreground">Raw response</summary>
+                          <pre className="mt-2 overflow-auto rounded bg-secondary p-2 font-mono text-[10px]">
+                            {test.data.raw}
+                          </pre>
+                        </details>
+                        <details>
+                          <summary className="cursor-pointer text-muted-foreground">signed_request used</summary>
+                          <pre className="mt-2 whitespace-pre-wrap break-all rounded bg-secondary p-2 font-mono text-[10px]">
+                            {test.data.signedRequest}
+                          </pre>
+                        </details>
+                      </div>
+                    )}
+                  </div>
+                </ConsoleSection>
+              </>
+            }
+            side={
+              <>
+                <ConsoleSection title="Live health check" hint="Auto-checked">
+                  <div className="space-y-2">
+                    <Health
+                      ok={d.health.privacy.ok}
+                      label="Privacy Policy page"
+                      detail={`HTTP ${d.health.privacy.status} · ${d.health.privacy.ms}ms`}
+                    />
+                    <Health
+                      ok={d.health.terms.ok}
+                      label="Terms of Service page"
+                      detail={`HTTP ${d.health.terms.status} · ${d.health.terms.ms}ms`}
+                    />
+                    <Health
+                      ok={d.health.callback.ok}
+                      label="Data deletion callback"
+                      detail={`HTTP ${d.health.callback.status} · ${d.health.callback.ms}ms`}
+                    />
+                    <Health ok={d.config.appIdConfigured} label="App ID configured" />
+                    <Health ok={d.config.appSecretConfigured} label="App Secret configured" />
+                  </div>
+                </ConsoleSection>
 
-            <section className="space-y-2">
-              <h2 className="text-sm font-bold">Live health check</h2>
-              <div className="space-y-1.5 rounded-md border border-border p-3">
-                <Health
-                  ok={d.health.privacy.ok}
-                  label="Privacy Policy page"
-                  detail={`HTTP ${d.health.privacy.status} · ${d.health.privacy.ms}ms`}
-                />
-                <Health
-                  ok={d.health.terms.ok}
-                  label="Terms of Service page"
-                  detail={`HTTP ${d.health.terms.status} · ${d.health.terms.ms}ms`}
-                />
-                <Health
-                  ok={d.health.callback.ok}
-                  label="Data deletion callback"
-                  detail={`HTTP ${d.health.callback.status} on unknown code · ${d.health.callback.ms}ms`}
-                />
-                <Health ok={d.config.appIdConfigured} label="App ID configured" />
-                <Health ok={d.config.appSecretConfigured} label="App Secret configured" />
-              </div>
-              <button
-                type="button"
-                onClick={() => void status.refetch()}
-                disabled={status.isFetching}
-                className="rounded-md border border-border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
-              >
-                {status.isFetching ? "Re-checking…" : "Re-run health check"}
-              </button>
-            </section>
-
-            <section className="space-y-2">
-              <h2 className="text-sm font-bold">Last successful callback</h2>
-              {d.lastSuccessfulCallbackAt ? (
-                <div className="rounded-md border border-border p-3 text-xs">
-                  <p>
-                    <span className="text-muted-foreground">When: </span>
-                    {new Date(d.lastSuccessfulCallbackAt).toLocaleString()}
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Confirmation code: </span>
-                    <span className="font-mono">{d.lastSuccessfulCode}</span>
-                    <CopyField value={d.lastSuccessfulCode ?? ""} label="confirmation code" />
-                  </p>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  No deletion callback has completed yet. Run the tester below to verify the endpoint.
-                </p>
-              )}
-              {d.recent.length > 0 && (
-                <ul className="space-y-1 text-[11px] text-muted-foreground">
-                  {d.recent.map((r) => (
-                    <li key={r.confirmation_code} className="font-mono">
-                      {new Date(r.created_at).toLocaleString()} · {r.status} · {r.confirmation_code}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="space-y-3">
-              <h2 className="flex items-center gap-2 text-sm font-bold">
-                <FlaskConical className="size-3.5" />
-                Deletion callback tester
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Paste a real <span className="font-mono">signed_request</span> from Meta, or leave it blank to
-                generate a valid test one signed with your App Secret. The request is sent to the live
-                endpoint and the returned confirmation code is shown below.
-              </p>
-              <textarea
-                value={signedRequest}
-                onChange={(e) => setSignedRequest(e.target.value)}
-                rows={3}
-                placeholder="signed_request (optional)"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs"
-              />
-              <input
-                value={metaUserId}
-                onChange={(e) => setMetaUserId(e.target.value)}
-                placeholder="Meta user id for generated test (optional)"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs"
-              />
-              <button
-                type="button"
-                onClick={() => test.mutate()}
-                disabled={test.isPending || !subId}
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
-              >
-                {test.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                {test.isPending ? "Testing…" : "Run end-to-end test"}
-              </button>
-
-              {test.data && (
-                <div className="space-y-1.5 rounded-md border border-border p-3 text-xs">
-                  <Health
-                    ok={test.data.ok}
-                    label={test.data.generated ? "Generated signed_request accepted" : "Pasted signed_request accepted"}
-                    detail={`HTTP ${test.data.status} · ${test.data.ms}ms`}
-                  />
-                  <p>
-                    <span className="text-muted-foreground">Meta user id: </span>
-                    <span className="font-mono">{test.data.decodedUserId ?? "—"}</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span className="text-muted-foreground">confirmation_code: </span>
-                    <span className="font-mono">{test.data.confirmationCode ?? "—"}</span>
-                    <CopyField value={test.data.confirmationCode ?? ""} label="confirmation code" />
-                  </p>
-                  {test.data.statusUrl && (
-                    <p className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Status URL: </span>
-                      <a className="truncate underline" href={test.data.statusUrl}>
-                        {test.data.statusUrl}
-                      </a>
-                      <CopyField value={test.data.statusUrl} label="status URL" />
+                <ConsoleSection title="Last successful callback">
+                  {d.lastSuccessfulCallbackAt ? (
+                    <div className="space-y-2 text-xs">
+                      <ConsoleStat label="When" value={new Date(d.lastSuccessfulCallbackAt).toLocaleString()} />
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Confirmation code:</span>
+                        <span className="font-mono">{d.lastSuccessfulCode}</span>
+                        <CopyField value={d.lastSuccessfulCode ?? ""} label="confirmation code" />
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground">
+                      No deletion callback has completed yet. Run the tester to verify the endpoint.
                     </p>
                   )}
-                  <details>
-                    <summary className="cursor-pointer text-muted-foreground">Raw response</summary>
-                    <pre className="mt-2 overflow-auto rounded bg-secondary p-2 font-mono text-[10px]">
-                      {test.data.raw}
-                    </pre>
-                  </details>
-                  <details>
-                    <summary className="cursor-pointer text-muted-foreground">signed_request used</summary>
-                    <pre className="mt-2 break-all whitespace-pre-wrap rounded bg-secondary p-2 font-mono text-[10px]">
-                      {test.data.signedRequest}
-                    </pre>
-                  </details>
-                </div>
-              )}
-            </section>
-          </>
+                  {d.recent.length > 0 && (
+                    <ul className="mt-3 space-y-1 border-t border-border pt-3 text-[11px] text-muted-foreground">
+                      {d.recent.map((r) => (
+                        <li key={r.confirmation_code} className="truncate font-mono">
+                          {new Date(r.created_at).toLocaleDateString()} · {r.status} · {r.confirmation_code}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </ConsoleSection>
+
+                <ConsoleTips
+                  items={[
+                    "All four URLs must resolve over HTTPS before Meta will approve the app.",
+                    "Run the tester after any App Secret rotation to confirm signatures still verify.",
+                    "The deletion callback must respond within a few seconds or Meta treats it as failed.",
+                  ]}
+                />
+              </>
+            }
+          />
         )}
-      </div>
+      </PageBody>
     </AppShell>
   );
 }
