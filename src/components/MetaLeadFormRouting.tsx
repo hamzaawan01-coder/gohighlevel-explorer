@@ -50,13 +50,55 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
   const replayFn = useServerFn(replayMetaLeadAdTest);
   const eventsFn = useServerFn(listMetaLeadAdEvents);
   const importFn = useServerFn(importPastMetaLeads);
-  const [importing, setImporting] = useState<string | null>(null);
+  const retryFn = useServerFn(retryFailedMetaLeads);
+
+  type ImportSummary = {
+    total: number; imported: number; skipped: number; failed: number; errors: string[];
+    pageName?: string; since?: string | null; until?: string | null;
+  };
+  type ImportJob = {
+    status: "queued" | "running" | "completed" | "failed";
+    pageName: string;
+    formName: string;
+    since: string | null;
+    until: string | null;
+    summary?: ImportSummary;
+    error?: string;
+  };
+  const [jobs, setJobs] = useState<Record<string, ImportJob>>({});
+  const [ranges, setRanges] = useState<Record<string, { since: string; until: string }>>({});
+  const rangeFor = (formId: string) => ranges[formId] ?? { since: "", until: "" };
+  const setRange = (formId: string, patch: Partial<{ since: string; until: string }>) =>
+    setRanges((r) => ({ ...r, [formId]: { ...rangeFor(formId), ...patch } }));
+  const presetRange = (formId: string, days: number) => {
+    const now = new Date();
+    const start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    setRange(formId, { since: start.toISOString().slice(0, 10), until: now.toISOString().slice(0, 10) });
+  };
 
   const importLeads = useMutation({
-    mutationFn: (input: { formId: string; formName?: string | null; pageId?: string | null }) =>
-      importFn({ data: { subAccountId: subId, ...input } }),
-    onSuccess: (res: { total: number; imported: number; skipped: number; failed: number; errors: string[] }) => {
-      if (res.total === 0) toast.info("Meta returned no past leads for this form");
+    mutationFn: async (input: { formId: string; formName?: string | null; pageId?: string | null; since?: string | null; until?: string | null }) => {
+      const res = (await importFn({ data: { subAccountId: subId, ...input } })) as ImportSummary;
+      return { formId: input.formId, res };
+    },
+    onMutate: (input) => {
+      setJobs((j) => ({
+        ...j,
+        [input.formId]: {
+          status: "running",
+          pageName: "",
+          formName: input.formName ?? input.formId,
+          since: input.since ?? null,
+          until: input.until ?? null,
+        },
+      }));
+    },
+    onSuccess: ({ formId, res }) => {
+      setJobs((j) => ({
+        ...j,
+        [formId]: { ...(j[formId] as ImportJob), status: "completed", pageName: res.pageName ?? "", summary: res },
+      }));
+      if (res.total === 0) toast.info("Meta returned no past leads in that window");
       else
         toast.success(
           `Imported ${res.imported} of ${res.total} leads · ${res.skipped} already in CRM${res.failed ? ` · ${res.failed} failed` : ""}`,
@@ -66,9 +108,25 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
       qc.invalidateQueries({ queryKey: ["contacts"] });
       qc.invalidateQueries({ queryKey: ["deals"] });
     },
-    onError: (e: Error) => toast.error(e.message),
-    onSettled: () => setImporting(null),
+    onError: (e: Error, input) => {
+      setJobs((j) => ({ ...j, [input.formId]: { ...(j[input.formId] as ImportJob), status: "failed", error: e.message } }));
+      toast.error(e.message);
+    },
   });
+
+  const retryFailed = useMutation({
+    mutationFn: (input: { formId?: string | null }) => retryFn({ data: { subAccountId: subId, ...input } }),
+    onSuccess: (res: { attempted: number; recovered: number; stillFailing: number; errors: string[] }) => {
+      if (res.attempted === 0) toast.info("No failed Lead Ad imports to retry");
+      else toast.success(`Retried ${res.attempted} leads · ${res.recovered} recovered · ${res.stillFailing} still failing`);
+      if (res.errors?.length) toast.error(res.errors[0]);
+      qc.invalidateQueries({ queryKey: ["meta-lead-ad-events", subId] });
+      qc.invalidateQueries({ queryKey: ["contacts"] });
+      qc.invalidateQueries({ queryKey: ["deals"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
 
   const { data, isLoading, isFetching } = useQuery({
