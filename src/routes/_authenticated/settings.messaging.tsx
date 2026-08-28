@@ -1,3 +1,4 @@
+import { SettingsNav } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -136,6 +137,7 @@ function MessagingSettingsPage() {
         }
       />
       <PageBody width="full">
+        <SettingsNav />
         {q.isError ? (
           <ErrorState onRetry={() => q.refetch()} error={q.error} />
         ) : !row ? (

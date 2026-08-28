@@ -1,3 +1,4 @@
+import { SettingsNav } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -108,6 +109,7 @@ function BookingSettingsPage() {
       }
     >
       <div className="p-8 max-w-4xl overflow-y-auto h-full">
+        <SettingsNav />
         <h1 className="text-2xl font-bold mb-1">Booking pages</h1>
         <p className="text-sm text-muted-foreground mb-6">Share a public link so people can pick a time from your availability.</p>
 

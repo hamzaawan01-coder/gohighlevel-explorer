@@ -1,3 +1,4 @@
+import { SettingsNav } from "@/components/SettingsNav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -76,6 +77,7 @@ function SubAccountsPage() {
       }
     >
       <div className="p-6 space-y-6 overflow-auto h-full">
+        <SettingsNav />
         <div>
           <h1 className="text-lg font-bold">Sub-accounts</h1>
           <p className="text-xs text-muted-foreground mt-1">
