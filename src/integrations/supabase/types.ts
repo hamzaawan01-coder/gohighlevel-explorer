@@ -1574,6 +1574,141 @@ export type Database = {
           },
         ]
       }
+      invoice_renders: {
+        Row: {
+          branding_snapshot: Json
+          created_at: string
+          created_by: string | null
+          html: string
+          id: string
+          invoice_id: string
+          invoice_snapshot: Json
+          reminder_sequence: number | null
+          source: string
+          sub_account_id: string
+          template_id: string | null
+          template_name: string | null
+          template_version: number | null
+        }
+        Insert: {
+          branding_snapshot?: Json
+          created_at?: string
+          created_by?: string | null
+          html: string
+          id?: string
+          invoice_id: string
+          invoice_snapshot?: Json
+          reminder_sequence?: number | null
+          source?: string
+          sub_account_id: string
+          template_id?: string | null
+          template_name?: string | null
+          template_version?: number | null
+        }
+        Update: {
+          branding_snapshot?: Json
+          created_at?: string
+          created_by?: string | null
+          html?: string
+          id?: string
+          invoice_id?: string
+          invoice_snapshot?: Json
+          reminder_sequence?: number | null
+          source?: string
+          sub_account_id?: string
+          template_id?: string | null
+          template_name?: string | null
+          template_version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_renders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_renders_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_renders_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_templates: {
+        Row: {
+          accent_color: string
+          address: string | null
+          archived_at: string | null
+          business_name: string | null
+          created_at: string
+          created_by: string | null
+          footer_note: string | null
+          id: string
+          is_default: boolean
+          logo_url: string | null
+          name: string
+          payment_instructions: string | null
+          sub_account_id: string
+          terms: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          accent_color?: string
+          address?: string | null
+          archived_at?: string | null
+          business_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          footer_note?: string | null
+          id?: string
+          is_default?: boolean
+          logo_url?: string | null
+          name: string
+          payment_instructions?: string | null
+          sub_account_id: string
+          terms?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          accent_color?: string
+          address?: string | null
+          archived_at?: string | null
+          business_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          footer_note?: string | null
+          id?: string
+          is_default?: boolean
+          logo_url?: string | null
+          name?: string
+          payment_instructions?: string | null
+          sub_account_id?: string
+          terms?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_templates_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount_paid: number
@@ -1601,6 +1736,7 @@ export type Database = {
           subtotal: number
           tax_amount: number
           tax_rate: number
+          template_id: string | null
           total: number
           updated_at: string
         }
@@ -1630,6 +1766,7 @@ export type Database = {
           subtotal?: number
           tax_amount?: number
           tax_rate?: number
+          template_id?: string | null
           total?: number
           updated_at?: string
         }
@@ -1659,6 +1796,7 @@ export type Database = {
           subtotal?: number
           tax_amount?: number
           tax_rate?: number
+          template_id?: string | null
           total?: number
           updated_at?: string
         }
@@ -1682,6 +1820,13 @@ export type Database = {
             columns: ["sub_account_id"]
             isOneToOne: false
             referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_templates"
             referencedColumns: ["id"]
           },
         ]
