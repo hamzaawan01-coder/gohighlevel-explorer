@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLeadDisplayPrefs } from "@/lib/lead-display-prefs";
+import { useSavedLeadSearches } from "@/lib/lead-saved-searches";
+import { CopyField } from "@/components/CopyField";
 import {
   dedupeValues,
   isEmailKey,
@@ -31,6 +33,9 @@ import {
   AlertTriangle,
   Clock,
   EyeOff,
+  Save,
+  Trash2,
+  ListChecks,
 } from "lucide-react";
 
 const FILE_RE = /^https?:\/\/\S+$/i;
