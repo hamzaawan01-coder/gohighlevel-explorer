@@ -62,7 +62,7 @@ export function MetaLeadSourcePanel({
             Form answers
           </div>
           <dl className="divide-y divide-border">
-            {Object.entries(data!.leadFields).map(([k, v]) => (
+            {Object.entries(data?.leadFields ?? {}).map(([k, v]) => (
               <div key={k} className="px-4 py-2.5 grid grid-cols-[160px_1fr] gap-4 text-xs">
                 <dt className="text-muted-foreground break-words">
                   {k.replace(/_/g, " ").replace(/\?$/, "?")}
