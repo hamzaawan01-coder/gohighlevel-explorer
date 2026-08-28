@@ -61,20 +61,14 @@ export async function fetchReports(subAccountId: string): Promise<ReportData> {
       .from("tasks")
       .select("id,assigned_to,status,completed_at")
       .eq("sub_account_id", subAccountId),
-    supabase.rpc("list_agency_members", { _agency: "00000000-0000-0000-0000-000000000000" }),
+    fetchMemberNames(subAccountId),
   ]);
 
   const stages = stagesRes.data ?? [];
   const deals = dealsRes.data ?? [];
   const contacts = contactsRes.data ?? [];
   const tasks = tasksRes.data ?? [];
-  // members RPC needs agency id; not critical — fall back to user_id strings
-  const memberMap = new Map<string, string>();
-  if (Array.isArray(membersRes.data)) {
-    for (const m of membersRes.data as { user_id: string; full_name: string | null }[]) {
-      if (m.user_id) memberMap.set(m.user_id, m.full_name || "Teammate");
-    }
-  }
+
 
   const wonStageId = stages.length ? stages[stages.length - 1].id : null;
   const lostStageId = stages.find((s) => /lost/i.test(s.name))?.id ?? null;
