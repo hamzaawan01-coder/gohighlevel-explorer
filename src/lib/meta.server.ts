@@ -29,7 +29,7 @@ export function publicOrigin(): string {
 }
 
 export function metaRedirectUri(): string {
-  return `${publicOrigin()}/api/public/oauth.meta.callback`;
+  return `${publicOrigin()}/api/public/oauth/meta/callback`;
 }
 
 export function metaWebhookUrl(token: string): string {
