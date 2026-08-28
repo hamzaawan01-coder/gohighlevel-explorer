@@ -61,8 +61,12 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         }
         const env: StripeEnv = rawEnv;
         try {
-          const event = await verifyWebhook(request, env);
-          const fresh = await claimEvent(event as { id?: string; type: string }, env);
+          const event = (await verifyWebhook(request, env)) as {
+            id?: string;
+            type: string;
+            data: { object: unknown };
+          };
+          const fresh = await claimEvent(event, env);
           if (!fresh) {
             return Response.json({ received: true, duplicate: true });
           }
