@@ -624,11 +624,12 @@ export function MetaLeadSourcePanel({
           {sourceOpen && (
             <dl className="divide-y divide-border">
               {metaRows.map(([k, v]) => (
-                <div key={k} className="px-4 py-2.5 grid grid-cols-[130px_1fr] gap-4 text-xs">
+                <div key={k} className="px-4 py-2.5 grid grid-cols-[130px_1fr_auto] gap-3 text-xs">
                   <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground self-center">
                     {k}
                   </dt>
                   <dd className="min-w-0 break-all">{v}</dd>
+                  <CopyField value={v} label={k} />
                 </div>
               ))}
             </dl>
@@ -648,9 +649,10 @@ export function MetaLeadSourcePanel({
           </div>
           <dl className="divide-y divide-border">
             {contactRows.map(([k, v]) => (
-              <div key={k} className="px-4 py-2.5 grid grid-cols-[130px_1fr] gap-4 text-xs">
+              <div key={k} className="px-4 py-2.5 grid grid-cols-[130px_1fr_auto] gap-3 text-xs">
                 <dt className="text-muted-foreground">{k}</dt>
                 <dd className="min-w-0 break-words text-foreground">{v}</dd>
+                <CopyField value={v} label={k} />
               </div>
             ))}
           </dl>
@@ -664,9 +666,10 @@ export function MetaLeadSourcePanel({
           </div>
           <dl className="divide-y divide-border">
             {answers.map(([k, v]) => (
-              <div key={k} className="px-4 py-2.5 grid grid-cols-[160px_1fr] gap-4 text-xs">
+              <div key={k} className="px-4 py-2.5 grid grid-cols-[160px_1fr_auto] gap-3 text-xs">
                 <dt className="text-muted-foreground break-words">{prettyLabel(k)}</dt>
                 <dd className="min-w-0 break-words text-foreground">{String(v) || "—"}</dd>
+                <CopyField value={String(v)} label={prettyLabel(k)} />
               </div>
             ))}
           </dl>
@@ -691,6 +694,7 @@ export function MetaLeadSourcePanel({
                 >
                   Open file
                 </a>
+                <CopyField value={String(v)} label={`${prettyLabel(k)} link`} />
               </li>
             ))}
           </ul>
