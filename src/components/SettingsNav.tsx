@@ -1,4 +1,5 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import {
   Bot,
   Building2,
@@ -23,7 +24,7 @@ type Item = {
   module?: string;
 };
 
-const ITEMS: Item[] = [
+export const SETTINGS_NAV_ITEMS: Item[] = [
   { label: "Overview", to: "/settings", icon: LayoutGrid },
   { label: "Integrations", to: "/settings/integrations", icon: SettingsIcon, module: "integrations" },
   { label: "Phone numbers", to: "/settings/phone-numbers", icon: Phone, module: "calls" },
@@ -39,34 +40,71 @@ const ITEMS: Item[] = [
   { label: "App review", to: "/settings/app-review", icon: ShieldCheck, module: "integrations" },
 ];
 
+/** Which settings entry a pathname belongs to (longest prefix wins). */
+export function activeSettingsItem(pathname: string) {
+  const clean = pathname.replace(/\/+$/, "") || "/";
+  let best: Item | undefined;
+  for (const item of SETTINGS_NAV_ITEMS) {
+    if (clean === item.to || clean.startsWith(`${item.to}/`)) {
+      if (!best || item.to.length > best.to.length) best = item;
+    }
+  }
+  return best;
+}
+
 /**
  * Horizontal, scrollable settings menu shown at the top of every settings
- * screen so people can move between sections without going back to the hub.
+ * screen. The current section is highlighted and scrolled into view, so the
+ * menu stays usable on narrow phones where it overflows sideways.
  */
 export function SettingsNav({ className = "" }: { className?: string }) {
   const { state } = useModules();
-  const items = ITEMS.filter((i) => !i.module || isModuleEnabled(state, i.module));
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const active = activeSettingsItem(pathname);
+  const scroller = useRef<HTMLElement | null>(null);
+
+  const items = SETTINGS_NAV_ITEMS.filter(
+    (i) => !i.module || isModuleEnabled(state, i.module) || i.to === active?.to,
+  );
+
+  // Keep the current section visible when the menu overflows on small screens.
+  useEffect(() => {
+    const el = scroller.current?.querySelector<HTMLElement>('[data-active="true"]');
+    el?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [pathname, items.length]);
 
   return (
     <nav
+      ref={scroller}
       aria-label="Settings sections"
-      className={`-mx-1 mb-1 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:thin] ${className}`}
+      className={`-mx-1 mb-1 flex snap-x snap-mandatory gap-1 overflow-x-auto pb-1 [scrollbar-width:thin] ${className}`}
     >
-      {items.map((item) => (
-        <Link
-          key={item.to}
-          to={item.to}
-          activeOptions={{ exact: item.to === "/settings" }}
-          className="flex shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground"
-          activeProps={{
-            className:
-              "flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-secondary px-2.5 py-1.5 text-xs font-semibold text-foreground",
-          }}
-        >
-          <item.icon className="size-3.5" />
-          {item.label}
-        </Link>
-      ))}
+      {items.map((item) => {
+        const isActive = active?.to === item.to;
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            data-active={isActive ? "true" : "false"}
+            aria-current={isActive ? "page" : undefined}
+            className={[
+              "relative flex shrink-0 snap-start items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              isActive
+                ? "border-border bg-secondary font-semibold text-foreground"
+                : "border-transparent font-medium text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
+            ].join(" ")}
+          >
+            <item.icon className="size-3.5 shrink-0" />
+            <span className="whitespace-nowrap">{item.label}</span>
+            {isActive ? (
+              <span
+                aria-hidden
+                className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary"
+              />
+            ) : null}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
