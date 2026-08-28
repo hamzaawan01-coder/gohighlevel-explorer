@@ -5,6 +5,7 @@ import {
   Building2,
   Calendar,
   Clock,
+  CreditCard,
   LayoutGrid,
   Palette,
   Phone,
