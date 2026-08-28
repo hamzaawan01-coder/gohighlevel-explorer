@@ -525,19 +525,23 @@ export const replayMetaLeadAdTest = createServerFn({ method: "POST" })
 
 /**
  * Pull existing (historical) leads for one Lead Ad form from Meta and ingest
- * them. Deduplicates by Meta lead ID, so re-running is safe.
+ * them. Deduplicates by Meta lead ID, so re-running is safe. Optional
+ * since/until (ISO dates) restrict the import to a specific window.
  */
 export const importPastMetaLeads = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { subAccountId: string; formId: string; formName?: string | null; pageId?: string | null; maxLeads?: number }) =>
+  .inputValidator((d: { subAccountId: string; formId: string; formName?: string | null; pageId?: string | null; maxLeads?: number; since?: string | null; until?: string | null }) =>
     z.object({
       subAccountId: z.string().uuid(),
       formId: z.string().min(1),
       formName: z.string().nullish(),
       pageId: z.string().nullish(),
       maxLeads: z.number().int().min(1).max(500).optional(),
+      since: z.string().nullish(),
+      until: z.string().nullish(),
     }).parse(d),
   )
+
   .handler(async ({ data, context }) => {
     await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
