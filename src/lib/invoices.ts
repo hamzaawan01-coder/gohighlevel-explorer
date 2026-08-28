@@ -20,6 +20,7 @@ export type Invoice = {
   total: number;
   notes: string | null;
   paid_at: string | null;
+  template_id: string | null;
   amount_paid: number;
   last_sent_at: string | null;
   stripe_payment_link_url: string | null;
@@ -123,6 +124,7 @@ export async function updateInvoice(
       | "due_date"
       | "tax_rate"
       | "notes"
+      | "template_id"
       | "reminders_enabled"
       | "reminder_interval_days"
       | "max_reminders"

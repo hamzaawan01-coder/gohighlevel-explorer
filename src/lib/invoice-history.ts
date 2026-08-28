@@ -44,6 +44,62 @@ export type InvoiceDelivery = {
   created_at: string;
 };
 
+export type InvoiceRender = {
+  id: string;
+  invoice_id: string;
+  sub_account_id: string;
+  template_id: string | null;
+  template_name: string | null;
+  template_version: number | null;
+  branding_snapshot: Record<string, unknown>;
+  html: string;
+  source: string;
+  reminder_sequence: number | null;
+  created_at: string;
+};
+
+/** Every generated document (email, reminder, print) for this invoice. */
+export async function fetchInvoiceRenders(invoiceId: string): Promise<InvoiceRender[]> {
+  const { data, error } = await supabase
+    .from("invoice_renders")
+    .select("*")
+    .eq("invoice_id", invoiceId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return (data ?? []) as unknown as InvoiceRender[];
+}
+
+/** Store a rendered document so it can be re-opened or downloaded later. */
+export async function recordInvoiceRender(input: {
+  invoiceId: string;
+  subAccountId: string;
+  templateId?: string | null;
+  templateName?: string | null;
+  templateVersion?: number | null;
+  brandingSnapshot: Record<string, unknown>;
+  invoiceSnapshot?: Record<string, unknown>;
+  html: string;
+  source: "print" | "email" | "reminder";
+  reminderSequence?: number | null;
+}): Promise<void> {
+  const auth = await supabase.auth.getUser();
+  const { error } = await supabase.from("invoice_renders").insert({
+    invoice_id: input.invoiceId,
+    sub_account_id: input.subAccountId,
+    template_id: input.templateId ?? null,
+    template_name: input.templateName ?? null,
+    template_version: input.templateVersion ?? null,
+    branding_snapshot: input.brandingSnapshot as never,
+    invoice_snapshot: (input.invoiceSnapshot ?? {}) as never,
+    html: input.html,
+    source: input.source,
+    reminder_sequence: input.reminderSequence ?? null,
+    created_by: auth.data.user?.id ?? null,
+  } as never);
+  if (error) throw error;
+}
+
 export async function fetchInvoiceEvents(invoiceId: string): Promise<InvoiceEvent[]> {
   const { data, error } = await supabase
     .from("invoice_events")
