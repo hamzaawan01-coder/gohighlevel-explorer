@@ -543,6 +543,42 @@ export type Database = {
           },
         ]
       }
+      billing_reconcile_state: {
+        Row: {
+          consecutive_rate_limits: number
+          created_at: string
+          id: string
+          last_result: Json
+          last_run_at: string | null
+          lease_until: string | null
+          paused_reason: string | null
+          paused_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          consecutive_rate_limits?: number
+          created_at?: string
+          id?: string
+          last_result?: Json
+          last_run_at?: string | null
+          lease_until?: string | null
+          paused_reason?: string | null
+          paused_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          consecutive_rate_limits?: number
+          created_at?: string
+          id?: string
+          last_result?: Json
+          last_run_at?: string | null
+          lease_until?: string | null
+          paused_reason?: string | null
+          paused_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_pages: {
         Row: {
           advance_days: number
@@ -2422,6 +2458,39 @@ export type Database = {
           },
         ]
       }
+      stripe_webhook_events: {
+        Row: {
+          created_at: string
+          environment: string
+          event_id: string
+          event_type: string
+          id: string
+          note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          environment?: string
+          event_id: string
+          event_type: string
+          id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          event_id?: string
+          event_type?: string
+          id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sub_account_integrations: {
         Row: {
           email_config: Json
@@ -3409,6 +3478,10 @@ export type Database = {
           sub_account_id: string
         }[]
       }
+      acquire_billing_reconcile_lease: {
+        Args: { _minutes?: number }
+        Returns: boolean
+      }
       get_invitation_token: { Args: { _id: string }; Returns: string }
       has_agency_access: {
         Args: { _agency: string; _user: string }
@@ -3451,6 +3524,10 @@ export type Database = {
         }[]
       }
       next_send_time: { Args: { _at: string; _sub: string }; Returns: string }
+      pause_billing_reconcile: {
+        Args: { _minutes: number; _reason: string }
+        Returns: undefined
+      }
       preview_invitation: {
         Args: { _token: string }
         Returns: {
@@ -3464,7 +3541,12 @@ export type Database = {
           sub_account_name: string
         }[]
       }
+      release_billing_reconcile_lease: {
+        Args: { _result?: Json }
+        Returns: undefined
+      }
       render_merge_tags: { Args: { _ctx: Json; _tpl: string }; Returns: string }
+      resume_billing_reconcile: { Args: never; Returns: undefined }
       run_workflows: {
         Args: {
           _payload: Json
