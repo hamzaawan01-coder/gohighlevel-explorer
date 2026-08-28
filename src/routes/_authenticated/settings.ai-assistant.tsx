@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/AppShell";
 import { SettingsNav } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -97,7 +98,7 @@ function AiAssistantSettingsPage() {
     setForm((f) => (f ? { ...f, [key]: value } : f));
 
   return (
-    <>
+    <AppShell>
       <PageHeader
         title="AI reply assistant"
         description="Drafts replies to customers in your inbox. A teammate always reviews before anything sends."
@@ -253,7 +254,7 @@ function AiAssistantSettingsPage() {
           </div>
         )}
       </PageBody>
-    </>
+    </AppShell>
   );
 }
 

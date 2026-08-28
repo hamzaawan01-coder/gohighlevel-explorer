@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/AppShell";
 import { SettingsNav } from "@/components/SettingsNav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -147,7 +148,7 @@ function SettingsHub() {
   const { state } = useModules();
 
   return (
-    <>
+    <AppShell>
       <PageHeader
         title="Settings"
         description="Everything you configure once, grouped in one place."
@@ -185,6 +186,6 @@ function SettingsHub() {
           })}
         </div>
       </PageBody>
-    </>
+    </AppShell>
   );
 }
