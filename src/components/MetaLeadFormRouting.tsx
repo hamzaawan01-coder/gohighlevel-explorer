@@ -242,17 +242,117 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
                     size="sm"
                     variant="outline"
                     className="text-xs"
-                    disabled={importing === f.formId}
+                    disabled={jobs[f.formId]?.status === "running"}
                     onClick={() => {
-                      setImporting(f.formId);
-                      importLeads.mutate({ formId: f.formId, formName: f.formName, pageId: f.pageId });
+                      const r = rangeFor(f.formId);
+                      if (r.since && r.until && r.since > r.until) {
+                        toast.error("The start date must be before the end date");
+                        return;
+                      }
+                      setJobs((j) => ({
+                        ...j,
+                        [f.formId]: {
+                          status: "queued",
+                          pageName: f.pageName,
+                          formName: f.formName,
+                          since: r.since || null,
+                          until: r.until || null,
+                        },
+                      }));
+                      importLeads.mutate({
+                        formId: f.formId,
+                        formName: f.formName,
+                        pageId: f.pageId,
+                        since: r.since || null,
+                        until: r.until || null,
+                      });
                     }}
                   >
-                    <DownloadCloud className={`size-3.5 mr-1 ${importing === f.formId ? "animate-pulse" : ""}`} />
-                    {importing === f.formId ? "Importing…" : "Import past leads"}
+                    <DownloadCloud className={`size-3.5 mr-1 ${jobs[f.formId]?.status === "running" ? "animate-pulse" : ""}`} />
+                    {jobs[f.formId]?.status === "running" ? "Importing…" : "Import past leads"}
                   </Button>
                 </div>
               </div>
+
+              <div className="flex flex-wrap items-end gap-3 rounded border border-border bg-muted/20 p-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] text-muted-foreground">Import from</label>
+                  <Input
+                    type="date"
+                    className="h-9 w-[150px] text-xs"
+                    value={rangeFor(f.formId).since}
+                    onChange={(e) => setRange(f.formId, { since: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] text-muted-foreground">Import to</label>
+                  <Input
+                    type="date"
+                    className="h-9 w-[150px] text-xs"
+                    value={rangeFor(f.formId).until}
+                    onChange={(e) => setRange(f.formId, { until: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  {[7, 30, 90].map((d) => (
+                    <Button key={d} size="sm" variant="ghost" className="text-[11px]" onClick={() => presetRange(f.formId, d)}>
+                      Last {d}d
+                    </Button>
+                  ))}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-[11px]"
+                    onClick={() => setRange(f.formId, { since: "", until: "" })}
+                  >
+                    All time
+                  </Button>
+                </div>
+              </div>
+
+              {jobs[f.formId] && (
+                <div className="rounded border border-border p-3 text-[11px] space-y-1">
+                  <div className="flex items-center gap-2">
+                    {jobs[f.formId]!.status === "completed" ? (
+                      <CheckCircle2 className="size-3.5 text-primary" />
+                    ) : jobs[f.formId]!.status === "failed" ? (
+                      <AlertTriangle className="size-3.5 text-destructive" />
+                    ) : jobs[f.formId]!.status === "running" ? (
+                      <RefreshCw className="size-3.5 animate-spin" />
+                    ) : (
+                      <Clock className="size-3.5" />
+                    )}
+                    <span className="font-medium capitalize">{jobs[f.formId]!.status}</span>
+                    <span className="text-muted-foreground">
+                      {jobs[f.formId]!.pageName || f.pageName} · {jobs[f.formId]!.formName}
+                      {" · "}
+                      {jobs[f.formId]!.since || jobs[f.formId]!.until
+                        ? `${jobs[f.formId]!.since ?? "start"} → ${jobs[f.formId]!.until ?? "today"}`
+                        : "all time"}
+                    </span>
+                  </div>
+                  {jobs[f.formId]!.status === "completed" && jobs[f.formId]!.summary && (
+                    <p className="text-muted-foreground">
+                      {jobs[f.formId]!.summary!.total} found · {jobs[f.formId]!.summary!.imported} imported ·{" "}
+                      {jobs[f.formId]!.summary!.skipped} already in CRM · {jobs[f.formId]!.summary!.failed} failed
+                    </p>
+                  )}
+                  {jobs[f.formId]!.status === "failed" && <p className="text-destructive">{jobs[f.formId]!.error}</p>}
+                  {(jobs[f.formId]!.summary?.failed ?? 0) > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-[11px] mt-1"
+                      disabled={retryFailed.isPending}
+                      onClick={() => retryFailed.mutate({ formId: f.formId })}
+                    >
+                      <RotateCcw className="size-3.5 mr-1" />
+                      Retry failed leads
+                    </Button>
+                  )}
+                </div>
+              )}
+
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
