@@ -35,6 +35,7 @@ import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
+import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
 import { Route as AuthenticatedSettingsAiAssistantRouteImport } from './routes/_authenticated/settings.ai-assistant'
 import { Route as AuthenticatedSettingsAppReviewRouteImport } from './routes/_authenticated/settings.app-review'
@@ -206,6 +207,12 @@ const AuthenticatedDealsIdRoute = AuthenticatedDealsIdRouteImport.update({
   path: '/deals/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInvoicesIndexRoute =
+  AuthenticatedInvoicesIndexRouteImport.update({
+    id: '/invoices/',
+    path: '/invoices/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsIndexRoute =
   AuthenticatedSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -458,6 +465,7 @@ export interface FileRoutesByFullPath {
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts/': typeof AuthenticatedContactsIndexRoute
+  '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
@@ -521,6 +529,7 @@ export interface FileRoutesByTo {
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts': typeof AuthenticatedContactsIndexRoute
+  '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
@@ -586,6 +595,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/_authenticated/contacts/': typeof AuthenticatedContactsIndexRoute
+  '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
@@ -651,6 +661,7 @@ export interface FileRouteTypes {
     | '/settings/wordpress'
     | '/api/public/process-outbound'
     | '/contacts/'
+    | '/invoices/'
     | '/settings/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
@@ -714,6 +725,7 @@ export interface FileRouteTypes {
     | '/settings/wordpress'
     | '/api/public/process-outbound'
     | '/contacts'
+    | '/invoices'
     | '/settings'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
@@ -778,6 +790,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/wordpress'
     | '/api/public/process-outbound'
     | '/_authenticated/contacts/'
+    | '/_authenticated/invoices/'
     | '/_authenticated/settings/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
@@ -1018,6 +1031,13 @@ declare module '@tanstack/react-router' {
       path: '/deals/$id'
       fullPath: '/deals/$id'
       preLoaderRoute: typeof AuthenticatedDealsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/invoices/': {
+      id: '/_authenticated/invoices/'
+      path: '/invoices'
+      fullPath: '/invoices/'
+      preLoaderRoute: typeof AuthenticatedInvoicesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/': {
@@ -1306,6 +1326,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
   AuthenticatedSettingsWordpressRoute: typeof AuthenticatedSettingsWordpressRoute
   AuthenticatedContactsIndexRoute: typeof AuthenticatedContactsIndexRoute
+  AuthenticatedInvoicesIndexRoute: typeof AuthenticatedInvoicesIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
 }
 
@@ -1343,6 +1364,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
   AuthenticatedSettingsWordpressRoute: AuthenticatedSettingsWordpressRoute,
   AuthenticatedContactsIndexRoute: AuthenticatedContactsIndexRoute,
+  AuthenticatedInvoicesIndexRoute: AuthenticatedInvoicesIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
 }
 
