@@ -16,7 +16,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Copy, Facebook, Instagram, BarChart3 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Copy, Facebook, Instagram, BarChart3, MessageSquare, Users, Webhook } from "lucide-react";
 
 type PageRow = {
   id: string;
@@ -167,194 +168,317 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
 
   const data = q.data;
   const conn = data?.connection;
+  const pages = (data?.pages ?? []) as PageRow[];
+  const adAccounts = (data?.adAccounts ?? []) as AdAccountRow[];
+  const subscribedCount = pages.filter((p) => p.webhook_subscribed).length;
+  const igCount = pages.filter((p) => p.instagram_business_account_id).length;
+  const leadAdsCount = pages.filter((p) => p.sync_lead_ads).length;
 
-  if (q.isLoading) return <p className="text-xs text-muted-foreground p-4">Loading…</p>;
+  if (q.isLoading) {
+    return (
+      <div className="surface-card space-y-3 p-5">
+        <div className="h-4 w-40 animate-pulse rounded bg-secondary" />
+        <div className="h-3 w-72 animate-pulse rounded bg-secondary" />
+        <div className="h-9 w-36 animate-pulse rounded bg-secondary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 mt-4">
-      {/* Connect state */}
-      <div className="rounded-md border border-border p-5 space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="font-medium flex items-center gap-2">
-              <Facebook className="size-4 text-[#1877F2]" /> Meta (Facebook, Instagram, Ads)
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              Connect one Facebook account to route Messenger + Instagram DMs into your inbox,
-              sync Lead Ads leads into Contacts, and read Meta Ads spend on the Reports page.
-            </p>
+    <div className="space-y-4">
+      {/* ── Connection header ─────────────────────────────── */}
+      <div className="surface-card overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#1877F2]/10">
+              <Facebook className="size-5 text-[#1877F2]" />
+            </span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-sm font-bold">Meta</h2>
+                {conn ? (
+                  <Badge variant="secondary" className="gap-1 text-[10px]">
+                    <CheckCircle2 className="size-3" /> Connected
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="gap-1 text-[10px]">
+                    <AlertCircle className="size-3" /> Not connected
+                  </Badge>
+                )}
+              </div>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {conn ? (
+                  <>
+                    Logged in as{" "}
+                    <span className="font-medium text-foreground">{conn.meta_user_name}</span>
+                    {conn.token_expires_at && (
+                      <> · token expires {new Date(conn.token_expires_at).toLocaleDateString()}</>
+                    )}
+                  </>
+                ) : (
+                  "Messenger + Instagram DMs into your inbox, Lead Ads into Contacts, ad spend in Reports."
+                )}
+              </p>
+            </div>
           </div>
-          {conn ? (
-            <Badge variant="secondary" className="gap-1"><CheckCircle2 className="size-3" /> Connected</Badge>
-          ) : (
-            <Badge variant="outline" className="gap-1"><AlertCircle className="size-3" /> Not connected</Badge>
-          )}
+
+          <div className="flex items-center gap-2">
+            {!conn ? (
+              <Button
+                onClick={() => connect.mutate()}
+                disabled={connect.isPending || data?.setup?.appConfigured === false}
+              >
+                <Facebook className="size-4" />
+                {connect.isPending ? "Redirecting…" : "Connect Facebook"}
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refresh.mutate()}
+                  disabled={refresh.isPending}
+                >
+                  <RefreshCw className={`size-3.5 ${refresh.isPending ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm("Disconnect Meta from this workspace?")) disconnect.mutate();
+                  }}
+                >
+                  Disconnect
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
-        {!conn ? (
-          <Button
-            onClick={() => connect.mutate()}
-            disabled={connect.isPending || data?.setup?.appConfigured === false}
-          >
-            <Facebook className="size-4 mr-2" />
-            {connect.isPending ? "Redirecting…" : "Connect Facebook"}
-          </Button>
-        ) : (
-          <div className="space-y-3">
-            <div className="text-xs text-muted-foreground">
-              Logged in as <span className="font-medium text-foreground">{conn.meta_user_name}</span>
-              {conn.token_expires_at && (
-                <> · token expires {new Date(conn.token_expires_at).toLocaleDateString()}</>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={() => refresh.mutate()} disabled={refresh.isPending}>
-                <RefreshCw className={`size-3.5 mr-2 ${refresh.isPending ? "animate-spin" : ""}`} />
-                Refresh pages & ad accounts
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => {
-                if (confirm("Disconnect Meta from this workspace?")) disconnect.mutate();
-              }}>
-                Disconnect
-              </Button>
-            </div>
+        {conn && (
+          <div className="grid grid-cols-2 divide-x divide-border border-t border-border sm:grid-cols-4">
+            <Stat label="Pages" value={pages.length} />
+            <Stat label="Subscribed" value={`${subscribedCount}/${pages.length}`} />
+            <Stat label="Instagram" value={igCount} />
+            <Stat label="Lead Ads on" value={leadAdsCount} />
           </div>
         )}
       </div>
 
       {!conn && data?.setup && <MetaSetupGuide setup={data.setup} />}
 
-
-
       {conn && (
-        <>
-          {/* Webhook URL — must be added manually inside Meta's Webhooks product UI */}
-          <div className="rounded-md border border-border p-5 space-y-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="font-medium text-sm">Webhook callback URL</h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Click the button to register this URL in Meta automatically (Page:{" "}
-                  <code>messages</code>, <code>messaging_postbacks</code>, <code>leadgen</code>; Instagram:{" "}
-                  <code>messages</code>). You can also paste it manually in Meta App → <b>Webhooks</b>.
-                </p>
-              </div>
-              <Button size="sm" disabled={configureWebhooks.isPending} onClick={() => configureWebhooks.mutate()}>
-                {configureWebhooks.isPending ? "Configuring…" : "Configure webhooks in Meta"}
-              </Button>
-            </div>
-            <FieldCopy label="Callback URL" value={data.webhookUrl ?? ""} />
-            <FieldCopy label="Verify Token" value={data.webhookVerifyToken ?? ""} secret />
-          </div>
+        <Tabs defaultValue="channels">
+          <TabsList>
+            <TabsTrigger value="channels">
+              <MessageSquare className="mr-1.5 size-3.5" /> Channels
+            </TabsTrigger>
+            <TabsTrigger value="leads">
+              <Users className="mr-1.5 size-3.5" /> Lead Ads
+            </TabsTrigger>
+            <TabsTrigger value="ads">
+              <BarChart3 className="mr-1.5 size-3.5" /> Ad accounts
+            </TabsTrigger>
+            <TabsTrigger value="advanced">
+              <Webhook className="mr-1.5 size-3.5" /> Webhooks
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Pages */}
-          <div className="rounded-md border border-border overflow-hidden">
-            <div className="p-4 border-b border-border flex items-start justify-between gap-3">
-              <div>
-                <h3 className="font-medium text-sm">Facebook Pages & Instagram accounts</h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {(data.pages ?? []).length === 0 ? "No pages found. Click Refresh above." : "Toggle what should flow into this workspace."}
-                </p>
-              </div>
-              {(data.pages ?? []).length > 0 && (
+          {/* ── Channels: pages & routing ───────────────── */}
+          <TabsContent value="channels" className="mt-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">
+                {pages.length === 0
+                  ? "No pages found yet — click Refresh above."
+                  : "Choose what each Page sends into this workspace."}
+              </p>
+              {pages.length > 0 && (
                 <Button
                   size="sm"
-                  variant="secondary"
+                  variant="outline"
                   disabled={enableAll.isPending}
                   onClick={() => enableAll.mutate()}
                 >
-                  {enableAll.isPending ? "Enabling…" : "Enable all pages"}
+                  {enableAll.isPending ? "Enabling…" : "Enable everything"}
                 </Button>
               )}
             </div>
 
-            {(data.pages ?? []).map((p: PageRow) => (
-              <div key={p.id} className="p-4 border-t border-border first:border-t-0 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate flex items-center gap-2">
-                      <Facebook className="size-3.5 text-[#1877F2] shrink-0" />
-                      {p.page_name}
-                      {p.instagram_business_account_id && (
-                        <Instagram className="size-3.5 text-[#E4405F] shrink-0" />
-                      )}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">{p.category ?? "Page"} · id {p.page_id}</p>
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              {pages.map((p) => (
+                <div key={p.id} className="surface-card space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+                        <Facebook className="size-3.5 shrink-0 text-[#1877F2]" />
+                        {p.page_name}
+                        {p.instagram_business_account_id && (
+                          <Instagram className="size-3.5 shrink-0 text-[#E4405F]" />
+                        )}
+                      </p>
+                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                        {p.category ?? "Page"} · {p.page_id}
+                      </p>
+                    </div>
+                    {p.webhook_subscribed ? (
+                      <Badge variant="secondary" className="shrink-0 gap-1 text-[10px]">
+                        <CheckCircle2 className="size-3" /> Subscribed
+                      </Badge>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        onClick={() =>
+                          patchPage.mutate({ pageRowId: p.id, patch: { subscribe: true } })
+                        }
+                      >
+                        Subscribe
+                      </Button>
+                    )}
                   </div>
-                  {p.webhook_subscribed ? (
-                    <Badge variant="secondary" className="gap-1"><CheckCircle2 className="size-3" /> Subscribed</Badge>
-                  ) : (
-                    <Button size="sm" variant="secondary" onClick={() => patchPage.mutate({ pageRowId: p.id, patch: { subscribe: true } })}>
-                      Subscribe to webhooks
-                    </Button>
-                  )}
+                  <div className="space-y-1.5 border-t border-border pt-3">
+                    <ToggleRow
+                      label="Messenger → Inbox"
+                      checked={p.route_messenger_to_inbox}
+                      onChange={(v) =>
+                        patchPage.mutate({
+                          pageRowId: p.id,
+                          patch: { route_messenger_to_inbox: v },
+                        })
+                      }
+                    />
+                    <ToggleRow
+                      label="Instagram DMs → Inbox"
+                      checked={p.route_instagram_to_inbox}
+                      disabled={!p.instagram_business_account_id}
+                      onChange={(v) =>
+                        patchPage.mutate({
+                          pageRowId: p.id,
+                          patch: { route_instagram_to_inbox: v },
+                        })
+                      }
+                    />
+                    <ToggleRow
+                      label="Lead Ads → Contacts"
+                      checked={p.sync_lead_ads}
+                      onChange={(v) =>
+                        patchPage.mutate({ pageRowId: p.id, patch: { sync_lead_ads: v } })
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                  <ToggleRow
-                    label="Route Messenger to inbox"
-                    checked={p.route_messenger_to_inbox}
-                    onChange={(v) => patchPage.mutate({ pageRowId: p.id, patch: { route_messenger_to_inbox: v } })}
-                  />
-                  <ToggleRow
-                    label="Route Instagram DMs to inbox"
-                    checked={p.route_instagram_to_inbox}
-                    disabled={!p.instagram_business_account_id}
-                    onChange={(v) => patchPage.mutate({ pageRowId: p.id, patch: { route_instagram_to_inbox: v } })}
-                  />
-                  <ToggleRow
-                    label="Sync Lead Ads leads to Contacts"
-                    checked={p.sync_lead_ads}
-                    onChange={(v) => patchPage.mutate({ pageRowId: p.id, patch: { sync_lead_ads: v } })}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <MetaLeadFormRouting subId={subId} />
-
-          {/* Ad accounts */}
-          <div className="rounded-md border border-border overflow-hidden">
-            <div className="p-4 border-b border-border flex items-center gap-2">
-              <BarChart3 className="size-4" />
-              <h3 className="font-medium text-sm">Meta Ads accounts</h3>
+              ))}
             </div>
-            {(data.adAccounts ?? []).length === 0 ? (
-              <p className="p-4 text-xs text-muted-foreground">No ad accounts found for this Meta user.</p>
-            ) : (
-              (data.adAccounts as AdAccountRow[]).map((a) => (
-                <div key={a.id} className="p-4 border-t border-border first:border-t-0 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{a.name ?? a.ad_account_id}</p>
-                    <p className="text-[11px] text-muted-foreground">{a.ad_account_id} · {a.currency ?? "—"}</p>
+          </TabsContent>
+
+          {/* ── Lead Ads routing ───────────────────────── */}
+          <TabsContent value="leads" className="mt-4">
+            <MetaLeadFormRouting subId={subId} />
+          </TabsContent>
+
+          {/* ── Ad accounts ────────────────────────────── */}
+          <TabsContent value="ads" className="mt-4">
+            <div className="surface-card overflow-hidden">
+              {adAccounts.length === 0 ? (
+                <p className="p-5 text-xs text-muted-foreground">
+                  No ad accounts found for this Meta user.
+                </p>
+              ) : (
+                adAccounts.map((a) => (
+                  <div
+                    key={a.id}
+                    className="flex items-center justify-between gap-3 border-t border-border p-4 first:border-t-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{a.name ?? a.ad_account_id}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {a.ad_account_id} · {a.currency ?? "—"}
+                      </p>
+                    </div>
+                    <div className="w-52 shrink-0">
+                      <ToggleRow
+                        label="Use for Reports"
+                        checked={a.use_for_reports}
+                        onChange={(v) => patchAd.mutate({ rowId: a.id, use_for_reports: v })}
+                      />
+                    </div>
                   </div>
-                  <ToggleRow
-                    label="Use for Reports"
-                    checked={a.use_for_reports}
-                    onChange={(v) => patchAd.mutate({ rowId: a.id, use_for_reports: v })}
-                  />
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          {/* ── Webhooks & app review ──────────────────── */}
+          <TabsContent value="advanced" className="mt-4 space-y-3">
+            <div className="surface-card space-y-3 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-medium">Webhook callback</h3>
+                  <p className="mt-1 max-w-lg text-xs text-muted-foreground">
+                    Register this URL in Meta automatically (Page: <code>messages</code>,{" "}
+                    <code>messaging_postbacks</code>, <code>leadgen</code>; Instagram:{" "}
+                    <code>messages</code>), or paste it manually in Meta App → Webhooks.
+                  </p>
                 </div>
-              ))
-            )}
-          </div>
-        </>
+                <Button
+                  size="sm"
+                  disabled={configureWebhooks.isPending}
+                  onClick={() => configureWebhooks.mutate()}
+                >
+                  {configureWebhooks.isPending ? "Configuring…" : "Configure in Meta"}
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <FieldCopy label="Callback URL" value={data.webhookUrl ?? ""} />
+                <FieldCopy label="Verify Token" value={data.webhookVerifyToken ?? ""} secret />
+              </div>
+            </div>
+
+            <Alert>
+              <AlertCircle className="size-4" />
+              <AlertTitle className="text-sm">Meta App Review</AlertTitle>
+              <AlertDescription className="text-xs">
+                Advanced permissions (Lead Ads, Ads Insights, page messaging, Instagram DMs) require
+                Meta App Review + Business Verification. Until approved, only Facebook accounts added
+                as <b>Testers</b> in your Meta App can use this integration.
+                <a
+                  className="ml-1 inline-flex items-center gap-1 underline"
+                  href="https://developers.facebook.com/apps"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open Meta developers <ExternalLink className="size-3" />
+                </a>
+              </AlertDescription>
+            </Alert>
+          </TabsContent>
+        </Tabs>
       )}
 
-      <Alert>
-        <AlertCircle className="size-4" />
-        <AlertTitle className="text-sm">Meta App Review</AlertTitle>
-        <AlertDescription className="text-xs">
-          Advanced permissions (Lead Ads, Ads Insights, page messaging, Instagram DMs) require
-          Meta App Review + Business Verification. Until approved, only Facebook accounts you've added
-          as <b>Testers</b> in your Meta App can use this integration.
-          <a className="underline ml-1 inline-flex items-center gap-1" href="https://developers.facebook.com/apps" target="_blank" rel="noreferrer">
-            Open Meta developers <ExternalLink className="size-3" />
-          </a>
-        </AlertDescription>
-      </Alert>
+      {!conn && (
+        <Alert>
+          <AlertCircle className="size-4" />
+          <AlertTitle className="text-sm">Meta App Review</AlertTitle>
+          <AlertDescription className="text-xs">
+            Until Meta approves the app, only Facebook accounts added as <b>Testers</b> can connect.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 }
+
+function Stat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="px-5 py-3">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="font-mono text-sm font-semibold tabular-nums">{value}</p>
+    </div>
+  );
+}
+
 
 function ToggleRow({ label, checked, onChange, disabled }: { label: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
