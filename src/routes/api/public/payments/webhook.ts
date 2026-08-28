@@ -3,6 +3,40 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
 import { applySubscriptionEvent, type WebhookDb } from "@/lib/payments-webhook.server";
+import { applyInvoicePaymentEvent, type InvoicePaymentDb } from "@/lib/invoice-payments.server";
+
+/** Invoice payment sync: mark paid + append to the invoice audit trail. */
+function invoiceDb(): InvoicePaymentDb {
+  return {
+    async markPaid({ invoiceId, amountPaid, paymentIntentId, checkoutSessionId, paidAt }) {
+      const { data, error } = await getSupabase()
+        .from("invoices")
+        .update({
+          status: "paid",
+          paid_at: paidAt,
+          amount_paid: amountPaid,
+          ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
+          ...(checkoutSessionId ? { stripe_checkout_session_id: checkoutSessionId } : {}),
+        } as never)
+        .eq("id", invoiceId)
+        .select("sub_account_id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      return { subAccountId: (data as { sub_account_id: string }).sub_account_id };
+    },
+    async logEvent({ invoiceId, subAccountId, type, detail }) {
+      await getSupabase()
+        .from("invoice_events")
+        .insert({
+          invoice_id: invoiceId,
+          sub_account_id: subAccountId,
+          type,
+          detail: detail as never,
+        } as never);
+    },
+  };
+}
 
 let _supabase: ReturnType<typeof createClient<Database>> | null = null;
 function getSupabase() {
@@ -70,15 +104,21 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           if (!fresh) {
             return Response.json({ received: true, duplicate: true });
           }
-          const result = await applySubscriptionEvent(event as Parameters<typeof applySubscriptionEvent>[0], db());
-          if (!result.applied) console.log("Payments webhook skipped:", result.reason);
+          const typed = event as Parameters<typeof applySubscriptionEvent>[0];
+          const result = await applySubscriptionEvent(typed, db());
+          const invoiceResult = await applyInvoicePaymentEvent(typed, invoiceDb());
+          if (!result.applied) console.log("Payments webhook (subscription) skipped:", result.reason);
+          if (!invoiceResult.applied) console.log("Payments webhook (invoice) skipped:", invoiceResult.reason);
+          const applied = result.applied || invoiceResult.applied;
+          const note = result.applied
+            ? result.action
+            : invoiceResult.applied
+              ? `invoice paid ${invoiceResult.invoiceId}`
+              : `${result.reason}; ${invoiceResult.reason}`;
           if (event.id) {
             await getSupabase()
               .from("stripe_webhook_events")
-              .update({
-                status: result.applied ? "processed" : "skipped",
-                note: result.applied ? result.action : result.reason,
-              })
+              .update({ status: applied ? "processed" : "skipped", note })
               .eq("event_id", event.id);
           }
           return Response.json({ received: true });
