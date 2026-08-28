@@ -229,11 +229,19 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         <>
           {/* Webhook URL — must be added manually inside Meta's Webhooks product UI */}
           <div className="rounded-md border border-border p-5 space-y-3">
-            <h3 className="font-medium text-sm">Webhook callback URL</h3>
-            <p className="text-xs text-muted-foreground">
-              Paste these into your Meta App → <b>Webhooks</b> product, once per object
-              (Page, Instagram). Subscribe to fields: <code>messages</code>, <code>messaging_postbacks</code>, <code>leadgen</code>.
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-medium text-sm">Webhook callback URL</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Click the button to register this URL in Meta automatically (Page:{" "}
+                  <code>messages</code>, <code>messaging_postbacks</code>, <code>leadgen</code>; Instagram:{" "}
+                  <code>messages</code>). You can also paste it manually in Meta App → <b>Webhooks</b>.
+                </p>
+              </div>
+              <Button size="sm" disabled={configureWebhooks.isPending} onClick={() => configureWebhooks.mutate()}>
+                {configureWebhooks.isPending ? "Configuring…" : "Configure webhooks in Meta"}
+              </Button>
+            </div>
             <FieldCopy label="Callback URL" value={data.webhookUrl ?? ""} />
             <FieldCopy label="Verify Token" value={data.webhookVerifyToken ?? ""} secret />
           </div>
