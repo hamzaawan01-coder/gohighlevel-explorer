@@ -97,7 +97,6 @@ function TeamPage() {
     <AppShell
       headerStatus={
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <SettingsNav />
           <Link to="/settings/sub-accounts" className="hover:text-foreground">Sub-accounts</Link>
           <span>·</span>
           <span className="text-foreground font-medium">Team</span>
@@ -105,6 +104,7 @@ function TeamPage() {
       }
     >
       <div className="max-w-4xl mx-auto p-6 space-y-8">
+        <SettingsNav />
         <header>
           <h1 className="text-2xl font-semibold tracking-tight">Team & invites</h1>
           <p className="text-sm text-muted-foreground mt-1">

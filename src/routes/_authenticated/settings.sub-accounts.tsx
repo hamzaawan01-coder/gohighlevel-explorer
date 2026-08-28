@@ -61,7 +61,6 @@ function SubAccountsPage() {
     <AppShell
       headerStatus={
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <SettingsNav />
           <span className="text-foreground font-medium">Sub-accounts</span>
           <span>·</span>
           <Link to="/settings/team" className="hover:text-foreground">Team</Link>
@@ -78,6 +77,7 @@ function SubAccountsPage() {
       }
     >
       <div className="p-6 space-y-6 overflow-auto h-full">
+        <SettingsNav />
         <div>
           <h1 className="text-lg font-bold">Sub-accounts</h1>
           <p className="text-xs text-muted-foreground mt-1">
