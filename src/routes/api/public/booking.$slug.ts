@@ -97,6 +97,8 @@ export const Route = createFileRoute("/api/public/booking/$slug")({
         const p = page as unknown as {
           id: string; sub_account_id: string; owner_user_id: string;
           name: string; duration_minutes: number; min_notice_minutes: number; enabled: boolean;
+          reminder_offsets: number[] | null; reminder_channel: "sms" | "email" | "both" | null;
+          reminder_template: string | null; confirmation_enabled: boolean | null; timezone: string;
         } | null;
         if (!p || !p.enabled) return new Response("Not found", { status: 404 });
 
@@ -148,17 +150,70 @@ export const Route = createFileRoute("/api/public/booking/$slug")({
           contactId = created.id;
         }
 
-        const { error: eErr } = await supabaseAdmin.from("calendar_events").insert({
-          sub_account_id: p.sub_account_id,
-          owner_user_id: p.owner_user_id,
-          title: `${p.name} — ${body.name}`,
-          description: body.notes ?? null,
-          starts_at: starts.toISOString(),
-          ends_at: ends.toISOString(),
-          all_day: false,
-          contact_id: contactId,
-        });
-        if (eErr) return new Response("Could not create event", { status: 500 });
+        const { data: event, error: eErr } = await supabaseAdmin
+          .from("calendar_events")
+          .insert({
+            sub_account_id: p.sub_account_id,
+            owner_user_id: p.owner_user_id,
+            title: `${p.name} — ${body.name}`,
+            description: body.notes ?? null,
+            starts_at: starts.toISOString(),
+            ends_at: ends.toISOString(),
+            all_day: false,
+            contact_id: contactId,
+            booking_page_id: p.id,
+            attendee_email: body.email,
+            attendee_phone: body.phone ?? null,
+            status: "confirmed",
+          } as never)
+          .select("id")
+          .single();
+        if (eErr || !event) return new Response("Could not create event", { status: 500 });
+
+        // Schedule reminders + optional instant confirmation. Never fail the
+        // booking itself if reminder scheduling has a problem.
+        try {
+          const { scheduleRemindersForEvent, renderReminder } = await import("@/lib/appointments.server");
+          await scheduleRemindersForEvent({
+            subAccountId: p.sub_account_id,
+            eventId: event.id,
+            startsAt: starts.toISOString(),
+            offsets: p.reminder_offsets ?? [1440, 60],
+            channel: p.reminder_channel ?? "sms",
+          });
+
+          if (p.confirmation_enabled !== false) {
+            const tz = p.timezone || "UTC";
+            const date = new Intl.DateTimeFormat("en-GB", {
+              timeZone: tz, weekday: "short", day: "numeric", month: "short",
+            }).format(starts);
+            const time = new Intl.DateTimeFormat("en-GB", {
+              timeZone: tz, hour: "2-digit", minute: "2-digit",
+            }).format(starts);
+            const text = renderReminder(
+              `Thanks {{name}} — your {{title}} is confirmed for {{date}} at {{time}}.`,
+              { title: p.name, date, time, name: first_name || "there" },
+            );
+            const channels = p.reminder_channel === "both"
+              ? (["email", "sms"] as const)
+              : ([p.reminder_channel ?? "sms"] as const);
+            for (const ch of channels) {
+              const to = ch === "sms" ? body.phone ?? null : body.email;
+              if (!to) continue;
+              await supabaseAdmin.from("outbound_messages").insert({
+                sub_account_id: p.sub_account_id,
+                channel: ch,
+                to_address: to,
+                subject: ch === "email" ? `Confirmed: ${p.name}` : null,
+                body_text: text,
+                contact_id: contactId,
+                status: "queued",
+              } as never);
+            }
+          }
+        } catch {
+          // best-effort
+        }
 
         return Response.json({ ok: true });
       },

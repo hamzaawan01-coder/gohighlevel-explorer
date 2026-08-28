@@ -16,9 +16,16 @@ export const Route = createFileRoute("/api/public/process-outbound")({
         const ok = !!provided && ((secret && provided === secret) || (anon && provided === anon));
         if (!ok) return new Response("unauthorized", { status: 401 });
         const { drainAll } = await import("@/lib/integrations.server-queue");
+        const { enqueueDueReminders } = await import("@/lib/appointments.server");
         try {
+          let reminders: Awaited<ReturnType<typeof enqueueDueReminders>> | { error: string };
+          try {
+            reminders = await enqueueDueReminders();
+          } catch (e) {
+            reminders = { error: e instanceof Error ? e.message : String(e) };
+          }
           const result = await drainAll();
-          return Response.json(result);
+          return Response.json({ ...result, reminders });
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           return new Response(msg, { status: 500 });
