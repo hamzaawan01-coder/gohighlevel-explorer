@@ -115,6 +115,11 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
     queryFn: () => getFn({ data: { subAccountId: subId } }),
   });
 
+  // First successful load counts as a check, so the header never reads "never".
+  useEffect(() => {
+    if (q.isSuccess && !stamps.countsAt) stampNow({ countsAt: new Date().toISOString() });
+  }, [q.isSuccess, stamps.countsAt, stampNow]);
+
   // Toast on OAuth callback redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
