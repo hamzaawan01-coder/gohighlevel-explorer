@@ -116,6 +116,39 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  /** One-click: subscribe every page to webhooks and route everything to the inbox. */
+  const enableAll = useMutation({
+    mutationFn: async () => {
+      const pages = (q.data?.pages ?? []) as PageRow[];
+      let ok = 0;
+      const failures: string[] = [];
+      for (const p of pages) {
+        try {
+          await updatePageFn({
+            data: {
+              pageRowId: p.id,
+              subAccountId: subId,
+              subscribe: true,
+              route_messenger_to_inbox: true,
+              route_instagram_to_inbox: Boolean(p.instagram_business_account_id),
+              sync_lead_ads: true,
+            },
+          });
+          ok++;
+        } catch (e) {
+          failures.push(`${p.page_name}: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      }
+      return { ok, failures };
+    },
+    onSuccess: ({ ok, failures }) => {
+      if (ok > 0) toast.success(`Enabled ${ok} page${ok === 1 ? "" : "s"}`);
+      if (failures.length > 0) toast.error(`${failures.length} failed — ${failures[0]}`);
+      qc.invalidateQueries({ queryKey: ["meta-connection", subId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const data = q.data;
   const conn = data?.connection;
 
