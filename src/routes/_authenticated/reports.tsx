@@ -108,7 +108,6 @@ function ReportsPage() {
                     <p className="text-xs text-muted-foreground py-8 text-center">No activity yet.</p>
                   ) : (
                     <div className="overflow-x-auto">
-                    <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
