@@ -64,7 +64,7 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
 
         const { data: connRows } = await (supabaseAdmin as any)
           .from("meta_connections").select("*").eq("id", connectionId).limit(1);
-        const conn = (connRows ?? [])[0] as { id: string; sub_account_id: string } | undefined;
+        const conn = (connRows ?? [])[0] as { id: string; sub_account_id: string; created_by: string } | undefined;
         if (!conn) {
           // Always ack 200 so Meta doesn't retry — the connection was removed.
           return new Response("ok", { status: 200 });
