@@ -46,6 +46,7 @@ import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_au
 import { Route as AuthenticatedSettingsModulesRouteImport } from './routes/_authenticated/settings.modules'
 import { Route as AuthenticatedSettingsPhoneNumbersRouteImport } from './routes/_authenticated/settings.phone-numbers'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
+import { Route as AuthenticatedSettingsSubscriptionsRouteImport } from './routes/_authenticated/settings.subscriptions'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsWordpressRouteImport } from './routes/_authenticated/settings.wordpress'
 import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
@@ -270,6 +271,12 @@ const AuthenticatedSettingsSubAccountsRoute =
     path: '/settings/sub-accounts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsSubscriptionsRoute =
+  AuthenticatedSettingsSubscriptionsRouteImport.update({
+    id: '/settings/subscriptions',
+    path: '/settings/subscriptions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsTeamRoute =
   AuthenticatedSettingsTeamRouteImport.update({
     id: '/settings/team',
@@ -439,6 +446,7 @@ export interface FileRoutesByFullPath {
   '/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
+  '/settings/subscriptions': typeof AuthenticatedSettingsSubscriptionsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
@@ -500,6 +508,7 @@ export interface FileRoutesByTo {
   '/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
+  '/settings/subscriptions': typeof AuthenticatedSettingsSubscriptionsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
@@ -563,6 +572,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/_authenticated/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
+  '/_authenticated/settings/subscriptions': typeof AuthenticatedSettingsSubscriptionsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/_authenticated/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
@@ -626,6 +636,7 @@ export interface FileRouteTypes {
     | '/settings/modules'
     | '/settings/phone-numbers'
     | '/settings/sub-accounts'
+    | '/settings/subscriptions'
     | '/settings/team'
     | '/settings/wordpress'
     | '/api/public/process-outbound'
@@ -687,6 +698,7 @@ export interface FileRouteTypes {
     | '/settings/modules'
     | '/settings/phone-numbers'
     | '/settings/sub-accounts'
+    | '/settings/subscriptions'
     | '/settings/team'
     | '/settings/wordpress'
     | '/api/public/process-outbound'
@@ -749,6 +761,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/modules'
     | '/_authenticated/settings/phone-numbers'
     | '/_authenticated/settings/sub-accounts'
+    | '/_authenticated/settings/subscriptions'
     | '/_authenticated/settings/team'
     | '/_authenticated/settings/wordpress'
     | '/api/public/process-outbound'
@@ -1070,6 +1083,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsSubAccountsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/subscriptions': {
+      id: '/_authenticated/settings/subscriptions'
+      path: '/settings/subscriptions'
+      fullPath: '/settings/subscriptions'
+      preLoaderRoute: typeof AuthenticatedSettingsSubscriptionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/team': {
       id: '/_authenticated/settings/team'
       path: '/settings/team'
@@ -1261,6 +1281,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsModulesRoute: typeof AuthenticatedSettingsModulesRoute
   AuthenticatedSettingsPhoneNumbersRoute: typeof AuthenticatedSettingsPhoneNumbersRoute
   AuthenticatedSettingsSubAccountsRoute: typeof AuthenticatedSettingsSubAccountsRoute
+  AuthenticatedSettingsSubscriptionsRoute: typeof AuthenticatedSettingsSubscriptionsRoute
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
   AuthenticatedSettingsWordpressRoute: typeof AuthenticatedSettingsWordpressRoute
   AuthenticatedContactsIndexRoute: typeof AuthenticatedContactsIndexRoute
@@ -1296,6 +1317,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsPhoneNumbersRoute:
     AuthenticatedSettingsPhoneNumbersRoute,
   AuthenticatedSettingsSubAccountsRoute: AuthenticatedSettingsSubAccountsRoute,
+  AuthenticatedSettingsSubscriptionsRoute:
+    AuthenticatedSettingsSubscriptionsRoute,
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
   AuthenticatedSettingsWordpressRoute: AuthenticatedSettingsWordpressRoute,
   AuthenticatedContactsIndexRoute: AuthenticatedContactsIndexRoute,
