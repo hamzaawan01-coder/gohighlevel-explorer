@@ -160,6 +160,10 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         )}
       </div>
 
+      {!conn && data?.setup && <MetaSetupGuide setup={data.setup} />}
+
+
+
       {conn && (
         <>
           {/* Webhook URL — must be added manually inside Meta's Webhooks product UI */}
