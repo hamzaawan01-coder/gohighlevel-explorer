@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Receipt } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { SettingsNav } from "@/components/SettingsNav";
@@ -99,7 +98,6 @@ function InvoiceBrandingPage() {
   return (
     <AppShell>
       <PageHeader
-        icon={Receipt}
         title="Invoice branding"
         description="Applied to invoice emails, overdue reminders and the print/PDF output for this workspace."
         actions={
