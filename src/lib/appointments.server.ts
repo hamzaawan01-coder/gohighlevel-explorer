@@ -9,11 +9,101 @@
  * provider selection, retries and logging.
  */
 
-type Channel = "sms" | "email";
+type Channel = "sms" | "email" | "in_app";
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
+}
+
+export type AuditAction =
+  | "booked"
+  | "rescheduled"
+  | "edited"
+  | "cancelled"
+  | "status_changed"
+  | "reminder_sent"
+  | "reminder_failed"
+  | "reminder_skipped";
+
+/** Append an entry to the appointment activity log. Never throws. */
+export async function logAppointmentAudit(input: {
+  subAccountId: string;
+  action: AuditAction;
+  eventId?: string | null;
+  bookingPageId?: string | null;
+  contactId?: string | null;
+  actorUserId?: string | null;
+  actorLabel?: string | null;
+  channel?: string | null;
+  detail?: string | null;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    const sb = await admin();
+    await sb.from("appointment_audit").insert({
+      sub_account_id: input.subAccountId,
+      action: input.action,
+      event_id: input.eventId ?? null,
+      booking_page_id: input.bookingPageId ?? null,
+      contact_id: input.contactId ?? null,
+      actor_user_id: input.actorUserId ?? null,
+      actor_label: input.actorLabel ?? null,
+      channel: input.channel ?? null,
+      detail: input.detail ?? null,
+      metadata: input.metadata ?? {},
+    } as never);
+  } catch {
+    // auditing must never break the caller
+  }
+}
+
+/**
+ * Keep the contact's inbox thread in step with appointment activity by posting
+ * an internal note. Best-effort: never throws.
+ */
+export async function postAppointmentNote(input: {
+  subAccountId: string;
+  contactId: string | null;
+  body: string;
+}): Promise<void> {
+  if (!input.contactId) return;
+  try {
+    const sb = await admin();
+    const { data: existing } = await sb
+      .from("conversations")
+      .select("id")
+      .eq("sub_account_id", input.subAccountId)
+      .eq("contact_id", input.contactId)
+      .eq("channel", "note")
+      .maybeSingle();
+    let convoId = (existing as { id: string } | null)?.id ?? null;
+    if (!convoId) {
+      const { data: created } = await sb
+        .from("conversations")
+        .insert({
+          sub_account_id: input.subAccountId,
+          contact_id: input.contactId,
+          channel: "note",
+          status: "open",
+        } as never)
+        .select("id")
+        .single();
+      convoId = (created as { id: string } | null)?.id ?? null;
+    }
+    if (!convoId) return;
+    await sb.from("messages").insert({
+      sub_account_id: input.subAccountId,
+      conversation_id: convoId,
+      contact_id: input.contactId,
+      channel: "note",
+      direction: "outbound",
+      kind: "note",
+      body: input.body,
+    } as never);
+  } catch {
+    // best-effort
+  }
 }
 
 export const DEFAULT_REMINDER_TEMPLATE =
@@ -55,10 +145,12 @@ export async function scheduleRemindersForEvent(input: {
   startsAt: string;
   offsets: number[];
   channel: "sms" | "email" | "both";
+  inApp?: boolean;
 }): Promise<number> {
   const sb = await admin();
   const channels: Channel[] =
     input.channel === "both" ? ["sms", "email"] : [input.channel];
+  if (input.inApp) channels.push("in_app");
   const startMs = new Date(input.startsAt).getTime();
 
   const rows = channels.flatMap((channel) =>
@@ -179,6 +271,50 @@ export async function enqueueDueReminders(limit = 50): Promise<{
         }
       }
 
+      const { date: dNow, time: tNow } = fmt(event.starts_at, timezone);
+
+      // In-app reminders become notifications for the workspace owner instead
+      // of an outbound provider message.
+      if (r.channel === "in_app") {
+        const { data: evOwner } = await sb
+          .from("calendar_events")
+          .select("owner_user_id")
+          .eq("id", r.event_id)
+          .maybeSingle();
+        const ownerId = (evOwner as { owner_user_id: string | null } | null)?.owner_user_id ?? null;
+        if (!ownerId) {
+          await mark(sb, r.id, "skipped", "No owner to notify");
+          skipped++;
+          continue;
+        }
+        await sb.from("notifications").insert({
+          user_id: ownerId,
+          sub_account_id: r.sub_account_id,
+          title: `Upcoming: ${event.title}`,
+          body: `${dNow} at ${tNow}`,
+          link: "/calendar",
+        } as never);
+        await sb
+          .from("appointment_reminders")
+          .update({
+            status: "queued",
+            delivery_status: "delivered",
+            delivered_at: new Date().toISOString(),
+            error: null,
+          } as never)
+          .eq("id", r.id);
+        await logAppointmentAudit({
+          subAccountId: r.sub_account_id,
+          action: "reminder_sent",
+          eventId: r.event_id,
+          contactId: event.contact_id,
+          channel: "in_app",
+          detail: `In-app reminder ${r.offset_minutes} min before`,
+        });
+        queued++;
+        continue;
+      }
+
       const to = r.channel === "sms" ? phone : email;
       if (!to) {
         await mark(sb, r.id, "skipped", `No ${r.channel === "sms" ? "phone" : "email"} on file`);
@@ -212,6 +348,15 @@ export async function enqueueDueReminders(limit = 50): Promise<{
           error: null,
         } as never)
         .eq("id", r.id);
+      await logAppointmentAudit({
+        subAccountId: r.sub_account_id,
+        action: "reminder_sent",
+        eventId: r.event_id,
+        contactId: event.contact_id,
+        channel: r.channel,
+        detail: `Queued ${r.channel} reminder to ${to}`,
+        metadata: { outbound_message_id: (msg as { id: string }).id },
+      });
       queued++;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -229,8 +374,71 @@ async function mark(
   status: "skipped" | "failed",
   error: string,
 ) {
+  const { data } = await sb
+    .from("appointment_reminders")
+    .update({
+      status,
+      error,
+      delivery_status: status === "failed" ? "failed" : null,
+    } as never)
+    .eq("id", id)
+    .select("sub_account_id, event_id, channel")
+    .maybeSingle();
+  const row = data as unknown as
+    | { sub_account_id: string; event_id: string; channel: string }
+    | null;
+  if (row) {
+    await logAppointmentAudit({
+      subAccountId: row.sub_account_id,
+      action: status === "failed" ? "reminder_failed" : "reminder_skipped",
+      eventId: row.event_id,
+      channel: row.channel,
+      detail: error,
+    });
+  }
+}
+
+/** Cancel every reminder that has not gone out yet for an appointment. */
+export async function cancelPendingReminders(eventId: string, reason: string): Promise<void> {
+  const sb = await admin();
   await sb
     .from("appointment_reminders")
-    .update({ status, error } as never)
-    .eq("id", id);
+    .update({ status: "skipped", error: reason } as never)
+    .eq("event_id", eventId)
+    .eq("status", "pending");
+}
+
+/**
+ * Move pending reminders to match a new appointment start time. Reminders whose
+ * new send time is already in the past are dropped.
+ */
+export async function reschedulePendingReminders(
+  eventId: string,
+  newStartsAt: string,
+): Promise<number> {
+  const sb = await admin();
+  const { data } = await sb
+    .from("appointment_reminders")
+    .select("id, offset_minutes")
+    .eq("event_id", eventId)
+    .eq("status", "pending");
+  const rows = (data ?? []) as unknown as { id: string; offset_minutes: number }[];
+  const startMs = new Date(newStartsAt).getTime();
+  let moved = 0;
+  for (const r of rows) {
+    const when = new Date(startMs - r.offset_minutes * 60_000);
+    if (when.getTime() <= Date.now() - 60_000) {
+      await sb
+        .from("appointment_reminders")
+        .update({ status: "skipped", error: "New time too close for this reminder" } as never)
+        .eq("id", r.id);
+      continue;
+    }
+    await sb
+      .from("appointment_reminders")
+      .update({ scheduled_for: when.toISOString(), error: null } as never)
+      .eq("id", r.id);
+    moved++;
+  }
+  return moved;
 }
