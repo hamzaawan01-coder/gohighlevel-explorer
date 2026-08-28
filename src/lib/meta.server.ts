@@ -172,6 +172,45 @@ export async function subscribePageToApp(pageId: string, pageAccessToken: string
   if (!res.ok || body.error) throw new Error(`Subscribe page failed: ${body.error?.message ?? res.status}`);
 }
 
+/**
+ * Register the app-level webhook callback URL + fields with Meta.
+ * Uses the app access token (app_id|app_secret) so no user token is needed.
+ */
+export async function configureAppWebhooks(callbackUrl: string): Promise<{ object: string; ok: boolean; error?: string }[]> {
+  const appId = process.env.META_APP_ID;
+  const appSecret = process.env.META_APP_SECRET;
+  const verifyToken = process.env.META_WEBHOOK_VERIFY_TOKEN;
+  if (!appId || !appSecret) throw new Error("META_APP_ID / META_APP_SECRET are not configured");
+  if (!verifyToken) throw new Error("META_WEBHOOK_VERIFY_TOKEN is not configured");
+
+  const targets: Array<{ object: string; fields: string }> = [
+    { object: "page", fields: "messages,messaging_postbacks,message_reads,leadgen" },
+    { object: "instagram", fields: "messages" },
+  ];
+
+  const results: { object: string; ok: boolean; error?: string }[] = [];
+  for (const t of targets) {
+    const url = new URL(`${GRAPH_BASE}/${appId}/subscriptions`);
+    const params = new URLSearchParams({
+      object: t.object,
+      callback_url: callbackUrl,
+      fields: t.fields,
+      verify_token: verifyToken,
+      include_values: "true",
+      access_token: `${appId}|${appSecret}`,
+    });
+    const res = await fetch(url.toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+    const body = (await res.json().catch(() => ({}))) as { success?: boolean; error?: { message?: string } };
+    if (!res.ok || body.error) results.push({ object: t.object, ok: false, error: body.error?.message ?? `HTTP ${res.status}` });
+    else results.push({ object: t.object, ok: true });
+  }
+  return results;
+}
+
 export async function sendPageMessage(
   pageId: string,
   pageAccessToken: string,
