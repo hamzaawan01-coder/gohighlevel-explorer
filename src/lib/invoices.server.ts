@@ -46,6 +46,7 @@ export async function logInvoiceEventServer(input: InvoiceEventInput, sb?: Sb): 
 
 export type InvoiceBundle = {
   invoice: Invoice & {
+    template_id: string | null;
     stripe_payment_link_url: string | null;
     reminders_enabled: boolean;
     reminder_interval_days: number;
@@ -53,6 +54,11 @@ export type InvoiceBundle = {
   };
   items: InvoiceItem[];
   branding: InvoiceBranding;
+  template: {
+    id: string | null;
+    name: string | null;
+    version: number | null;
+  };
   contact: { id: string; email: string | null; first_name: string | null; last_name: string | null } | null;
 };
 
@@ -68,11 +74,48 @@ export async function loadInvoiceBundle(invoiceId: string, sb?: Sb): Promise<Inv
     .eq("invoice_id", invoiceId)
     .order("position", { ascending: true });
 
-  const { data: branding } = await client
-    .from("invoice_branding")
-    .select("*")
-    .eq("sub_account_id", inv.sub_account_id)
-    .maybeSingle();
+  // Template variant chosen on the invoice, else the workspace default, else
+  // the legacy single-branding row.
+  let templateRow: Record<string, unknown> | null = null;
+  if (inv.template_id) {
+    const { data } = await client
+      .from("invoice_templates")
+      .select("*")
+      .eq("id", inv.template_id)
+      .maybeSingle();
+    templateRow = (data as Record<string, unknown> | null) ?? null;
+  }
+  if (!templateRow) {
+    const { data } = await client
+      .from("invoice_templates")
+      .select("*")
+      .eq("sub_account_id", inv.sub_account_id)
+      .eq("is_default", true)
+      .is("archived_at", null)
+      .maybeSingle();
+    templateRow = (data as Record<string, unknown> | null) ?? null;
+  }
+
+  let branding: InvoiceBranding | null = null;
+  if (templateRow) {
+    branding = {
+      sub_account_id: inv.sub_account_id,
+      business_name: (templateRow['business_name'] as string | null) ?? null,
+      logo_url: (templateRow['logo_url'] as string | null) ?? null,
+      accent_color: (templateRow['accent_color'] as string) ?? DEFAULT_BRANDING.accent_color,
+      address: (templateRow['address'] as string | null) ?? null,
+      payment_instructions: (templateRow['payment_instructions'] as string | null) ?? null,
+      terms: (templateRow['terms'] as string | null) ?? null,
+      footer_note: (templateRow['footer_note'] as string | null) ?? null,
+    };
+  } else {
+    const { data } = await client
+      .from("invoice_branding")
+      .select("*")
+      .eq("sub_account_id", inv.sub_account_id)
+      .maybeSingle();
+    branding = (data as InvoiceBranding | null) ?? null;
+  }
 
   let contact: InvoiceBundle["contact"] = null;
   if (inv.contact_id) {
@@ -87,10 +130,54 @@ export async function loadInvoiceBundle(invoiceId: string, sb?: Sb): Promise<Inv
   return {
     invoice: inv,
     items: (items ?? []) as unknown as InvoiceItem[],
-    branding:
-      (branding as InvoiceBranding | null) ?? { sub_account_id: inv.sub_account_id, ...DEFAULT_BRANDING },
+    branding: branding ?? { sub_account_id: inv.sub_account_id, ...DEFAULT_BRANDING },
+    template: {
+      id: (templateRow?.['id'] as string | undefined) ?? null,
+      name: (templateRow?.['name'] as string | undefined) ?? null,
+      version: (templateRow?.['version'] as number | undefined) ?? null,
+    },
     contact,
   };
+}
+
+/**
+ * Snapshot a generated document (plus the exact template version and branding
+ * used) so the same PDF can be downloaded again months later.
+ */
+export async function recordInvoiceRenderServer(
+  input: {
+    bundle: InvoiceBundle;
+    html: string;
+    source: "email" | "reminder" | "print";
+    reminderSequence?: number | null;
+    actor?: string | null;
+  },
+  sb?: Sb,
+): Promise<void> {
+  try {
+    const client = sb ?? (await admin());
+    const { bundle } = input;
+    await client.from("invoice_renders").insert({
+      invoice_id: bundle.invoice.id,
+      sub_account_id: bundle.invoice.sub_account_id,
+      template_id: bundle.template.id,
+      template_name: bundle.template.name,
+      template_version: bundle.template.version,
+      branding_snapshot: bundle.branding as never,
+      invoice_snapshot: {
+        number: bundle.invoice.number,
+        status: bundle.invoice.status,
+        total: bundle.invoice.total,
+        currency: bundle.invoice.currency,
+      } as never,
+      html: input.html,
+      source: input.source,
+      reminder_sequence: input.reminderSequence ?? null,
+      created_by: input.actor ?? null,
+    } as never);
+  } catch {
+    // render history must never block a send
+  }
 }
 
 export type QueueResult = { messageId: string; to: string };
@@ -140,6 +227,17 @@ export async function queueInvoiceEmail(input: {
   if (error || !msg) throw new Error(error?.message ?? "Could not queue the invoice email");
 
   const messageId = (msg as { id: string }).id;
+
+  await recordInvoiceRenderServer(
+    {
+      bundle,
+      html: email.html,
+      source: input.reminderSequence ? "reminder" : "email",
+      reminderSequence: input.reminderSequence ?? null,
+      actor: input.actor ?? null,
+    },
+    client,
+  );
 
   const patch: Record<string, unknown> = { last_sent_at: new Date().toISOString() };
   if (!input.reminderSequence && bundle.invoice.status === "draft") patch['status'] = "sent";
