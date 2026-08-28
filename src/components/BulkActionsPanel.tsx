@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Trash2, ArrowRightLeft } from "lucide-react";
+import { Loader2, Trash2, ArrowRightLeft, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fetchBoard, moveDeal, deleteDeal, listPipelines } from "@/lib/pipeline";
+import { EmptyState, ErrorState, TableSkeleton } from "@/components/ui/states";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export function BulkActionsPanel({ subAccountId }: { subAccountId: string }) {
@@ -89,55 +91,66 @@ export function BulkActionsPanel({ subAccountId }: { subAccountId: string }) {
 
   return (
     <div className="border border-border rounded-lg bg-card overflow-hidden">
-      <div className="flex items-center gap-2 p-3 border-b border-border">
-        <Select
-          value={currentPipelineId ?? ""}
-          onValueChange={(v) => {
-            setPipelineId(v);
-            clear();
-          }}
-        >
-          <SelectTrigger className="h-8 w-[220px] text-xs">
-            <SelectValue placeholder="Select pipeline" />
-          </SelectTrigger>
-          <SelectContent>
-            {(pipelinesQ.data ?? []).map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search opportunities"
-          className="h-8 text-xs max-w-xs"
-        />
-        <div className="ml-auto text-xs text-muted-foreground">
+      <div className="grid grid-cols-1 gap-2 p-3 border-b border-border sm:flex sm:flex-wrap sm:items-center">
+        <div className="min-w-0">
+          <Label htmlFor="bulk-pipeline-select" className="sr-only">Pipeline</Label>
+          <Select
+            value={currentPipelineId ?? ""}
+            onValueChange={(v) => {
+              setPipelineId(v);
+              clear();
+            }}
+          >
+            <SelectTrigger id="bulk-pipeline-select" className="h-8 w-full text-xs sm:w-[220px]">
+              <SelectValue placeholder="Select pipeline" />
+            </SelectTrigger>
+            <SelectContent>
+              {(pipelinesQ.data ?? []).map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="min-w-0">
+          <Label htmlFor="bulk-search" className="sr-only">Search opportunities</Label>
+          <Input
+            id="bulk-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search opportunities"
+            data-page-search
+            className="h-8 text-xs w-full sm:max-w-xs"
+          />
+        </div>
+        <div aria-live="polite" className="text-xs text-muted-foreground sm:ml-auto">
           {selected.size} selected
         </div>
       </div>
 
       {selected.size > 0 && (
-        <div className="flex items-center gap-2 p-2 bg-secondary/60 border-b border-border">
-          <ArrowRightLeft className="size-3.5 text-muted-foreground" />
-          <span className="text-xs">Move to</span>
-          <Select value={moveTarget} onValueChange={setMoveTarget}>
-            <SelectTrigger className="h-7 w-[180px] text-xs">
-              <SelectValue placeholder="Choose stage" />
-            </SelectTrigger>
-            <SelectContent>
-              {stages.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 gap-2 p-2 bg-secondary/60 border-b border-border sm:flex sm:flex-wrap sm:items-center">
+          <div className="flex items-center gap-2 min-w-0">
+            <ArrowRightLeft className="size-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+            <span className="text-xs shrink-0">Move to</span>
+            <Label htmlFor="bulk-move-target" className="sr-only">Target stage</Label>
+            <Select value={moveTarget} onValueChange={setMoveTarget}>
+              <SelectTrigger id="bulk-move-target" className="h-7 w-full text-xs sm:w-[180px]">
+                <SelectValue placeholder="Choose stage" />
+              </SelectTrigger>
+              <SelectContent>
+                {stages.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Button
             size="sm"
-            className="h-7"
+            className="h-9 sm:h-7"
             disabled={!moveTarget || moveMut.isPending}
             onClick={() => moveMut.mutate(moveTarget)}
           >
@@ -146,7 +159,7 @@ export function BulkActionsPanel({ subAccountId }: { subAccountId: string }) {
           <Button
             size="sm"
             variant="outline"
-            className="h-7 ml-auto text-destructive"
+            className="h-9 sm:h-7 sm:ml-auto text-destructive"
             disabled={deleteMut.isPending}
             onClick={() => {
               if (confirm(`Delete ${selected.size} deals? This cannot be undone.`))
@@ -160,21 +173,27 @@ export function BulkActionsPanel({ subAccountId }: { subAccountId: string }) {
       )}
 
       {boardQ.isLoading ? (
-        <div className="flex items-center justify-center h-40 text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
+        <div className="p-3">
+          <TableSkeleton rows={5} cols={4} />
         </div>
+      ) : boardQ.isError ? (
+        <ErrorState onRetry={() => boardQ.refetch()} />
       ) : filtered.length === 0 ? (
-        <div className="p-8 text-center text-xs text-muted-foreground">
-          No opportunities in this pipeline.
-        </div>
+        <EmptyState
+          icon={ListChecks}
+          title="No opportunities in this pipeline"
+          description="Try a different pipeline or clear your search."
+        />
       ) : (
-        <table className="w-full text-xs">
+        <div className="overflow-x-auto">
+        <table className="w-full text-xs min-w-[480px]">
           <thead className="bg-secondary/40 text-muted-foreground uppercase text-[10px] tracking-wider">
             <tr>
               <th className="w-8 p-2">
                 <Checkbox
                   checked={selected.size > 0 && selected.size === filtered.length}
                   onCheckedChange={toggleAll}
+                  aria-label="Select all opportunities"
                 />
               </th>
               <th className="text-left p-2 font-mono">Title</th>
@@ -194,6 +213,7 @@ export function BulkActionsPanel({ subAccountId }: { subAccountId: string }) {
                     <Checkbox
                       checked={selected.has(d.id)}
                       onCheckedChange={() => toggle(d.id)}
+                      aria-label={`Select ${d.title}`}
                     />
                   </td>
                   <td className="p-2 font-medium">{d.title}</td>
@@ -214,6 +234,7 @@ export function BulkActionsPanel({ subAccountId }: { subAccountId: string }) {
             })}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

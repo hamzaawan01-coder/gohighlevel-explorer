@@ -49,7 +49,6 @@ function DealDetailPage() {
         </Link>
       }
     >
-      <h1 className="sr-only">Deal details</h1>
       <div className="h-full overflow-auto">
         {dealQ.isLoading || stagesQ.isLoading ? (
           <PanelSkeleton />

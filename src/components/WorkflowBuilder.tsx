@@ -105,7 +105,7 @@ export function WorkflowBuilder({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{initial ? "Edit workflow" : "New workflow"}</DialogTitle>
         </DialogHeader>
@@ -213,7 +213,8 @@ export function WorkflowBuilder({
                       <button
                         type="button"
                         onClick={() => removeAction(idx)}
-                        className="text-muted-foreground hover:text-destructive"
+                        aria-label="Remove action"
+                        className="flex min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 items-center justify-center text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <Trash2 className="size-3" />
                       </button>

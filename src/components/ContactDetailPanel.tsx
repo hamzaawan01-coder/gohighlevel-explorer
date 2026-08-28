@@ -194,7 +194,7 @@ export function ContactDetailPanel({
   return (
     <div className="flex flex-col overflow-hidden max-h-[80vh]">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-border flex items-start gap-4">
+      <div className="px-4 sm:px-6 py-5 border-b border-border grid grid-cols-[auto_minmax(0,1fr)] gap-4 sm:flex sm:items-start">
         <span
           className="size-14 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold text-white"
           style={{ backgroundColor: `hsl(${hue} 60% 45%)` }}
@@ -203,7 +203,7 @@ export function ContactDetailPanel({
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-lg font-semibold truncate">{name}</h2>
+            <h1 className="text-lg font-semibold truncate">{name}</h1>
             <span className="inline-block bg-accent/10 text-accent rounded px-1.5 py-0.5 text-[10px] font-mono uppercase">
               {LIFECYCLE_STAGES.find((s) => s.value === c.lifecycle_stage)?.label ?? c.lifecycle_stage}
             </span>
@@ -233,16 +233,17 @@ export function ContactDetailPanel({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="col-span-2 flex items-center gap-2 sm:col-auto sm:shrink-0">
           <button
             onClick={() => setEditOpen(true)}
-            className="flex items-center gap-1.5 bg-secondary rounded-md py-1.5 px-3 text-xs font-medium hover:bg-secondary/80 transition-colors"
+            className="flex items-center gap-1.5 bg-secondary rounded-md py-1.5 px-3 text-xs font-medium hover:bg-secondary/80 transition-colors min-h-11 sm:min-h-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Pencil className="size-3.5" /> Edit
           </button>
           <button
             onClick={() => { if (confirm(`Delete "${name}"?`)) deleteMut.mutate(); }}
-            className="size-8 rounded-md hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive"
+            aria-label={`Delete ${name}`}
+            className="min-h-11 min-w-11 sm:size-8 rounded-md hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Delete"
           >
             <Trash2 className="size-3.5" />

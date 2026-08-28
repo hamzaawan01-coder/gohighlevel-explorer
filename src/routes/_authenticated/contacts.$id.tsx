@@ -26,7 +26,6 @@ function ContactDetailPage() {
         </Link>
       }
     >
-      <h1 className="sr-only">Contact details</h1>
       <div className="h-full overflow-auto">
         <ContactDetailPanel
           contactId={id}
