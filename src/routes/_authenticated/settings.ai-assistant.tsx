@@ -153,6 +153,8 @@ function AiAssistantSettingsPage() {
                   placeholder="— Team Click Away"
                 />
               </section>
+
+              <FeedbackSection subId={subId} />
             </div>
 
             <div className="space-y-4">
