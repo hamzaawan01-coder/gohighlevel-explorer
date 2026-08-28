@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Copy, Facebook, Instagram, BarChart3, MessageSquare, Users, Webhook } from "lucide-react";
+import { CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Copy, Facebook, Instagram, BarChart3, MessageSquare, Users, Webhook, Link2, Search, X, ChevronDown } from "lucide-react";
 
 type PageRow = {
   id: string;
@@ -619,6 +619,14 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         </Alert>
       )}
     </div>
+  );
+}
+
+function MiniTag({ label }: { label: string }) {
+  return (
+    <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+      {label}
+    </span>
   );
 }
 
