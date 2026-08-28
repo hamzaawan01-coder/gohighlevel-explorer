@@ -1,9 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   loadMetaTabUi,
   saveMetaTabUi,
+  loadMetaStamps,
+  saveMetaStamps,
+  describeAge,
+  isStale,
   type MetaChannelFilter,
+  type MetaStamps,
   type MetaTabUiState,
+  type MetaTabView,
 } from "@/lib/meta-ui-prefs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,9 +27,19 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Copy, Facebook, Instagram, BarChart3, MessageSquare, Users, Webhook, Link2, Search, X, ChevronDown } from "lucide-react";
+import { CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Copy, Facebook, Instagram, BarChart3, MessageSquare, Users, Webhook, Link2, Search, X, ChevronDown, Clock } from "lucide-react";
 
 type PageRow = {
   id: string;
@@ -55,8 +71,32 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   const disconnectFn = useServerFn(disconnectMeta);
   const configureWebhooksFn = useServerFn(configureMetaWebhooks);
 
+  // Freshness stamps: when counts / webhook status were last checked.
+  const [stamps, setStamps] = useState<MetaStamps>(() => loadMetaStamps());
+  const stampNow = useCallback((patch: Partial<MetaStamps>) => {
+    setStamps((s) => {
+      const next = { ...s, ...patch };
+      saveMetaStamps(next);
+      return next;
+    });
+  }, []);
+  // Re-render every 30s so the "last refreshed" age stays accurate.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  // Confirmation prompts before destructive/bulk actions.
+  const [confirmAction, setConfirmAction] = useState<null | "webhooks" | "enableAll">(null);
+
   const configureWebhooks = useMutation({
-    mutationFn: () => configureWebhooksFn({ data: { subAccountId: subId } }),
+    mutationFn: () => {
+      const id = toast.loading("Resyncing webhooks with Meta…");
+      return configureWebhooksFn({ data: { subAccountId: subId } }).finally(() =>
+        toast.dismiss(id),
+      );
+    },
     onSuccess: (res: { results: { object: string; ok: boolean; error?: string }[] }) => {
       const failed = (res.results ?? []).filter((r) => !r.ok);
       if (failed.length === 0) toast.success("Webhooks registered with Meta (Page + Instagram)");
@@ -64,14 +104,21 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         toast.warning(
           `Partially configured: ${failed.map((f) => `${f.object} — ${f.error}`).join("; ")}`,
         );
+      stampNow({ webhooksAt: new Date().toISOString() });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(`Webhook resync failed — ${e.message}`),
   });
+
 
   const q = useQuery({
     queryKey: ["meta-connection", subId],
     queryFn: () => getFn({ data: { subAccountId: subId } }),
   });
+
+  // First successful load counts as a check, so the header never reads "never".
+  useEffect(() => {
+    if (q.isSuccess && !stamps.countsAt) stampNow({ countsAt: new Date().toISOString() });
+  }, [q.isSuccess, stamps.countsAt, stampNow]);
 
   // Toast on OAuth callback redirect
   useEffect(() => {
@@ -89,7 +136,10 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   }, [qc, subId]);
 
   const connect = useMutation({
-    mutationFn: () => startFn({ data: { subAccountId: subId } }),
+    mutationFn: () => {
+      const id = toast.loading("Opening Facebook…");
+      return startFn({ data: { subAccountId: subId } }).finally(() => toast.dismiss(id));
+    },
     onSuccess: ({ url }) => {
       // Facebook refuses to render inside an iframe (the Lovable preview),
       // so always hand off in a top-level tab/window.
@@ -104,16 +154,20 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         toast.info("Continue in the Facebook tab, then come back and click Refresh accounts.");
       }
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(`Could not start Facebook login — ${e.message}`),
   });
 
   const refresh = useMutation({
-    mutationFn: () => refreshFn({ data: { subAccountId: subId } }),
+    mutationFn: () => {
+      const id = toast.loading("Refreshing pages and ad accounts from Meta…");
+      return refreshFn({ data: { subAccountId: subId } }).finally(() => toast.dismiss(id));
+    },
     onSuccess: ({ pages, adAccounts }) => {
       toast.success(`Refreshed: ${pages} pages, ${adAccounts} ad accounts`);
+      stampNow({ countsAt: new Date().toISOString() });
       qc.invalidateQueries({ queryKey: ["meta-connection", subId] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(`Refresh failed — ${e.message}`),
   });
 
   const disconnect = useMutation({
@@ -139,13 +193,43 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  /** Restore a snapshot of page routing settings — used for "Undo". */
+  const restorePages = async (snapshot: PageRow[]) => {
+    const id = toast.loading("Undoing page changes…");
+    let ok = 0;
+    for (const p of snapshot) {
+      try {
+        await updatePageFn({
+          data: {
+            pageRowId: p.id,
+            subAccountId: subId,
+            subscribe: p.webhook_subscribed,
+            route_messenger_to_inbox: p.route_messenger_to_inbox,
+            route_instagram_to_inbox: p.route_instagram_to_inbox,
+            sync_lead_ads: p.sync_lead_ads,
+          },
+        });
+        ok++;
+      } catch {
+        /* keep going; reported below */
+      }
+    }
+    toast.dismiss(id);
+    if (ok === snapshot.length) toast.success("Reverted to previous page settings");
+    else toast.warning(`Reverted ${ok} of ${snapshot.length} pages — check each page manually`);
+    qc.invalidateQueries({ queryKey: ["meta-connection", subId] });
+  };
+
   /** One-click: subscribe every page to webhooks and route everything to the inbox. */
   const enableAll = useMutation({
     mutationFn: async () => {
       const pages = (q.data?.pages ?? []) as PageRow[];
+      const snapshot = pages.map((p) => ({ ...p }));
+      const toastId = toast.loading(`Enabling 0 / ${pages.length} pages…`);
       let ok = 0;
       const failures: string[] = [];
-      for (const p of pages) {
+      for (const [i, p] of pages.entries()) {
+        toast.loading(`Enabling ${i + 1} / ${pages.length} — ${p.page_name}`, { id: toastId });
         try {
           await updatePageFn({
             data: {
@@ -162,14 +246,19 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
           failures.push(`${p.page_name}: ${e instanceof Error ? e.message : String(e)}`);
         }
       }
-      return { ok, failures };
+      toast.dismiss(toastId);
+      return { ok, failures, snapshot };
     },
-    onSuccess: ({ ok, failures }) => {
-      if (ok > 0) toast.success(`Enabled ${ok} page${ok === 1 ? "" : "s"}`);
+    onSuccess: ({ ok, failures, snapshot }) => {
+      if (ok > 0)
+        toast.success(`Enabled ${ok} page${ok === 1 ? "" : "s"}`, {
+          duration: 12_000,
+          action: { label: "Undo", onClick: () => void restorePages(snapshot) },
+        });
       if (failures.length > 0) toast.error(`${failures.length} failed — ${failures[0]}`);
       qc.invalidateQueries({ queryKey: ["meta-connection", subId] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(`Enable everything failed — ${e.message}`),
   });
 
   const data = q.data;
@@ -180,30 +269,42 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   const igCount = pages.filter((p) => p.instagram_business_account_id).length;
   const leadAdsCount = pages.filter((p) => p.sync_lead_ads).length;
 
-  // Persisted UI state: sub-tab, channel search, channel filter, expanded cards.
+  // Persisted UI state: sub-tab plus per-sub-tab search / filter / expanded cards.
   const [ui, setUi] = useState<MetaTabUiState>(() => loadMetaTabUi());
   useEffect(() => {
     saveMetaTabUi(ui);
   }, [ui]);
+  const view: MetaTabView =
+    ui.views[ui.tab] ?? { search: "", filter: "all", expanded: [] };
   const patchUi = (patch: Partial<MetaTabUiState>) => setUi((s) => ({ ...s, ...patch }));
+  /** Patch only the current sub-tab's view state. */
+  const patchView = (patch: Partial<MetaTabView>) =>
+    setUi((s) => {
+      const current = s.views[s.tab] ?? { search: "", filter: "all", expanded: [] };
+      return { ...s, views: { ...s.views, [s.tab]: { ...current, ...patch } } };
+    });
   const toggleExpanded = (id: string) =>
-    setUi((s) => ({
-      ...s,
-      expanded: s.expanded.includes(id) ? s.expanded.filter((x) => x !== id) : [...s.expanded, id],
-    }));
+    setUi((s) => {
+      const current = s.views[s.tab] ?? { search: "", filter: "all" as MetaChannelFilter, expanded: [] };
+      const expanded = current.expanded.includes(id)
+        ? current.expanded.filter((x) => x !== id)
+        : [...current.expanded, id];
+      return { ...s, views: { ...s.views, [s.tab]: { ...current, expanded } } };
+    });
 
   const visiblePages = useMemo(() => {
-    const term = ui.search.trim().toLowerCase();
+    const term = view.search.trim().toLowerCase();
     return pages.filter((p) => {
       if (term && !`${p.page_name} ${p.page_id} ${p.category ?? ""}`.toLowerCase().includes(term))
         return false;
-      if (ui.filter === "subscribed") return p.webhook_subscribed;
-      if (ui.filter === "unsubscribed") return !p.webhook_subscribed;
-      if (ui.filter === "instagram") return Boolean(p.instagram_business_account_id);
-      if (ui.filter === "leadads") return p.sync_lead_ads;
+      if (view.filter === "subscribed") return p.webhook_subscribed;
+      if (view.filter === "unsubscribed") return !p.webhook_subscribed;
+      if (view.filter === "instagram") return Boolean(p.instagram_business_account_id);
+      if (view.filter === "leadads") return p.sync_lead_ads;
       return true;
     });
-  }, [pages, ui.search, ui.filter]);
+  }, [pages, view.search, view.filter]);
+
 
 
   if (q.isLoading) {
@@ -312,10 +413,10 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 size="sm"
                 variant="outline"
                 className="flex-1 sm:flex-none"
-                onClick={() => configureWebhooks.mutate()}
+                onClick={() => setConfirmAction("webhooks")}
                 disabled={configureWebhooks.isPending}
               >
-                <Webhook className="size-3.5" />
+                <Webhook className={`size-3.5 ${configureWebhooks.isPending ? "animate-pulse" : ""}`} />
                 {configureWebhooks.isPending ? "Resyncing…" : "Resync webhooks"}
               </Button>
               <Button
@@ -325,7 +426,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 onClick={() => connect.mutate()}
                 disabled={connect.isPending}
               >
-                <Link2 className="size-3.5" />
+                <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
                 {connect.isPending ? "Opening…" : "Reconnect"}
               </Button>
               {pages.length > 0 && (
@@ -334,16 +435,76 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                   variant="outline"
                   className="flex-1 sm:flex-none"
                   disabled={enableAll.isPending}
-                  onClick={() => enableAll.mutate()}
+                  onClick={() => setConfirmAction("enableAll")}
                 >
                   <CheckCircle2 className="size-3.5" />
                   {enableAll.isPending ? "Enabling…" : "Enable everything"}
                 </Button>
               )}
             </div>
+            {/* Freshness */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Clock className="size-3" />
+                Counts checked{" "}
+                <span className={isStale(stamps.countsAt) ? "font-medium text-amber-600" : "font-medium text-foreground"}>
+                  {describeAge(stamps.countsAt)}
+                </span>
+                {stamps.countsAt && <>({new Date(stamps.countsAt).toLocaleTimeString()})</>}
+              </span>
+              <span className="flex items-center gap-1">
+                <Webhook className="size-3" />
+                Webhooks synced{" "}
+                <span className={isStale(stamps.webhooksAt, 24 * 60) ? "font-medium text-amber-600" : "font-medium text-foreground"}>
+                  {describeAge(stamps.webhooksAt)}
+                </span>
+              </span>
+              {isStale(stamps.countsAt) && (
+                <span>Data may be out of date — click Refresh counts.</span>
+              )}
+            </div>
           </>
         )}
       </div>
+
+      {/* Confirmation prompts for bulk / remote-changing actions */}
+      <AlertDialog open={confirmAction !== null} onOpenChange={(o) => !o && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === "enableAll" ? "Enable everything on all pages?" : "Resync webhooks with Meta?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === "enableAll" ? (
+                <>
+                  This subscribes all {pages.length} page{pages.length === 1 ? "" : "s"} to webhooks and
+                  turns on Messenger, Instagram and Lead Ads routing. You can undo it from the toast
+                  right after it finishes.
+                </>
+              ) : (
+                <>
+                  This re-registers Page and Instagram webhook subscriptions with Meta. It doesn't
+                  delete data, but incoming message routing may pause for a few seconds. This action
+                  can't be undone automatically — just resync again if needed.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmAction === "enableAll") enableAll.mutate();
+                else configureWebhooks.mutate();
+                setConfirmAction(null);
+              }}
+            >
+              {confirmAction === "enableAll" ? "Enable everything" : "Resync webhooks"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {!conn && data?.setup && <MetaSetupGuide setup={data.setup} />}
 
@@ -377,16 +538,16 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                     <input
-                      value={ui.search}
-                      onChange={(e) => patchUi({ search: e.target.value })}
+                      value={view.search}
+                      onChange={(e) => patchView({ search: e.target.value })}
                       placeholder="Search pages by name, category or ID…"
                       aria-label="Search Facebook pages"
                       className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-xs outline-none focus:border-primary"
                     />
-                    {ui.search && (
+                    {view.search && (
                       <button
                         type="button"
-                        onClick={() => patchUi({ search: "" })}
+                        onClick={() => patchView({ search: "" })}
                         aria-label="Clear search"
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
@@ -407,10 +568,10 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                       <button
                         key={key}
                         type="button"
-                        onClick={() => patchUi({ filter: key })}
-                        aria-pressed={ui.filter === key}
+                        onClick={() => patchView({ filter: key })}
+                        aria-pressed={view.filter === key}
                         className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
-                          ui.filter === key
+                          view.filter === key
                             ? "bg-primary text-primary-foreground"
                             : "bg-secondary text-muted-foreground hover:text-foreground"
                         }`}
@@ -420,8 +581,8 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                     ))}
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Showing {visiblePages.length} of {pages.length} pages · your search, filters and
-                    open sections are remembered on this device.
+                    Showing {visiblePages.length} of {pages.length} pages · search, filters and open
+                    sections are remembered per sub-tab on this device.
                   </p>
                 </div>
 
@@ -432,7 +593,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 ) : (
                   <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
                     {visiblePages.map((p) => {
-                      const open = ui.expanded.includes(p.id);
+                      const open = view.expanded.includes(p.id);
                       return (
                         <div key={p.id} className="surface-card overflow-hidden">
                           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 p-4">
