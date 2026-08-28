@@ -10,6 +10,7 @@ import { ConsoleSection, ConsoleSplit, ConsoleTips, StatusPill } from "@/compone
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { PlanCheckoutDialog } from "@/components/PlanCheckoutDialog";
 import { AssignPlanDialog } from "@/components/AssignPlanDialog";
+import { SubscriptionAuditPanel } from "@/components/SubscriptionAuditPanel";
 import { ModuleInclusionPreview } from "@/components/ModuleInclusionPreview";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -203,10 +204,25 @@ function SubscriptionsSettingsPage() {
       });
       if ("error" in res) throw new Error(res.error);
       window.open(res.url, "_blank", "noopener");
+      // Stripe's portal is a separate tab; refresh plan + module gating as soon
+      // as the client comes back so changes there apply immediately.
+      const refresh = () => {
+        invalidate();
+        qc.invalidateQueries({ queryKey: ["module-state"] });
+        qc.invalidateQueries({ queryKey: ["subscription-audit"] });
+      };
+      const onFocus = () => {
+        refresh();
+        // Webhooks land a moment after the portal action; poll once more.
+        window.setTimeout(refresh, 2500);
+        window.removeEventListener("focus", onFocus);
+      };
+      window.addEventListener("focus", onFocus);
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const auditWorkspaceId = assignFlow.workspaceId ?? currentSubId ?? subs[0]?.id ?? null;
   const planById = (id: string | null) => plans.find((p) => p.id === id);
   const activeCount = assignments.filter((a) => isSubscriptionActive(a) && a.plan_id).length;
 
@@ -370,6 +386,12 @@ function SubscriptionsSettingsPage() {
                   </div>
                 )}
               </ConsoleSection>
+
+              <SubscriptionAuditPanel
+                subAccountId={auditWorkspaceId}
+                workspaceName={subs.find((s) => s.id === auditWorkspaceId)?.name ?? null}
+                plans={plans}
+              />
 
               <ConsoleTips
                 items={[
