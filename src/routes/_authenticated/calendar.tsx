@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ErrorState, ListSkeleton } from "@/components/ui/states";
+import { UpcomingAppointments } from "@/components/UpcomingAppointments";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -302,6 +303,16 @@ function CalendarPage() {
                 ))}
               </ul>
             )}
+          </div>
+          <div className="border-t border-border">
+            <div className="px-4 py-3 border-b border-border">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                Upcoming appointments
+              </p>
+            </div>
+            <div className="max-h-[340px] overflow-auto">
+              <UpcomingAppointments subAccountId={subId} />
+            </div>
           </div>
         </aside>
       </div>

@@ -15,6 +15,7 @@ import {
   type DayKey,
   type Availability,
 } from "@/lib/booking";
+import { REMINDER_PRESETS, offsetLabel } from "@/lib/appointments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,6 +69,9 @@ function BookingSettingsPage() {
         min_notice_minutes: 60,
         availability: DEFAULT_AVAILABILITY,
         enabled: true,
+        reminder_offsets: [1440, 60],
+        reminder_channel: "sms",
+        confirmation_enabled: true,
       });
     },
     onSuccess: (p) => {
@@ -126,7 +130,10 @@ function BookingSettingsPage() {
                       {!p.enabled && <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded">Disabled</span>}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{url}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{p.duration_minutes} min · buffer {p.buffer_minutes}m · {p.advance_days} days ahead</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{p.duration_minutes} min · buffer {p.buffer_minutes}m · {p.advance_days} days ahead ·{" "}
+                      {(p.reminder_offsets ?? []).length > 0
+                        ? `${(p.reminder_offsets ?? []).length} reminder(s)`
+                        : "no reminders"}</p>
                   </div>
                   <button onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }} className="p-2 hover:bg-secondary rounded-md" title="Copy link">
                     <Copy className="size-3.5" />
@@ -261,6 +268,88 @@ function EditDialog({ page, onClose, subId }: { page: BookingPage; onClose: () =
                 );
               })}
             </div>
+          </div>
+
+          <div className="border border-border rounded-md p-3 space-y-3">
+            <div>
+              <Label className="text-xs mb-1 block">Reminders</Label>
+              <p className="text-[11px] text-muted-foreground mb-2">
+                Pick when to remind the attendee before the appointment.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {REMINDER_PRESETS.map((preset) => {
+                  const active = (state.reminder_offsets ?? []).includes(preset.minutes);
+                  return (
+                    <button
+                      key={preset.minutes}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => {
+                        const cur = state.reminder_offsets ?? [];
+                        const next = active
+                          ? cur.filter((m) => m !== preset.minutes)
+                          : [...cur, preset.minutes].sort((a, b) => b - a);
+                        setState({ ...state, reminder_offsets: next });
+                      }}
+                      className={`px-2 py-1 rounded-md text-[11px] border transition-colors ${
+                        active
+                          ? "bg-primary/10 text-primary border-primary/40 font-medium"
+                          : "border-border text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {(state.reminder_offsets ?? []).length === 0 && (
+                <p className="text-[11px] text-muted-foreground mt-1.5">No reminders will be sent.</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs mb-1 block">Reminder channel</Label>
+                <select
+                  value={state.reminder_channel ?? "sms"}
+                  onChange={(e) =>
+                    setState({ ...state, reminder_channel: e.target.value as BookingPage["reminder_channel"] })
+                  }
+                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-xs"
+                >
+                  <option value="sms">Text message</option>
+                  <option value="email">Email</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+              <div className="flex items-end gap-2 pb-2">
+                <Switch
+                  checked={state.confirmation_enabled ?? true}
+                  onCheckedChange={(v) => setState({ ...state, confirmation_enabled: v })}
+                />
+                <Label className="text-xs">Send instant confirmation</Label>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs mb-1 block">Reminder message</Label>
+              <Textarea
+                rows={2}
+                placeholder="Reminder: {{title}} on {{date}} at {{time}}."
+                value={state.reminder_template ?? ""}
+                onChange={(e) => setState({ ...state, reminder_template: e.target.value })}
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Available tags: {"{{name}}"} {"{{title}}"} {"{{date}}"} {"{{time}}"}
+              </p>
+            </div>
+
+            {(state.reminder_offsets ?? []).length > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Will send {(state.reminder_offsets ?? []).map(offsetLabel).join(", ")} via{" "}
+                {state.reminder_channel === "both" ? "text and email" : state.reminder_channel === "email" ? "email" : "text"}.
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

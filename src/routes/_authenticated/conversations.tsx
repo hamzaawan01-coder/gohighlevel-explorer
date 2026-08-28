@@ -2,17 +2,23 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Send, MessageSquare, Search, Inbox, ArrowLeft } from "lucide-react";
+import { Loader2, Send, MessageSquare, Search, Inbox, ArrowLeft, Star, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
-import { useTenancy } from "@/lib/tenancy";
+import { useTenancy, fetchMySubAccounts } from "@/lib/tenancy";
+import { fetchAgencyMembers } from "@/lib/invitations";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import {
   fetchConversations,
   ensureConversation,
   fetchMessages,
   postMessage,
+  updateConversation,
+  markConversationRead,
+  isUnread,
+  CONVERSATION_STATUSES,
   type Conversation,
+  type ConversationStatus,
   type MessageChannel,
 } from "@/lib/conversations";
 import { sendTwilioSms, sendTwilioWhatsapp } from "@/lib/twilio.functions";
@@ -40,6 +46,8 @@ export const Route = createFileRoute("/_authenticated/conversations")({
 });
 
 type FilterKey = "all" | MessageChannel;
+type StatusFilter = "all" | ConversationStatus;
+type AssignFilter = "all" | "mine" | "unassigned";
 
 function ConversationsPage() {
   const qc = useQueryClient();
@@ -50,6 +58,8 @@ function ConversationsPage() {
   const [body, setBody] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("open");
+  const [assignFilter, setAssignFilter] = useState<AssignFilter>("all");
   const threadRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -61,6 +71,26 @@ function ConversationsPage() {
     queryFn: () => fetchContacts(subId!),
     enabled: !!subId,
   });
+  const subAccountsQ = useQuery({
+    queryKey: ["my-sub-accounts"],
+    queryFn: fetchMySubAccounts,
+  });
+  const agencyId = (subAccountsQ.data ?? []).find((s) => s.id === subId)?.agency_id ?? null;
+  const membersQ = useQuery({
+    queryKey: ["agency-members", agencyId],
+    queryFn: () => fetchAgencyMembers(agencyId!),
+    enabled: !!agencyId,
+  });
+  const members = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const m of membersQ.data ?? []) {
+      if (!seen.has(m.user_id)) seen.set(m.user_id, m.full_name || "Teammate");
+    }
+    return Array.from(seen, ([user_id, name]) => ({ user_id, name }));
+  }, [membersQ.data]);
+  const memberName = (id: string | null) =>
+    id ? members.find((m) => m.user_id === id)?.name ?? "Assigned" : "Unassigned";
+
   const convosQ = useQuery({
     queryKey: ["conversations", subId],
     queryFn: () => fetchConversations(subId!),
@@ -82,6 +112,14 @@ function ConversationsPage() {
     const q = search.trim().toLowerCase();
     return convos
       .filter((c) => filter === "all" || c.channel === filter)
+      .filter((c) => statusFilter === "all" || (c.status ?? "open") === statusFilter)
+      .filter((c) =>
+        assignFilter === "all"
+          ? true
+          : assignFilter === "mine"
+          ? c.assigned_to_user_id === userId
+          : !c.assigned_to_user_id,
+      )
       .filter((c) => {
         if (!q) return true;
         const contact = contactById.get(c.contact_id);
@@ -91,11 +129,13 @@ function ConversationsPage() {
           (contact.email ?? "").toLowerCase().includes(q)
         );
       });
-  }, [convos, filter, search, contactById]);
+  }, [convos, filter, statusFilter, assignFilter, userId, search, contactById]);
 
   // Fallback: contacts without a conversation yet — surface them at bottom of the list
   const orphanContacts = useMemo(() => {
     if (filter !== "all" && filter !== "note") return [];
+    if (statusFilter === "closed" || statusFilter === "pending") return [];
+    if (assignFilter !== "all") return [];
     const hasConvo = new Set(convos.map((c) => c.contact_id));
     const q = search.trim().toLowerCase();
     return contacts
@@ -106,7 +146,7 @@ function ConversationsPage() {
           displayName(c).toLowerCase().includes(q) ||
           (c.email ?? "").toLowerCase().includes(q),
       );
-  }, [contacts, convos, filter, search]);
+  }, [contacts, convos, filter, statusFilter, assignFilter, search]);
 
   const selectedConvo = convos.find((c) => c.id === selectedConvoId) ?? null;
   const selectedContact = selectedConvo ? contactById.get(selectedConvo.contact_id) ?? null : null;
@@ -134,6 +174,21 @@ function ConversationsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const patchMut = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Parameters<typeof updateConversation>[1] }) =>
+      updateConversation(id, patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["conversations", subId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Mark the open thread as read.
+  useEffect(() => {
+    if (!selectedConvo || !isUnread(selectedConvo)) return;
+    markConversationRead(selectedConvo.id)
+      .then(() => qc.invalidateQueries({ queryKey: ["conversations", subId] }))
+      .catch(() => undefined);
+  }, [selectedConvo, qc, subId]);
 
   const msgsQ = useQuery({
     queryKey: ["messages", selectedConvoId],
@@ -272,6 +327,33 @@ function ConversationsPage() {
                 {filteredConvos.length}
               </span>
             </div>
+            <div className="flex items-center gap-1" role="group" aria-label="Filter by status">
+              {([{ key: "open", label: "Open" }, { key: "pending", label: "Pending" }, { key: "closed", label: "Closed" }, { key: "all", label: "All" }] as { key: StatusFilter; label: string }[]).map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  aria-pressed={statusFilter === s.key}
+                  onClick={() => setStatusFilter(s.key)}
+                  className={`px-2 py-0.5 rounded text-[10px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    statusFilter === s.key
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <select
+              value={assignFilter}
+              onChange={(e) => setAssignFilter(e.target.value as AssignFilter)}
+              aria-label="Filter by assignee"
+              className="h-7 w-full rounded-md border border-input bg-background px-2 text-[11px]"
+            >
+              <option value="all">Everyone</option>
+              <option value="mine">Assigned to me</option>
+              <option value="unassigned">Unassigned</option>
+            </select>
             <div className="relative">
               <Search aria-hidden className="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-muted-foreground" />
               <Input
@@ -338,8 +420,14 @@ function ConversationsPage() {
                           </span>
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate">{name}</p>
+                          <p className={`text-xs truncate flex items-center gap-1 ${isUnread(c) ? "font-bold" : "font-medium"}`}>
+                            {c.priority && <Star className="size-3 shrink-0 text-amber-500 fill-amber-500" />}
+                            <span className="truncate">{name}</span>
+                            {isUnread(c) && <span className="size-1.5 rounded-full bg-primary shrink-0" />}
+                          </p>
                           <p className="text-[10px] text-muted-foreground truncate">
+                            {c.assigned_to_user_id ? `${memberName(c.assigned_to_user_id)} · ` : ""}
+                            {(c.status ?? "open") !== "open" ? `${c.status} · ` : ""}
                             {meta.label} ·{" "}
                             {c.last_message_at
                               ? formatDistanceToNow(new Date(c.last_message_at), {
@@ -430,7 +518,65 @@ function ConversationsPage() {
                     {selectedContact.email ?? "no email"}
                   </p>
                 </div>
-                <div className="hidden sm:flex items-center gap-1">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    title={selectedConvo.priority ? "Remove priority" : "Mark as priority"}
+                    aria-label={selectedConvo.priority ? "Remove priority" : "Mark as priority"}
+                    aria-pressed={selectedConvo.priority}
+                    disabled={patchMut.isPending}
+                    onClick={() =>
+                      patchMut.mutate({ id: selectedConvo.id, patch: { priority: !selectedConvo.priority } })
+                    }
+                    className="size-8 rounded flex items-center justify-center text-muted-foreground hover:bg-secondary disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Star className={`size-3.5 ${selectedConvo.priority ? "text-amber-500 fill-amber-500" : ""}`} />
+                  </button>
+                  <label className="sr-only" htmlFor="convo-assignee">Assignee</label>
+                  <div className="relative">
+                    <UserCheck aria-hidden className="absolute left-1.5 top-1/2 -translate-y-1/2 size-3 text-muted-foreground" />
+                    <select
+                      id="convo-assignee"
+                      value={selectedConvo.assigned_to_user_id ?? ""}
+                      disabled={patchMut.isPending}
+                      onChange={(e) =>
+                        patchMut.mutate({
+                          id: selectedConvo.id,
+                          patch: { assigned_to_user_id: e.target.value || null },
+                        })
+                      }
+                      className="h-8 rounded-md border border-input bg-background pl-6 pr-2 text-[11px] max-w-[140px]"
+                    >
+                      <option value="">Unassigned</option>
+                      {userId && !members.some((m) => m.user_id === userId) && (
+                        <option value={userId}>Me</option>
+                      )}
+                      {members.map((m) => (
+                        <option key={m.user_id} value={m.user_id}>
+                          {m.user_id === userId ? `${m.name} (me)` : m.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <label className="sr-only" htmlFor="convo-status">Status</label>
+                  <select
+                    id="convo-status"
+                    value={selectedConvo.status ?? "open"}
+                    disabled={patchMut.isPending}
+                    onChange={(e) =>
+                      patchMut.mutate({
+                        id: selectedConvo.id,
+                        patch: { status: e.target.value as ConversationStatus },
+                      })
+                    }
+                    className="h-8 rounded-md border border-input bg-background px-2 text-[11px]"
+                  >
+                    {CONVERSATION_STATUSES.map((s) => (
+                      <option key={s.key} value={s.key}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="hidden lg:flex items-center gap-1">
                   {CHANNELS.map((ch) => {
                     const Icon = ch.icon;
                     const active = ch.key === selectedChannel;

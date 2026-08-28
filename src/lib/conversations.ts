@@ -12,15 +12,52 @@ export type MessageChannel =
 
 export type MessageDirection = "inbound" | "outbound";
 
+export type ConversationStatus = "open" | "pending" | "closed";
+
 export type Conversation = {
   id: string;
   sub_account_id: string;
   contact_id: string;
   channel: MessageChannel;
   last_message_at: string | null;
+  assigned_to_user_id: string | null;
+  status: ConversationStatus;
+  snoozed_until: string | null;
+  last_read_at: string | null;
+  priority: boolean;
   created_at: string;
   updated_at: string;
 };
+
+export const CONVERSATION_STATUSES: { key: ConversationStatus; label: string }[] = [
+  { key: "open", label: "Open" },
+  { key: "pending", label: "Pending" },
+  { key: "closed", label: "Closed" },
+];
+
+/** True when the last inbound activity happened after the viewer last read it. */
+export function isUnread(c: Conversation): boolean {
+  if (!c.last_message_at) return false;
+  if (!c.last_read_at) return true;
+  return new Date(c.last_message_at).getTime() > new Date(c.last_read_at).getTime();
+}
+
+export async function updateConversation(
+  id: string,
+  patch: Partial<
+    Pick<Conversation, "assigned_to_user_id" | "status" | "priority" | "snoozed_until" | "last_read_at">
+  >,
+): Promise<void> {
+  const { error } = await supabase
+    .from("conversations")
+    .update(patch as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function markConversationRead(id: string): Promise<void> {
+  await updateConversation(id, { last_read_at: new Date().toISOString() });
+}
 
 export type Message = {
   id: string;

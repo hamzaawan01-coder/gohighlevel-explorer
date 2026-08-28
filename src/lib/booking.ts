@@ -33,6 +33,10 @@ export type BookingPage = {
   timezone: string;
   availability: Availability;
   enabled: boolean;
+  reminder_offsets: number[];
+  reminder_channel: "sms" | "email" | "both";
+  reminder_template: string | null;
+  confirmation_enabled: boolean;
   created_at: string;
   updated_at: string;
 };

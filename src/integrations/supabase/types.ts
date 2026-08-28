@@ -235,11 +235,76 @@ export type Database = {
           },
         ]
       }
+      appointment_reminders: {
+        Row: {
+          channel: string
+          created_at: string
+          error: string | null
+          event_id: string
+          id: string
+          offset_minutes: number
+          outbound_message_id: string | null
+          scheduled_for: string
+          status: string
+          sub_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          error?: string | null
+          event_id: string
+          id?: string
+          offset_minutes: number
+          outbound_message_id?: string | null
+          scheduled_for: string
+          status?: string
+          sub_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error?: string | null
+          event_id?: string
+          id?: string
+          offset_minutes?: number
+          outbound_message_id?: string | null
+          scheduled_for?: string
+          status?: string
+          sub_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminders_outbound_message_id_fkey"
+            columns: ["outbound_message_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminders_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_pages: {
         Row: {
           advance_days: number
           availability: Json
           buffer_minutes: number
+          confirmation_enabled: boolean
           created_at: string
           description: string | null
           duration_minutes: number
@@ -248,6 +313,9 @@ export type Database = {
           min_notice_minutes: number
           name: string
           owner_user_id: string
+          reminder_channel: string
+          reminder_offsets: number[]
+          reminder_template: string | null
           slug: string
           sub_account_id: string
           timezone: string
@@ -257,6 +325,7 @@ export type Database = {
           advance_days?: number
           availability?: Json
           buffer_minutes?: number
+          confirmation_enabled?: boolean
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -265,6 +334,9 @@ export type Database = {
           min_notice_minutes?: number
           name: string
           owner_user_id: string
+          reminder_channel?: string
+          reminder_offsets?: number[]
+          reminder_template?: string | null
           slug: string
           sub_account_id: string
           timezone?: string
@@ -274,6 +346,7 @@ export type Database = {
           advance_days?: number
           availability?: Json
           buffer_minutes?: number
+          confirmation_enabled?: boolean
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -282,6 +355,9 @@ export type Database = {
           min_notice_minutes?: number
           name?: string
           owner_user_id?: string
+          reminder_channel?: string
+          reminder_offsets?: number[]
+          reminder_template?: string | null
           slug?: string
           sub_account_id?: string
           timezone?: string
@@ -300,6 +376,9 @@ export type Database = {
       calendar_events: {
         Row: {
           all_day: boolean
+          attendee_email: string | null
+          attendee_phone: string | null
+          booking_page_id: string | null
           contact_id: string | null
           created_at: string
           deal_id: string | null
@@ -310,12 +389,16 @@ export type Database = {
           location: string | null
           owner_user_id: string
           starts_at: string
+          status: string
           sub_account_id: string
           title: string
           updated_at: string
         }
         Insert: {
           all_day?: boolean
+          attendee_email?: string | null
+          attendee_phone?: string | null
+          booking_page_id?: string | null
           contact_id?: string | null
           created_at?: string
           deal_id?: string | null
@@ -326,12 +409,16 @@ export type Database = {
           location?: string | null
           owner_user_id: string
           starts_at: string
+          status?: string
           sub_account_id: string
           title: string
           updated_at?: string
         }
         Update: {
           all_day?: boolean
+          attendee_email?: string | null
+          attendee_phone?: string | null
+          booking_page_id?: string | null
           contact_id?: string | null
           created_at?: string
           deal_id?: string | null
@@ -342,11 +429,19 @@ export type Database = {
           location?: string | null
           owner_user_id?: string
           starts_at?: string
+          status?: string
           sub_account_id?: string
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "calendar_events_booking_page_id_fkey"
+            columns: ["booking_page_id"]
+            isOneToOne: false
+            referencedRelation: "booking_pages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "calendar_events_contact_id_fkey"
             columns: ["contact_id"]
@@ -666,34 +761,49 @@ export type Database = {
       }
       conversations: {
         Row: {
+          assigned_to_user_id: string | null
           channel: Database["public"]["Enums"]["message_channel"]
           contact_id: string
           created_at: string
           external_thread_id: string | null
           id: string
           last_message_at: string | null
+          last_read_at: string | null
+          priority: boolean
+          snoozed_until: string | null
+          status: string
           sub_account_id: string
           twilio_number_id: string | null
           updated_at: string
         }
         Insert: {
+          assigned_to_user_id?: string | null
           channel?: Database["public"]["Enums"]["message_channel"]
           contact_id: string
           created_at?: string
           external_thread_id?: string | null
           id?: string
           last_message_at?: string | null
+          last_read_at?: string | null
+          priority?: boolean
+          snoozed_until?: string | null
+          status?: string
           sub_account_id: string
           twilio_number_id?: string | null
           updated_at?: string
         }
         Update: {
+          assigned_to_user_id?: string | null
           channel?: Database["public"]["Enums"]["message_channel"]
           contact_id?: string
           created_at?: string
           external_thread_id?: string | null
           id?: string
           last_message_at?: string | null
+          last_read_at?: string | null
+          priority?: boolean
+          snoozed_until?: string | null
+          status?: string
           sub_account_id?: string
           twilio_number_id?: string | null
           updated_at?: string
