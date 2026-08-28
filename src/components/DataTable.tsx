@@ -184,6 +184,57 @@ export function DataTable<T>({
 
   return (
     <div className="flex flex-col gap-3">
+      {tableKey ? (
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Saved views">
+          <button
+            type="button"
+            onClick={resetView}
+            aria-pressed={activeView === null}
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              activeView === null
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-border bg-secondary/60 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <RotateCcw className="size-3" />
+            Default
+          </button>
+          {views.map((v) => (
+            <span
+              key={v.id}
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] ${
+                activeView === v.id
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : "border-border bg-secondary/60 text-muted-foreground"
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => applyView(v)}
+                aria-pressed={activeView === v.id}
+                className="hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {v.name}
+              </button>
+              <button
+                type="button"
+                aria-label={`Delete view ${v.name}`}
+                onClick={() => {
+                  setViews(removeSavedView(tableKey, v.id));
+                  if (activeView === v.id) resetView();
+                }}
+                className="opacity-60 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          ))}
+          <Button variant="ghost" size="sm" onClick={createView} className="h-7 text-[11px]">
+            <Bookmark className="size-3" />
+            Save view
+          </Button>
+        </div>
+      ) : null}
       {toolbar || showColumnPicker ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-1 flex-wrap items-center gap-2">{toolbar}</div>
