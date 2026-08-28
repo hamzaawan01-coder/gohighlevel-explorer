@@ -174,6 +174,32 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   const igCount = pages.filter((p) => p.instagram_business_account_id).length;
   const leadAdsCount = pages.filter((p) => p.sync_lead_ads).length;
 
+  // Persisted UI state: sub-tab, channel search, channel filter, expanded cards.
+  const [ui, setUi] = useState<MetaTabUiState>(() => loadMetaTabUi());
+  useEffect(() => {
+    saveMetaTabUi(ui);
+  }, [ui]);
+  const patchUi = (patch: Partial<MetaTabUiState>) => setUi((s) => ({ ...s, ...patch }));
+  const toggleExpanded = (id: string) =>
+    setUi((s) => ({
+      ...s,
+      expanded: s.expanded.includes(id) ? s.expanded.filter((x) => x !== id) : [...s.expanded, id],
+    }));
+
+  const visiblePages = useMemo(() => {
+    const term = ui.search.trim().toLowerCase();
+    return pages.filter((p) => {
+      if (term && !`${p.page_name} ${p.page_id} ${p.category ?? ""}`.toLowerCase().includes(term))
+        return false;
+      if (ui.filter === "subscribed") return p.webhook_subscribed;
+      if (ui.filter === "unsubscribed") return !p.webhook_subscribed;
+      if (ui.filter === "instagram") return Boolean(p.instagram_business_account_id);
+      if (ui.filter === "leadads") return p.sync_lead_ads;
+      return true;
+    });
+  }, [pages, ui.search, ui.filter]);
+
+
   if (q.isLoading) {
     return (
       <div className="surface-card space-y-3 p-5">
