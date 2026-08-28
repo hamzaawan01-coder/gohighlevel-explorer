@@ -11,7 +11,7 @@ import {
   sendPageMessage,
   metaWebhookUrl,
   metaRedirectUri,
-  META_SCOPES,
+  metaScopes,
 } from "./meta.server";
 
 type MetaConnectionRow = {
@@ -88,7 +88,7 @@ export const getMetaConnection = createServerFn({ method: "GET" })
       verifyTokenConfigured: Boolean(process.env.META_WEBHOOK_VERIFY_TOKEN),
       redirectUri: metaRedirectUri(),
       webhookBaseUrl: metaWebhookUrl("CONNECTION_ID"),
-      scopes: [...META_SCOPES],
+      scopes: metaScopes(),
     };
     if (!conn) return { connection: null, pages: [], adAccounts: [], setup };
 

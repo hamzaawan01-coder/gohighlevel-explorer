@@ -6,7 +6,7 @@ import {
   fetchUserPages,
   fetchUserAdAccounts,
   publicOrigin,
-  META_SCOPES,
+  metaScopes,
 } from "@/lib/meta.server";
 
 function redirectBack(status: "ok" | "error", message?: string) {
@@ -79,7 +79,7 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
               meta_user_name: me.name,
               access_token: longTok.access_token,
               token_expires_at: expiresAt,
-              granted_scopes: [...META_SCOPES],
+              granted_scopes: metaScopes(),
               created_by: stateRow.user_id,
             },
             { onConflict: "sub_account_id,meta_user_id" },
