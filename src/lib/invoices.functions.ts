@@ -106,3 +106,57 @@ export const createInvoicePaymentLink = createServerFn({ method: "POST" })
       return { error: e instanceof Error ? e.message : String(e) };
     }
   });
+
+/**
+ * Resend one or more invoices as branded emails, optionally forcing a specific
+ * template version. Each delivery is recorded in the invoice history.
+ */
+export const bulkResendInvoiceEmails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { invoiceIds: string[]; templateId?: string | null }) => data)
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{
+      sent: Array<{ invoiceId: string; number: string; to: string }>;
+      failed: Array<{ invoiceId: string; number: string; error: string }>;
+    }> => {
+      const { supabase, userId } = context;
+      const ids = [...new Set(data.invoiceIds)].slice(0, 100);
+      const sent: Array<{ invoiceId: string; number: string; to: string }> = [];
+      const failed: Array<{ invoiceId: string; number: string; error: string }> = [];
+      if (!ids.length) return { sent, failed };
+
+      // RLS check — only invoices the caller can actually see.
+      const { data: rows } = await supabase
+        .from("invoices")
+        .select("id,number,sub_account_id")
+        .in("id", ids);
+      const visible = (rows ?? []) as Array<{ id: string; number: string; sub_account_id: string }>;
+
+      const { queueInvoiceEmail, logInvoiceEventServer } = await import("@/lib/invoices.server");
+      for (const inv of visible) {
+        try {
+          const result = await queueInvoiceEmail({
+            invoiceId: inv.id,
+            actor: userId,
+            templateId: data.templateId ?? null,
+            resend: true,
+          });
+          sent.push({ invoiceId: inv.id, number: inv.number, to: result.to });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          await logInvoiceEventServer({
+            invoiceId: inv.id,
+            subAccountId: inv.sub_account_id,
+            type: "send_failed",
+            detail: { error: msg, resend: true, template_id: data.templateId ?? null },
+            actor: userId,
+          });
+          failed.push({ invoiceId: inv.id, number: inv.number, error: msg });
+        }
+      }
+      return { sent, failed };
+    },
+  );

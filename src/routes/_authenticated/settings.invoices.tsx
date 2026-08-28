@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, Copy, Plus, Star, Trash2 } from "lucide-react";
+import { Check, Copy, Download, GitCompare, History, Plus, Star, Trash2, Upload } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { SettingsNav } from "@/components/SettingsNav";
@@ -26,6 +26,21 @@ import {
   type InvoiceTemplate,
   type TemplatePatch,
 } from "@/lib/invoice-templates";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  diffTemplates,
+  importTemplates,
+  logTemplateExport,
+  parseTemplateFile,
+  templatesToCsv,
+  templatesToJson,
+} from "@/lib/invoice-template-transfer";
+import {
+  changedFieldsSummary,
+  describeTemplateAudit,
+  fetchTemplateAudit,
+} from "@/lib/invoice-template-audit";
+import { fetchAllInvoiceTemplates } from "@/lib/invoice-templates";
 import { renderInvoiceHtml, safeColor } from "@/lib/invoice-render";
 import type { Invoice, InvoiceItem } from "@/lib/invoices";
 
@@ -78,12 +93,27 @@ function InvoiceTemplatesPage() {
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [form, setForm] = useState<TemplatePatch>({});
+  const [leftId, setLeftId] = useState<string>("");
+  const [rightId, setRightId] = useState<string>("");
 
   const q = useQuery({
     queryKey: ["invoice-templates", subId],
     queryFn: () => fetchInvoiceTemplates(subId!),
     enabled: !!subId,
   });
+
+  const allQ = useQuery({
+    queryKey: ["invoice-templates-all", subId],
+    queryFn: () => fetchAllInvoiceTemplates(subId!),
+    enabled: !!subId,
+  });
+  const auditQ = useQuery({
+    queryKey: ["invoice-template-audit", subId],
+    queryFn: () => fetchTemplateAudit(subId!),
+    enabled: !!subId,
+  });
+  const allTemplates = allQ.data ?? [];
+  const audit = auditQ.data ?? [];
 
   const templates = q.data ?? [];
   const selected: InvoiceTemplate | null =
@@ -109,6 +139,8 @@ function InvoiceTemplatesPage() {
   const refresh = (id?: string) => {
     qc.invalidateQueries({ queryKey: ["invoice-templates", subId] });
     qc.invalidateQueries({ queryKey: ["invoice-template"] });
+    qc.invalidateQueries({ queryKey: ["invoice-templates-all", subId] });
+    qc.invalidateQueries({ queryKey: ["invoice-template-audit", subId] });
     if (id) setSelectedId(id);
   };
 
@@ -135,7 +167,7 @@ function InvoiceTemplatesPage() {
   });
 
   const save = useMutation({
-    mutationFn: () => updateInvoiceTemplate(selected!.id, form),
+    mutationFn: () => updateInvoiceTemplate(selected!.id, form, selected),
     onSuccess: () => {
       toast.success("Template saved");
       refresh();
@@ -162,7 +194,7 @@ function InvoiceTemplatesPage() {
   });
 
   const archive = useMutation({
-    mutationFn: () => archiveInvoiceTemplate(selected!.id),
+    mutationFn: () => archiveInvoiceTemplate(selected!.id, selected),
     onSuccess: () => {
       toast.success("Template archived — invoices already sent keep their version");
       setSelectedId(null);
@@ -172,6 +204,44 @@ function InvoiceTemplatesPage() {
   });
 
   const set = (patch: TemplatePatch) => setForm((f) => ({ ...f, ...patch }));
+
+  function download(name: string, content: string, mime: string) {
+    const url = URL.createObjectURL(new Blob([content], { type: mime }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function exportTemplates(format: "json" | "csv") {
+    if (!subId || !templates.length) return;
+    if (format === "json") {
+      download("invoice-templates.json", templatesToJson(templates), "application/json");
+    } else {
+      download("invoice-templates.csv", templatesToCsv(templates), "text/csv;charset=utf-8");
+    }
+    await logTemplateExport(subId, templates, format);
+    qc.invalidateQueries({ queryKey: ["invoice-template-audit", subId] });
+    toast.success(`Exported ${templates.length} template(s)`);
+  }
+
+  const importMut = useMutation({
+    mutationFn: async (file: File) => {
+      const parsed = parseTemplateFile(await file.text());
+      if (!parsed.length) throw new Error("No templates found in that file.");
+      return importTemplates(subId!, parsed, templates);
+    },
+    onSuccess: (res) => {
+      toast.success(`Imported ${res.imported} template(s)`);
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const left = allTemplates.find((t) => t.id === leftId) ?? null;
+  const right = allTemplates.find((t) => t.id === rightId) ?? null;
+  const diff = left && right ? diffTemplates(left, right) : [];
 
   const preview = useMemo(
     () =>
@@ -191,9 +261,42 @@ function InvoiceTemplatesPage() {
         title="Invoice templates"
         description="Save multiple branding variants per workspace, version them safely, and pick which one each invoice uses."
         actions={
-          <Button size="sm" onClick={() => create.mutate()} disabled={!subId || create.isPending}>
-            <Plus className="size-3.5" /> New template
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void exportTemplates("json")}
+              disabled={!templates.length}
+            >
+              <Download className="size-3.5" /> JSON
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void exportTemplates("csv")}
+              disabled={!templates.length}
+            >
+              <Download className="size-3.5" /> CSV
+            </Button>
+            <Button size="sm" variant="outline" asChild>
+              <label className="cursor-pointer">
+                <Upload className="size-3.5" /> Import
+                <input
+                  type="file"
+                  accept=".json,.csv,application/json,text/csv"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) importMut.mutate(file);
+                  }}
+                />
+              </label>
+            </Button>
+            <Button size="sm" onClick={() => create.mutate()} disabled={!subId || create.isPending}>
+              <Plus className="size-3.5" /> New template
+            </Button>
+          </div>
         }
       />
       <SettingsNav />
@@ -367,6 +470,114 @@ function InvoiceTemplatesPage() {
             </div>
           </div>
         )}
+
+        <section className="mt-8 space-y-3 rounded-xl border bg-card p-5">
+          <h2 className="flex items-center gap-2 text-sm font-medium">
+            <GitCompare className="size-4" /> Compare versions
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            See exactly what differs between two variants (including archived versions) before you
+            assign one to an invoice.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Select value={leftId} onValueChange={setLeftId}>
+              <SelectTrigger aria-label="Compare from">
+                <SelectValue placeholder="Select a version" />
+              </SelectTrigger>
+              <SelectContent>
+                {allTemplates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name} — v{t.version}
+                    {t.archived_at ? " (archived)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={rightId} onValueChange={setRightId}>
+              <SelectTrigger aria-label="Compare with">
+                <SelectValue placeholder="Select a version" />
+              </SelectTrigger>
+              <SelectContent>
+                {allTemplates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name} — v{t.version}
+                    {t.archived_at ? " (archived)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {left && right ? (
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">Field</th>
+                    <th className="px-3 py-2 text-left font-medium">
+                      {left.name} v{left.version}
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium">
+                      {right.name} v{right.version}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {diff.map((row) => (
+                    <tr
+                      key={row.field}
+                      className={`border-t ${row.changed ? "bg-amber-500/5" : ""}`}
+                    >
+                      <td className="px-3 py-2 font-mono text-xs">{row.field}</td>
+                      <td className="px-3 py-2 whitespace-pre-wrap">{row.left || "—"}</td>
+                      <td className="px-3 py-2 whitespace-pre-wrap">
+                        {row.right || "—"}
+                        {row.changed && (
+                          <Badge variant="secondary" className="ml-2 h-4 px-1.5 text-[10px]">
+                            changed
+                          </Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {diff.every((r) => !r.changed) && (
+                <p className="border-t px-3 py-2 text-xs text-muted-foreground">
+                  These two versions are identical.
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">Pick two versions to compare.</p>
+          )}
+        </section>
+
+        <section className="mt-6 space-y-3 rounded-xl border bg-card p-5">
+          <h2 className="flex items-center gap-2 text-sm font-medium">
+            <History className="size-4" /> Template change history
+          </h2>
+          {audit.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No template changes recorded yet.</p>
+          ) : (
+            <ul className="divide-y">
+              {audit.map((e) => (
+                <li key={e.id} className="py-2 text-sm">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="font-medium">{describeTemplateAudit(e)}</span>
+                    <span className="font-mono text-[11px] text-muted-foreground">
+                      {new Date(e.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  {changedFieldsSummary(e).map((line) => (
+                    <div key={line} className="truncate text-xs text-muted-foreground">
+                      {line}
+                    </div>
+                  ))}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </PageBody>
     </AppShell>
   );

@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Download, Receipt, Trash2 } from "lucide-react";
+import { Plus, Download, Receipt, Trash2, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -11,6 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useServerFn } from "@tanstack/react-start";
+import { bulkResendInvoiceEmails } from "@/lib/invoices.functions";
+import { fetchAllInvoiceTemplates } from "@/lib/invoice-templates";
 import { useTenancy } from "@/lib/tenancy";
 import { fetchContacts } from "@/lib/contacts";
 import {
@@ -60,6 +64,9 @@ function InvoicesPage() {
   const [dueDate, setDueDate] = useState("");
   const [taxRate, setTaxRate] = useState("20");
   const [currency, setCurrency] = useState("GBP");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [resendOpen, setResendOpen] = useState(false);
+  const [resendTemplate, setResendTemplate] = useState<string>("invoice");
 
   const invoicesQ = useQuery({
     queryKey: ["invoices", subId],
@@ -70,6 +77,32 @@ function InvoicesPage() {
     queryKey: ["contacts", subId],
     queryFn: () => fetchContacts(subId!),
     enabled: !!subId,
+  });
+
+  const templatesQ = useQuery({
+    queryKey: ["invoice-templates-all", subId],
+    queryFn: () => fetchAllInvoiceTemplates(subId!),
+    enabled: !!subId,
+  });
+  const templates = templatesQ.data ?? [];
+
+  const resendFn = useServerFn(bulkResendInvoiceEmails);
+  const resendMut = useMutation({
+    mutationFn: () =>
+      resendFn({
+        data: {
+          invoiceIds: selected,
+          templateId: resendTemplate === "invoice" ? null : resendTemplate,
+        },
+      }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      setResendOpen(false);
+      setSelected([]);
+      if (res.sent.length) toast.success(`Resent ${res.sent.length} invoice(s)`);
+      for (const f of res.failed) toast.error(`${f.number}: ${f.error}`);
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const invoices = invoicesQ.data ?? [];
@@ -84,6 +117,11 @@ function InvoicesPage() {
     () => (filter === "all" ? invoices : invoices.filter((i) => effectiveStatus(i) === filter)),
     [invoices, filter],
   );
+
+  const allSelected = rows.length > 0 && rows.every((r) => selected.includes(r.id));
+  const toggleAll = () => setSelected(allSelected ? [] : rows.map((r) => r.id));
+  const toggleOne = (id: string) =>
+    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   const outstanding = invoices
     .filter((i) => i.status === "sent")
@@ -135,6 +173,11 @@ function InvoicesPage() {
       }
       headerActions={
         <div className="flex items-center gap-2">
+          {selected.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => setResendOpen(true)}>
+              <Send className="size-3.5" /> Resend {selected.length}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={exportCsv} disabled={!rows.length}>
             <Download className="size-3.5" /> CSV
           </Button>
@@ -177,6 +220,13 @@ function InvoicesPage() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
+                    <th className="px-4 py-2 w-8">
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={toggleAll}
+                        aria-label="Select all invoices"
+                      />
+                    </th>
                     <th className="text-left font-medium px-4 py-2">Number</th>
                     <th className="text-left font-medium px-4 py-2">Client</th>
                     <th className="text-left font-medium px-4 py-2">Issued</th>
@@ -193,6 +243,13 @@ function InvoicesPage() {
                       className="border-t border-border hover:bg-muted/40 cursor-pointer"
                       onClick={() => navigate({ to: "/invoices/$id", params: { id: inv.id } })}
                     >
+                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selected.includes(inv.id)}
+                          onCheckedChange={() => toggleOne(inv.id)}
+                          aria-label={`Select ${inv.number}`}
+                        />
+                      </td>
                       <td className="px-4 py-2 font-mono text-xs">{inv.number}</td>
                       <td className="px-4 py-2">{contactName(inv.contact_id)}</td>
                       <td className="px-4 py-2 text-muted-foreground">{inv.issue_date}</td>
@@ -271,6 +328,46 @@ function InvoicesPage() {
             </Button>
             <Button onClick={() => createMut.mutate()} disabled={!subId || createMut.isPending}>
               Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resendOpen} onOpenChange={setResendOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resend {selected.length} invoice(s)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Each client gets a fresh branded PDF email, and every delivery is added to that
+              invoice&apos;s history.
+            </p>
+            <div className="space-y-1.5">
+              <Label>Template version</Label>
+              <Select value={resendTemplate} onValueChange={setResendTemplate}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="invoice">Keep each invoice&apos;s own template</SelectItem>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name} — v{t.version}
+                      {t.is_default ? " (default)" : ""}
+                      {t.archived_at ? " (archived)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResendOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => resendMut.mutate()} disabled={resendMut.isPending}>
+              {resendMut.isPending ? "Sending…" : "Send now"}
             </Button>
           </DialogFooter>
         </DialogContent>

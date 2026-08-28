@@ -1644,6 +1644,57 @@ export type Database = {
           },
         ]
       }
+      invoice_template_audit: {
+        Row: {
+          action: string
+          changed_by: string | null
+          created_at: string
+          detail: Json
+          id: string
+          sub_account_id: string
+          template_id: string | null
+          template_name: string | null
+          template_version: number | null
+        }
+        Insert: {
+          action: string
+          changed_by?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          sub_account_id: string
+          template_id?: string | null
+          template_name?: string | null
+          template_version?: number | null
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          sub_account_id?: string
+          template_id?: string | null
+          template_name?: string | null
+          template_version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_template_audit_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_template_audit_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_templates: {
         Row: {
           accent_color: string

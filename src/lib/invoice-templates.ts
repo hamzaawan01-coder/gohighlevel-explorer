@@ -8,6 +8,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_BRANDING, type InvoiceBranding } from "./invoice-render";
+import { logTemplateAudit } from "./invoice-template-audit";
 
 export type InvoiceTemplate = {
   id: string;
@@ -71,11 +72,28 @@ export async function fetchInvoiceTemplates(subAccountId: string): Promise<Invoi
   return (data ?? []) as unknown as InvoiceTemplate[];
 }
 
+/** Includes archived versions — needed for the version diff picker. */
+export async function fetchAllInvoiceTemplates(subAccountId: string): Promise<InvoiceTemplate[]> {
+  const { data, error } = await supabase
+    .from("invoice_templates")
+    .select("*")
+    .eq("sub_account_id", subAccountId)
+    .order("name", { ascending: true })
+    .order("version", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as InvoiceTemplate[];
+}
+
 export async function createInvoiceTemplate(
   subAccountId: string,
-  input: TemplatePatch & { name: string; makeDefault?: boolean },
+  input: TemplatePatch & {
+    name: string;
+    makeDefault?: boolean;
+    auditAction?: "created" | "duplicated" | "imported";
+    auditDetail?: Record<string, unknown>;
+  },
 ): Promise<InvoiceTemplate> {
-  const { name, makeDefault, ...branding } = input;
+  const { name, makeDefault, auditAction: _a, auditDetail: _d, ...branding } = input;
   const auth = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("invoice_templates")
@@ -95,13 +113,49 @@ export async function createInvoiceTemplate(
     .single();
   if (error) throw error;
   const created = data as unknown as InvoiceTemplate;
+  await logTemplateAudit({
+    subAccountId,
+    templateId: created.id,
+    templateName: created.name,
+    templateVersion: created.version,
+    action: input.auditAction ?? "created",
+    detail: input.auditDetail ?? {},
+  });
   if (makeDefault) await setDefaultInvoiceTemplate(subAccountId, created.id);
   return created;
 }
 
-export async function updateInvoiceTemplate(id: string, patch: TemplatePatch): Promise<void> {
+export async function updateInvoiceTemplate(
+  id: string,
+  patch: TemplatePatch,
+  previous?: InvoiceTemplate | null,
+): Promise<void> {
   const { error } = await supabase.from("invoice_templates").update(patch as never).eq("id", id);
   if (error) throw error;
+  if (previous) {
+    await logTemplateAudit({
+      subAccountId: previous.sub_account_id,
+      templateId: id,
+      templateName: patch.name ?? previous.name,
+      templateVersion: previous.version,
+      action: "edited",
+      detail: { changes: templateChanges(previous, patch) },
+    });
+  }
+}
+
+/** Per-field { from, to } map for the fields this patch actually changes. */
+export function templateChanges(
+  previous: InvoiceTemplate,
+  patch: TemplatePatch,
+): Record<string, { from: unknown; to: unknown }> {
+  const out: Record<string, { from: unknown; to: unknown }> = {};
+  for (const key of Object.keys(patch) as Array<keyof TemplatePatch>) {
+    const from = (previous as unknown as Record<string, unknown>)[key as string] ?? null;
+    const to = (patch as Record<string, unknown>)[key as string] ?? null;
+    if (String(from ?? "") !== String(to ?? "")) out[key as string] = { from, to };
+  }
+  return out;
 }
 
 /**
@@ -141,6 +195,14 @@ export async function saveTemplateAsNewVersion(
     .update({ archived_at: new Date().toISOString(), is_default: false } as never)
     .eq("id", template.id);
   if (template.is_default) await setDefaultInvoiceTemplate(template.sub_account_id, next.id);
+  await logTemplateAudit({
+    subAccountId: template.sub_account_id,
+    templateId: next.id,
+    templateName: next.name,
+    templateVersion: next.version,
+    action: "new_version",
+    detail: { from_version: template.version, changes: templateChanges(template, patch) },
+  });
   return next;
 }
 
@@ -149,6 +211,8 @@ export async function duplicateInvoiceTemplate(
   name: string,
 ): Promise<InvoiceTemplate> {
   return createInvoiceTemplate(template.sub_account_id, {
+    auditAction: "duplicated",
+    auditDetail: { source_template: template.name, source_version: template.version },
     name,
     business_name: template.business_name,
     logo_url: template.logo_url,
@@ -169,12 +233,22 @@ export async function setDefaultInvoiceTemplate(subAccountId: string, id: string
   if (clear.error) throw clear.error;
   const { error } = await supabase.from("invoice_templates").update({ is_default: true } as never).eq("id", id);
   if (error) throw error;
+  await logTemplateAudit({ subAccountId, templateId: id, action: "made_default" });
 }
 
-export async function archiveInvoiceTemplate(id: string): Promise<void> {
+export async function archiveInvoiceTemplate(id: string, template?: InvoiceTemplate | null): Promise<void> {
   const { error } = await supabase
     .from("invoice_templates")
     .update({ archived_at: new Date().toISOString(), is_default: false } as never)
     .eq("id", id);
   if (error) throw error;
+  if (template) {
+    await logTemplateAudit({
+      subAccountId: template.sub_account_id,
+      templateId: id,
+      templateName: template.name,
+      templateVersion: template.version,
+      action: "archived",
+    });
+  }
 }
