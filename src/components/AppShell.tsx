@@ -144,6 +144,30 @@ export function AppShell({
   );
 }
 
+function ModuleDisabled({ label }: { label: string }) {
+  return (
+    <div className="h-full flex items-center justify-center p-10">
+      <div className="max-w-sm text-center space-y-3">
+        <div className="mx-auto size-10 rounded-full bg-secondary flex items-center justify-center">
+          <Ban className="size-4 text-muted-foreground" />
+        </div>
+        <h2 className="text-sm font-bold">{label} is turned off</h2>
+        <p className="text-xs text-muted-foreground">
+          This module is disabled for the current workspace. Nothing has been deleted — a workspace
+          admin can switch it back on at any time.
+        </p>
+        <Link
+          to="/settings/modules"
+          className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-md bg-primary text-primary-foreground"
+        >
+          <ToggleLeft className="size-3.5" />
+          Manage modules
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
