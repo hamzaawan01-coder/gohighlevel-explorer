@@ -81,7 +81,14 @@ export const getMetaConnection = createServerFn({ method: "GET" })
       .limit(1);
     if (error) throw new Error(error.message);
     const conn = (conns ?? [])[0] ?? null;
-    if (!conn) return { connection: null, pages: [], adAccounts: [] };
+    const setup = {
+      appConfigured: Boolean(process.env.META_APP_ID && process.env.META_APP_SECRET),
+      verifyTokenConfigured: Boolean(process.env.META_WEBHOOK_VERIFY_TOKEN),
+      redirectUri: metaRedirectUri(),
+      webhookBaseUrl: metaWebhookUrl("<connection-id>"),
+      scopes: [...META_SCOPES],
+    };
+    if (!conn) return { connection: null, pages: [], adAccounts: [], setup };
 
     const [pagesRes, adAccountsRes] = await Promise.all([
       (supabaseAdmin as any).from("meta_pages")
