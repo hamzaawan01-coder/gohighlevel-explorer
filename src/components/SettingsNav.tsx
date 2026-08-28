@@ -34,6 +34,7 @@ export const SETTINGS_NAV_ITEMS: Item[] = [
   { label: "WordPress", to: "/settings/wordpress", icon: Webhook, module: "integrations" },
   { label: "AI assistant", to: "/settings/ai-assistant", icon: Bot, module: "conversations" },
   { label: "Booking pages", to: "/settings/booking", icon: Calendar, module: "calendar" },
+  { label: "Invoice branding", to: "/settings/invoices", icon: Receipt, module: "invoices" },
   { label: "Team", to: "/settings/team", icon: Users2 },
   { label: "Sub-accounts", to: "/settings/sub-accounts", icon: Building2 },
   { label: "Modules", to: "/settings/modules", icon: ToggleLeft },
