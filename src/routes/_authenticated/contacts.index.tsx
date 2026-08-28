@@ -471,30 +471,63 @@ function ContactsPage() {
 
         <div className="flex-1 overflow-auto">
           {contactsQuery.isLoading ? (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              <Loader2 className="size-4 animate-spin mr-2" />
-              <span className="text-xs">Loading contacts…</span>
+            <div className="p-6">
+              <TableSkeleton rows={10} cols={6} />
             </div>
+          ) : contactsQuery.isError ? (
+            <ErrorState
+              title="Couldn't load contacts"
+              error={contactsQuery.error}
+              onRetry={() => contactsQuery.refetch()}
+              retrying={contactsQuery.isFetching}
+            />
           ) : filtered.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
-              <p className="text-xs">
-                {contacts.length === 0 ? "No contacts yet." : "No matches for your filter."}
-              </p>
-              {contacts.length === 0 && (
-                <button
-                  onClick={() => {
-                    setEditing(null);
-                    setDialogOpen(true);
-                  }}
-                  className="text-xs text-primary hover:underline"
-                >
-                  Add your first contact
-                </button>
-              )}
-            </div>
+            <EmptyState
+              icon={contacts.length === 0 ? UserPlus : SearchX}
+              title={contacts.length === 0 ? "No contacts yet" : "No matches for your filters"}
+              description={
+                contacts.length === 0
+                  ? "Contacts are the backbone of your pipeline. Add one manually or import a CSV to get started."
+                  : "Try clearing the stage or tag filter, or search for something else."
+              }
+              action={
+                contacts.length === 0 ? (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setEditing(null);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    <Plus className="size-3.5" />
+                    Add your first contact
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSearch("");
+                      setActiveTag(null);
+                      setActiveStage("all");
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )
+              }
+              secondaryAction={
+                contacts.length === 0 ? (
+                  <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+                    <Upload className="size-3.5" />
+                    Import CSV
+                  </Button>
+                ) : null
+              }
+            />
           ) : (
             <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-card border-b border-border z-10">
+              <thead className="sticky top-0 z-10 border-b border-border bg-secondary/85 backdrop-blur-sm">
                 <tr className="text-left font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="pl-6 pr-2 py-2 w-8">
                     <Checkbox
@@ -513,6 +546,7 @@ function ContactsPage() {
                 </tr>
               </thead>
               <tbody>
+
                 {filtered.map((c) => {
                   const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "—";
                   return (
