@@ -70,7 +70,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           if (!fresh) {
             return Response.json({ received: true, duplicate: true });
           }
-          const result = await applySubscriptionEvent(event, db());
+          const result = await applySubscriptionEvent(event as unknown as { type: string; data: { object: unknown } } as never, db());
           if (!result.applied) console.log("Payments webhook skipped:", result.reason);
           if (event.id) {
             await getSupabase()
