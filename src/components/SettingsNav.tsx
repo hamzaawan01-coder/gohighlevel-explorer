@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   Palette,
   Phone,
+  Receipt,
   PhoneCall,
   Settings as SettingsIcon,
   ShieldCheck,
