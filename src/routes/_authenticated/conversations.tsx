@@ -775,6 +775,60 @@ function ConversationsPage() {
                     </Button>
                   </div>
                 </div>
+                {lastDraft && (
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Bot className="size-3" /> Was this AI draft helpful?
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="AI draft was helpful"
+                      disabled={feedbackMut.isPending || draftRated !== null}
+                      onClick={() => feedbackMut.mutate({ rating: "up" })}
+                      className={`flex items-center gap-1 rounded-md border px-2 py-1 transition-colors disabled:opacity-60 ${
+                        draftRated === "up"
+                          ? "border-primary/40 bg-primary/10 text-primary"
+                          : "border-border hover:bg-secondary"
+                      }`}
+                    >
+                      <ThumbsUp className="size-3" /> Good
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="AI draft was not helpful"
+                      disabled={feedbackMut.isPending || draftRated !== null}
+                      onClick={() => setShowRejectNote(true)}
+                      className={`flex items-center gap-1 rounded-md border px-2 py-1 transition-colors disabled:opacity-60 ${
+                        draftRated === "down"
+                          ? "border-destructive/40 bg-destructive/10 text-destructive"
+                          : "border-border hover:bg-secondary"
+                      }`}
+                    >
+                      <ThumbsDown className="size-3" /> Needs work
+                    </button>
+                    {feedbackMut.isPending && <Loader2 className="size-3 animate-spin" />}
+                    {draftRated && <span>Saved — future drafts will use this.</span>}
+                    {showRejectNote && draftRated === null && (
+                      <div className="flex w-full items-center gap-2">
+                        <Input
+                          value={rejectNote}
+                          onChange={(e) => setRejectNote(e.target.value)}
+                          placeholder="What was wrong? (optional — e.g. too long, wrong price)"
+                          className="h-8 text-xs"
+                          aria-label="Why the draft needs work"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={feedbackMut.isPending}
+                          onClick={() => feedbackMut.mutate({ rating: "down", note: rejectNote })}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {isRealChannel && (
                   <p className="text-[10px] text-muted-foreground">
                     {CHANNEL_BY_KEY[composeChannel].label} sending isn't connected yet —
