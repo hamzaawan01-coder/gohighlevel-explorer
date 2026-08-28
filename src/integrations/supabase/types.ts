@@ -1367,6 +1367,98 @@ export type Database = {
           },
         ]
       }
+      invoice_branding: {
+        Row: {
+          accent_color: string
+          address: string | null
+          business_name: string | null
+          created_at: string
+          footer_note: string | null
+          logo_url: string | null
+          payment_instructions: string | null
+          sub_account_id: string
+          terms: string | null
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          address?: string | null
+          business_name?: string | null
+          created_at?: string
+          footer_note?: string | null
+          logo_url?: string | null
+          payment_instructions?: string | null
+          sub_account_id: string
+          terms?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          address?: string | null
+          business_name?: string | null
+          created_at?: string
+          footer_note?: string | null
+          logo_url?: string | null
+          payment_instructions?: string | null
+          sub_account_id?: string
+          terms?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_branding_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: true
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_events: {
+        Row: {
+          actor: string | null
+          created_at: string
+          detail: Json
+          id: string
+          invoice_id: string
+          sub_account_id: string
+          type: string
+        }
+        Insert: {
+          actor?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          invoice_id: string
+          sub_account_id: string
+          type: string
+        }
+        Update: {
+          actor?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          invoice_id?: string
+          sub_account_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_events_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_events_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           created_at: string
@@ -1418,8 +1510,73 @@ export type Database = {
           },
         ]
       }
+      invoice_reminders: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          invoice_id: string
+          outbound_message_id: string | null
+          scheduled_at: string
+          sent_at: string | null
+          sequence: number
+          status: string
+          sub_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          invoice_id: string
+          outbound_message_id?: string | null
+          scheduled_at?: string
+          sent_at?: string | null
+          sequence?: number
+          status?: string
+          sub_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          invoice_id?: string
+          outbound_message_id?: string | null
+          scheduled_at?: string
+          sent_at?: string | null
+          sequence?: number
+          status?: string
+          sub_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_reminders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_reminders_outbound_message_id_fkey"
+            columns: ["outbound_message_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_reminders_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
+          amount_paid: number
           contact_id: string | null
           created_at: string
           created_by: string | null
@@ -1428,10 +1585,18 @@ export type Database = {
           due_date: string | null
           id: string
           issue_date: string
+          last_sent_at: string | null
+          max_reminders: number
           notes: string | null
           number: string
           paid_at: string | null
+          reminder_interval_days: number
+          reminders_enabled: boolean
           status: Database["public"]["Enums"]["invoice_status"]
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_payment_link_id: string | null
+          stripe_payment_link_url: string | null
           sub_account_id: string
           subtotal: number
           tax_amount: number
@@ -1440,6 +1605,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amount_paid?: number
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1448,10 +1614,18 @@ export type Database = {
           due_date?: string | null
           id?: string
           issue_date?: string
+          last_sent_at?: string | null
+          max_reminders?: number
           notes?: string | null
           number: string
           paid_at?: string | null
+          reminder_interval_days?: number
+          reminders_enabled?: boolean
           status?: Database["public"]["Enums"]["invoice_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_payment_link_id?: string | null
+          stripe_payment_link_url?: string | null
           sub_account_id: string
           subtotal?: number
           tax_amount?: number
@@ -1460,6 +1634,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amount_paid?: number
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1468,10 +1643,18 @@ export type Database = {
           due_date?: string | null
           id?: string
           issue_date?: string
+          last_sent_at?: string | null
+          max_reminders?: number
           notes?: string | null
           number?: string
           paid_at?: string | null
+          reminder_interval_days?: number
+          reminders_enabled?: boolean
           status?: Database["public"]["Enums"]["invoice_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_payment_link_id?: string | null
+          stripe_payment_link_url?: string | null
           sub_account_id?: string
           subtotal?: number
           tax_amount?: number
@@ -2173,6 +2356,7 @@ export type Database = {
           created_by: string | null
           error: string | null
           id: string
+          invoice_id: string | null
           next_attempt_at: string
           provider: string | null
           provider_message_id: string | null
@@ -2195,6 +2379,7 @@ export type Database = {
           created_by?: string | null
           error?: string | null
           id?: string
+          invoice_id?: string | null
           next_attempt_at?: string
           provider?: string | null
           provider_message_id?: string | null
@@ -2217,6 +2402,7 @@ export type Database = {
           created_by?: string | null
           error?: string | null
           id?: string
+          invoice_id?: string | null
           next_attempt_at?: string
           provider?: string | null
           provider_message_id?: string | null
@@ -2235,6 +2421,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
           {

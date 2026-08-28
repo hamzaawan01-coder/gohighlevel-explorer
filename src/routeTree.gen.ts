@@ -44,6 +44,7 @@ import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_a
 import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
 import { Route as AuthenticatedSettingsCallFlowsRouteImport } from './routes/_authenticated/settings.call-flows'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
+import { Route as AuthenticatedSettingsInvoicesRouteImport } from './routes/_authenticated/settings.invoices'
 import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_authenticated/settings.messaging'
 import { Route as AuthenticatedSettingsModulesRouteImport } from './routes/_authenticated/settings.modules'
 import { Route as AuthenticatedSettingsPhoneNumbersRouteImport } from './routes/_authenticated/settings.phone-numbers'
@@ -56,6 +57,7 @@ import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/bo
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicHooksAppointmentsRouteImport } from './routes/api/public/hooks/appointments'
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
+import { Route as ApiPublicInvoicesRemindersRouteImport } from './routes/api/public/invoices/reminders'
 import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta.data-deletion'
 import { Route as ApiPublicPaymentsReconcileRouteImport } from './routes/api/public/payments/reconcile'
@@ -261,6 +263,12 @@ const AuthenticatedSettingsIntegrationsRoute =
     path: '/settings/integrations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsInvoicesRoute =
+  AuthenticatedSettingsInvoicesRouteImport.update({
+    id: '/settings/invoices',
+    path: '/settings/invoices',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsMessagingRoute =
   AuthenticatedSettingsMessagingRouteImport.update({
     id: '/settings/messaging',
@@ -329,6 +337,12 @@ const ApiPublicHooksSyncGoogleAdsRoute =
   ApiPublicHooksSyncGoogleAdsRouteImport.update({
     id: '/api/public/hooks/sync-google-ads',
     path: '/api/public/hooks/sync-google-ads',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicInvoicesRemindersRoute =
+  ApiPublicInvoicesRemindersRouteImport.update({
+    id: '/api/public/invoices/reminders',
+    path: '/api/public/invoices/reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicLSlugRoute = ApiPublicLSlugRouteImport.update({
@@ -463,6 +477,7 @@ export interface FileRoutesByFullPath {
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/settings/invoices': typeof AuthenticatedSettingsInvoicesRoute
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -478,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
+  '/api/public/invoices/reminders': typeof ApiPublicInvoicesRemindersRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/payments/reconcile': typeof ApiPublicPaymentsReconcileRoute
@@ -528,6 +544,7 @@ export interface FileRoutesByTo {
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/settings/invoices': typeof AuthenticatedSettingsInvoicesRoute
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -543,6 +560,7 @@ export interface FileRoutesByTo {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
+  '/api/public/invoices/reminders': typeof ApiPublicInvoicesRemindersRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/payments/reconcile': typeof ApiPublicPaymentsReconcileRoute
@@ -595,6 +613,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/_authenticated/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/_authenticated/settings/invoices': typeof AuthenticatedSettingsInvoicesRoute
   '/_authenticated/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/_authenticated/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/_authenticated/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -610,6 +629,7 @@ export interface FileRoutesById {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
+  '/api/public/invoices/reminders': typeof ApiPublicInvoicesRemindersRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/payments/reconcile': typeof ApiPublicPaymentsReconcileRoute
@@ -662,6 +682,7 @@ export interface FileRouteTypes {
     | '/settings/booking'
     | '/settings/call-flows'
     | '/settings/integrations'
+    | '/settings/invoices'
     | '/settings/messaging'
     | '/settings/modules'
     | '/settings/phone-numbers'
@@ -677,6 +698,7 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
+    | '/api/public/invoices/reminders'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
     | '/api/public/payments/reconcile'
@@ -727,6 +749,7 @@ export interface FileRouteTypes {
     | '/settings/booking'
     | '/settings/call-flows'
     | '/settings/integrations'
+    | '/settings/invoices'
     | '/settings/messaging'
     | '/settings/modules'
     | '/settings/phone-numbers'
@@ -742,6 +765,7 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
+    | '/api/public/invoices/reminders'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
     | '/api/public/payments/reconcile'
@@ -793,6 +817,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/booking'
     | '/_authenticated/settings/call-flows'
     | '/_authenticated/settings/integrations'
+    | '/_authenticated/settings/invoices'
     | '/_authenticated/settings/messaging'
     | '/_authenticated/settings/modules'
     | '/_authenticated/settings/phone-numbers'
@@ -808,6 +833,7 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
+    | '/api/public/invoices/reminders'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
     | '/api/public/payments/reconcile'
@@ -842,6 +868,7 @@ export interface RootRouteChildren {
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
   ApiPublicHooksAppointmentsRoute: typeof ApiPublicHooksAppointmentsRoute
   ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
+  ApiPublicInvoicesRemindersRoute: typeof ApiPublicInvoicesRemindersRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
   ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
   ApiPublicPaymentsReconcileRoute: typeof ApiPublicPaymentsReconcileRoute
@@ -1108,6 +1135,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/invoices': {
+      id: '/_authenticated/settings/invoices'
+      path: '/settings/invoices'
+      fullPath: '/settings/invoices'
+      preLoaderRoute: typeof AuthenticatedSettingsInvoicesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/messaging': {
       id: '/_authenticated/settings/messaging'
       path: '/settings/messaging'
@@ -1190,6 +1224,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/sync-google-ads'
       fullPath: '/api/public/hooks/sync-google-ads'
       preLoaderRoute: typeof ApiPublicHooksSyncGoogleAdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/invoices/reminders': {
+      id: '/api/public/invoices/reminders'
+      path: '/api/public/invoices/reminders'
+      fullPath: '/api/public/invoices/reminders'
+      preLoaderRoute: typeof ApiPublicInvoicesRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/l/$slug': {
@@ -1338,6 +1379,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsBookingRoute: typeof AuthenticatedSettingsBookingRoute
   AuthenticatedSettingsCallFlowsRoute: typeof AuthenticatedSettingsCallFlowsRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
+  AuthenticatedSettingsInvoicesRoute: typeof AuthenticatedSettingsInvoicesRoute
   AuthenticatedSettingsMessagingRoute: typeof AuthenticatedSettingsMessagingRoute
   AuthenticatedSettingsModulesRoute: typeof AuthenticatedSettingsModulesRoute
   AuthenticatedSettingsPhoneNumbersRoute: typeof AuthenticatedSettingsPhoneNumbersRoute
@@ -1375,6 +1417,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsCallFlowsRoute: AuthenticatedSettingsCallFlowsRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
+  AuthenticatedSettingsInvoicesRoute: AuthenticatedSettingsInvoicesRoute,
   AuthenticatedSettingsMessagingRoute: AuthenticatedSettingsMessagingRoute,
   AuthenticatedSettingsModulesRoute: AuthenticatedSettingsModulesRoute,
   AuthenticatedSettingsPhoneNumbersRoute:
@@ -1407,6 +1450,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
   ApiPublicHooksAppointmentsRoute: ApiPublicHooksAppointmentsRoute,
   ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
+  ApiPublicInvoicesRemindersRoute: ApiPublicInvoicesRemindersRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
   ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,
   ApiPublicPaymentsReconcileRoute: ApiPublicPaymentsReconcileRoute,

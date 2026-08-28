@@ -17,6 +17,7 @@ export const Route = createFileRoute("/api/public/process-outbound")({
         if (!ok) return new Response("unauthorized", { status: 401 });
         const { drainAll } = await import("@/lib/integrations.server-queue");
         const { enqueueDueReminders } = await import("@/lib/appointments.server");
+        const { runOverdueInvoiceReminders } = await import("@/lib/invoices.server");
         try {
           let reminders: Awaited<ReturnType<typeof enqueueDueReminders>> | { error: string };
           try {
@@ -24,8 +25,16 @@ export const Route = createFileRoute("/api/public/process-outbound")({
           } catch (e) {
             reminders = { error: e instanceof Error ? e.message : String(e) };
           }
+          let invoiceReminders:
+            | Awaited<ReturnType<typeof runOverdueInvoiceReminders>>
+            | { error: string };
+          try {
+            invoiceReminders = await runOverdueInvoiceReminders();
+          } catch (e) {
+            invoiceReminders = { error: e instanceof Error ? e.message : String(e) };
+          }
           const result = await drainAll();
-          return Response.json({ ...result, reminders });
+          return Response.json({ ...result, reminders, invoiceReminders });
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           return new Response(msg, { status: 500 });
