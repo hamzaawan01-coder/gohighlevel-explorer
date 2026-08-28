@@ -241,6 +241,19 @@ export async function fetchLeadById(
   return graph(`/${leadId}`, { fields: "id,created_time,field_data,form_id" }, pageAccessToken);
 }
 
+/** List the Lead Ad forms configured on a Facebook Page. */
+export async function fetchPageLeadForms(
+  pageId: string,
+  pageAccessToken: string,
+): Promise<Array<{ id: string; name: string; status?: string }>> {
+  const res = await graph<{ data?: Array<{ id: string; name: string; status?: string }> }>(
+    `/${pageId}/leadgen_forms`,
+    { fields: "id,name,status", limit: "100" },
+    pageAccessToken,
+  );
+  return res.data ?? [];
+}
+
 /** Verify Meta X-Hub-Signature-256 header against the raw request body. */
 export function verifyMetaSignature(rawBody: string, signatureHeader: string | null): boolean {
   const appSecret = process.env.META_APP_SECRET;
@@ -255,30 +268,68 @@ export function verifyMetaSignature(rawBody: string, signatureHeader: string | n
 
 /**
  * Creates an opportunity (deal) for a freshly captured lead so it shows up on
- * the Opportunities board, not just in Contacts. Uses the sub-account's first
+ * the Opportunities board, not just in Contacts. Uses the pipeline/stage mapped
+ * to the Lead Ad form when configured, otherwise the sub-account's first
  * pipeline and its first stage. Safe no-op when no pipeline exists.
  */
 export async function createOpportunityForLead(
   admin: { from: (t: string) => any },
-  args: { subAccountId: string; contactId: string | null; title: string; source: string },
+  args: { subAccountId: string; contactId: string | null; title: string; source: string; formId?: string | null },
 ): Promise<string | null> {
-  const { data: pipes } = await admin
-    .from("pipelines")
-    .select("id, owner_id")
-    .eq("sub_account_id", args.subAccountId)
-    .order("created_at", { ascending: true })
-    .limit(1);
-  const pipeline = (pipes ?? [])[0] as { id: string; owner_id: string } | undefined;
-  if (!pipeline) return null;
+  let pipeline: { id: string; owner_id: string } | undefined;
+  let stage: { id: string } | undefined;
 
-  const { data: stages } = await admin
-    .from("pipeline_stages")
-    .select("id")
-    .eq("pipeline_id", pipeline.id)
-    .order("position", { ascending: true })
-    .limit(1);
-  const stage = (stages ?? [])[0] as { id: string } | undefined;
-  if (!stage) return null;
+  if (args.formId) {
+    const { data: routes } = await admin
+      .from("meta_lead_form_routes")
+      .select("pipeline_id, stage_id")
+      .eq("sub_account_id", args.subAccountId)
+      .eq("form_id", args.formId)
+      .limit(1);
+    const route = (routes ?? [])[0] as { pipeline_id: string; stage_id: string } | undefined;
+    if (route) {
+      const { data: routedPipes } = await admin
+        .from("pipelines")
+        .select("id, owner_id")
+        .eq("id", route.pipeline_id)
+        .eq("sub_account_id", args.subAccountId)
+        .limit(1);
+      const routedPipe = (routedPipes ?? [])[0] as { id: string; owner_id: string } | undefined;
+      if (routedPipe) {
+        const { data: routedStages } = await admin
+          .from("pipeline_stages")
+          .select("id")
+          .eq("id", route.stage_id)
+          .eq("pipeline_id", routedPipe.id)
+          .limit(1);
+        const routedStage = (routedStages ?? [])[0] as { id: string } | undefined;
+        if (routedStage) {
+          pipeline = routedPipe;
+          stage = routedStage;
+        }
+      }
+    }
+  }
+
+  if (!pipeline || !stage) {
+    const { data: pipes } = await admin
+      .from("pipelines")
+      .select("id, owner_id")
+      .eq("sub_account_id", args.subAccountId)
+      .order("created_at", { ascending: true })
+      .limit(1);
+    pipeline = (pipes ?? [])[0] as { id: string; owner_id: string } | undefined;
+    if (!pipeline) return null;
+
+    const { data: stages } = await admin
+      .from("pipeline_stages")
+      .select("id")
+      .eq("pipeline_id", pipeline.id)
+      .order("position", { ascending: true })
+      .limit(1);
+    stage = (stages ?? [])[0] as { id: string } | undefined;
+    if (!stage) return null;
+  }
 
   if (args.contactId) {
     const { data: dupe } = await admin

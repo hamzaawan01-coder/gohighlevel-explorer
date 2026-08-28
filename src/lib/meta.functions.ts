@@ -316,3 +316,107 @@ export const configureMetaWebhooks = createServerFn({ method: "POST" })
     const results = await configureAppWebhooks(callbackUrl);
     return { callbackUrl, results };
   });
+
+/** List Lead Ad forms per page, plus current pipeline/stage mappings and options. */
+export const listMetaLeadFormRoutes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string }) => z.object({ subAccountId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { fetchPageLeadForms } = await import("./meta.server");
+
+    const [pagesRes, routesRes, pipelinesRes, stagesRes] = await Promise.all([
+      (supabaseAdmin as any).from("meta_pages")
+        .select("id, page_id, page_name, page_access_token, sync_lead_ads")
+        .eq("sub_account_id", data.subAccountId),
+      (context.supabase as any).from("meta_lead_form_routes")
+        .select("id, page_id, form_id, form_name, pipeline_id, stage_id")
+        .eq("sub_account_id", data.subAccountId),
+      (context.supabase as any).from("pipelines").select("id, name")
+        .eq("sub_account_id", data.subAccountId).order("created_at", { ascending: true }),
+      (context.supabase as any).from("pipeline_stages").select("id, pipeline_id, name, position")
+        .eq("sub_account_id", data.subAccountId).order("position", { ascending: true }),
+    ]);
+
+    const pages = (pagesRes.data ?? []) as Array<{
+      id: string; page_id: string; page_name: string; page_access_token: string; sync_lead_ads: boolean;
+    }>;
+
+    const forms: Array<{ pageId: string; pageName: string; formId: string; formName: string; status?: string }> = [];
+    const errors: Array<{ pageName: string; error: string }> = [];
+    for (const p of pages) {
+      try {
+        const list = await fetchPageLeadForms(p.page_id, p.page_access_token);
+        for (const f of list) {
+          forms.push({ pageId: p.page_id, pageName: p.page_name, formId: f.id, formName: f.name, status: f.status });
+        }
+      } catch (e) {
+        errors.push({ pageName: p.page_name, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+
+    return {
+      forms,
+      errors,
+      routes: routesRes.data ?? [],
+      pipelines: pipelinesRes.data ?? [],
+      stages: stagesRes.data ?? [],
+    };
+  });
+
+/** Map (or clear) the pipeline + stage used for opportunities from one Lead Ad form. */
+export const setMetaLeadFormRoute = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    subAccountId: string;
+    formId: string;
+    formName?: string | null;
+    pageId?: string | null;
+    pipelineId?: string | null;
+    stageId?: string | null;
+  }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      formId: z.string().min(1),
+      formName: z.string().nullish(),
+      pageId: z.string().nullish(),
+      pipelineId: z.string().uuid().nullish(),
+      stageId: z.string().uuid().nullish(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
+
+    if (!data.pipelineId || !data.stageId) {
+      const { error } = await (context.supabase as any)
+        .from("meta_lead_form_routes").delete()
+        .eq("sub_account_id", data.subAccountId).eq("form_id", data.formId);
+      if (error) throw new Error(error.message);
+      return { ok: true, cleared: true };
+    }
+
+    const { data: stages, error: sErr } = await (context.supabase as any)
+      .from("pipeline_stages").select("id")
+      .eq("id", data.stageId).eq("pipeline_id", data.pipelineId)
+      .eq("sub_account_id", data.subAccountId).limit(1);
+    if (sErr) throw new Error(sErr.message);
+    if (!(stages ?? [])[0]) throw new Error("That stage does not belong to the selected pipeline");
+
+    const { error } = await (context.supabase as any)
+      .from("meta_lead_form_routes")
+      .upsert(
+        {
+          sub_account_id: data.subAccountId,
+          page_id: data.pageId ?? null,
+          form_id: data.formId,
+          form_name: data.formName ?? null,
+          pipeline_id: data.pipelineId,
+          stage_id: data.stageId,
+          created_by: context.userId,
+        },
+        { onConflict: "sub_account_id,form_id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true, cleared: false };
+  });
