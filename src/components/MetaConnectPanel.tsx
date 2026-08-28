@@ -1,4 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  loadMetaTabUi,
+  saveMetaTabUi,
+  type MetaChannelFilter,
+  type MetaTabUiState,
+} from "@/lib/meta-ui-prefs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -17,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Copy, Facebook, Instagram, BarChart3, MessageSquare, Users, Webhook } from "lucide-react";
+import { CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Copy, Facebook, Instagram, BarChart3, MessageSquare, Users, Webhook, Link2, Search, X, ChevronDown } from "lucide-react";
 
 type PageRow = {
   id: string;
@@ -174,6 +180,32 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   const igCount = pages.filter((p) => p.instagram_business_account_id).length;
   const leadAdsCount = pages.filter((p) => p.sync_lead_ads).length;
 
+  // Persisted UI state: sub-tab, channel search, channel filter, expanded cards.
+  const [ui, setUi] = useState<MetaTabUiState>(() => loadMetaTabUi());
+  useEffect(() => {
+    saveMetaTabUi(ui);
+  }, [ui]);
+  const patchUi = (patch: Partial<MetaTabUiState>) => setUi((s) => ({ ...s, ...patch }));
+  const toggleExpanded = (id: string) =>
+    setUi((s) => ({
+      ...s,
+      expanded: s.expanded.includes(id) ? s.expanded.filter((x) => x !== id) : [...s.expanded, id],
+    }));
+
+  const visiblePages = useMemo(() => {
+    const term = ui.search.trim().toLowerCase();
+    return pages.filter((p) => {
+      if (term && !`${p.page_name} ${p.page_id} ${p.category ?? ""}`.toLowerCase().includes(term))
+        return false;
+      if (ui.filter === "subscribed") return p.webhook_subscribed;
+      if (ui.filter === "unsubscribed") return !p.webhook_subscribed;
+      if (ui.filter === "instagram") return Boolean(p.instagram_business_account_id);
+      if (ui.filter === "leadads") return p.sync_lead_ads;
+      return true;
+    });
+  }, [pages, ui.search, ui.filter]);
+
+
   if (q.isLoading) {
     return (
       <div className="surface-card space-y-3 p-5">
@@ -257,121 +289,241 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         </div>
 
         {conn && (
-          <div className="grid grid-cols-2 divide-x divide-border border-t border-border sm:grid-cols-4">
-            <Stat label="Pages" value={pages.length} />
-            <Stat label="Subscribed" value={`${subscribedCount}/${pages.length}`} />
-            <Stat label="Instagram" value={igCount} />
-            <Stat label="Lead Ads on" value={leadAdsCount} />
-          </div>
+          <>
+            <div className="grid grid-cols-2 divide-x divide-y divide-border border-t border-border sm:grid-cols-4 sm:divide-y-0">
+              <Stat label="Pages" value={pages.length} />
+              <Stat label="Subscribed" value={`${subscribedCount}/${pages.length}`} />
+              <Stat label="Instagram" value={igCount} />
+              <Stat label="Lead Ads on" value={leadAdsCount} />
+            </div>
+            {/* Quick actions */}
+            <div className="flex flex-wrap gap-2 border-t border-border bg-muted/30 p-3">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => refresh.mutate()}
+                disabled={refresh.isPending}
+              >
+                <RefreshCw className={`size-3.5 ${refresh.isPending ? "animate-spin" : ""}`} />
+                {refresh.isPending ? "Refreshing…" : "Refresh counts"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => configureWebhooks.mutate()}
+                disabled={configureWebhooks.isPending}
+              >
+                <Webhook className="size-3.5" />
+                {configureWebhooks.isPending ? "Resyncing…" : "Resync webhooks"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => connect.mutate()}
+                disabled={connect.isPending}
+              >
+                <Link2 className="size-3.5" />
+                {connect.isPending ? "Opening…" : "Reconnect"}
+              </Button>
+              {pages.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 sm:flex-none"
+                  disabled={enableAll.isPending}
+                  onClick={() => enableAll.mutate()}
+                >
+                  <CheckCircle2 className="size-3.5" />
+                  {enableAll.isPending ? "Enabling…" : "Enable everything"}
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
 
       {!conn && data?.setup && <MetaSetupGuide setup={data.setup} />}
 
       {conn && (
-        <Tabs defaultValue="channels">
-          <TabsList>
-            <TabsTrigger value="channels">
+        <Tabs value={ui.tab} onValueChange={(v) => patchUi({ tab: v })}>
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:h-9 sm:w-auto">
+            <TabsTrigger value="channels" className="w-full py-1.5 text-xs sm:w-auto sm:text-sm">
               <MessageSquare className="mr-1.5 size-3.5" /> Channels
             </TabsTrigger>
-            <TabsTrigger value="leads">
+            <TabsTrigger value="leads" className="w-full py-1.5 text-xs sm:w-auto sm:text-sm">
               <Users className="mr-1.5 size-3.5" /> Lead Ads
             </TabsTrigger>
-            <TabsTrigger value="ads">
+            <TabsTrigger value="ads" className="w-full py-1.5 text-xs sm:w-auto sm:text-sm">
               <BarChart3 className="mr-1.5 size-3.5" /> Ad accounts
             </TabsTrigger>
-            <TabsTrigger value="advanced">
+            <TabsTrigger value="advanced" className="w-full py-1.5 text-xs sm:w-auto sm:text-sm">
               <Webhook className="mr-1.5 size-3.5" /> Webhooks
             </TabsTrigger>
           </TabsList>
 
+
           {/* ── Channels: pages & routing ───────────────── */}
           <TabsContent value="channels" className="mt-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">
-                {pages.length === 0
-                  ? "No pages found yet — click Refresh above."
-                  : "Choose what each Page sends into this workspace."}
+            {pages.length === 0 ? (
+              <p className="surface-card p-5 text-xs text-muted-foreground">
+                No pages found yet — use <b>Refresh counts</b> above.
               </p>
-              {pages.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={enableAll.isPending}
-                  onClick={() => enableAll.mutate()}
-                >
-                  {enableAll.isPending ? "Enabling…" : "Enable everything"}
-                </Button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-              {pages.map((p) => (
-                <div key={p.id} className="surface-card space-y-3 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-1.5 truncate text-sm font-medium">
-                        <Facebook className="size-3.5 shrink-0 text-[#1877F2]" />
-                        {p.page_name}
-                        {p.instagram_business_account_id && (
-                          <Instagram className="size-3.5 shrink-0 text-[#E4405F]" />
-                        )}
-                      </p>
-                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                        {p.category ?? "Page"} · {p.page_id}
-                      </p>
-                    </div>
-                    {p.webhook_subscribed ? (
-                      <Badge variant="secondary" className="shrink-0 gap-1 text-[10px]">
-                        <CheckCircle2 className="size-3" /> Subscribed
-                      </Badge>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0"
-                        onClick={() =>
-                          patchPage.mutate({ pageRowId: p.id, patch: { subscribe: true } })
-                        }
+            ) : (
+              <>
+                <div className="surface-card space-y-3 p-3">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      value={ui.search}
+                      onChange={(e) => patchUi({ search: e.target.value })}
+                      placeholder="Search pages by name, category or ID…"
+                      aria-label="Search Facebook pages"
+                      className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-xs outline-none focus:border-primary"
+                    />
+                    {ui.search && (
+                      <button
+                        type="button"
+                        onClick={() => patchUi({ search: "" })}
+                        aria-label="Clear search"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
-                        Subscribe
-                      </Button>
+                        <X className="size-3.5" />
+                      </button>
                     )}
                   </div>
-                  <div className="space-y-1.5 border-t border-border pt-3">
-                    <ToggleRow
-                      label="Messenger → Inbox"
-                      checked={p.route_messenger_to_inbox}
-                      onChange={(v) =>
-                        patchPage.mutate({
-                          pageRowId: p.id,
-                          patch: { route_messenger_to_inbox: v },
-                        })
-                      }
-                    />
-                    <ToggleRow
-                      label="Instagram DMs → Inbox"
-                      checked={p.route_instagram_to_inbox}
-                      disabled={!p.instagram_business_account_id}
-                      onChange={(v) =>
-                        patchPage.mutate({
-                          pageRowId: p.id,
-                          patch: { route_instagram_to_inbox: v },
-                        })
-                      }
-                    />
-                    <ToggleRow
-                      label="Lead Ads → Contacts"
-                      checked={p.sync_lead_ads}
-                      onChange={(v) =>
-                        patchPage.mutate({ pageRowId: p.id, patch: { sync_lead_ads: v } })
-                      }
-                    />
+                  <div className="flex flex-wrap gap-1.5">
+                    {(
+                      [
+                        ["all", "All"],
+                        ["subscribed", "Subscribed"],
+                        ["unsubscribed", "Not subscribed"],
+                        ["instagram", "Has Instagram"],
+                        ["leadads", "Lead Ads on"],
+                      ] as [MetaChannelFilter, string][]
+                    ).map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => patchUi({ filter: key })}
+                        aria-pressed={ui.filter === key}
+                        className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                          ui.filter === key
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Showing {visiblePages.length} of {pages.length} pages · your search, filters and
+                    open sections are remembered on this device.
+                  </p>
                 </div>
-              ))}
-            </div>
+
+                {visiblePages.length === 0 ? (
+                  <p className="surface-card p-5 text-xs text-muted-foreground">
+                    No pages match this search or filter.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                    {visiblePages.map((p) => {
+                      const open = ui.expanded.includes(p.id);
+                      return (
+                        <div key={p.id} className="surface-card overflow-hidden">
+                          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 p-4">
+                            <button
+                              type="button"
+                              onClick={() => toggleExpanded(p.id)}
+                              aria-expanded={open}
+                              className="min-w-0 text-left"
+                            >
+                              <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+                                <ChevronDown
+                                  className={`size-3.5 shrink-0 text-muted-foreground transition-transform ${
+                                    open ? "" : "-rotate-90"
+                                  }`}
+                                />
+                                <Facebook className="size-3.5 shrink-0 text-[#1877F2]" />
+                                <span className="truncate">{p.page_name}</span>
+                                {p.instagram_business_account_id && (
+                                  <Instagram className="size-3.5 shrink-0 text-[#E4405F]" />
+                                )}
+                              </p>
+                              <p className="mt-0.5 truncate pl-5 text-[11px] text-muted-foreground">
+                                {p.category ?? "Page"} · {p.page_id}
+                              </p>
+                              {!open && (
+                                <div className="mt-2 flex flex-wrap gap-1 pl-5">
+                                  {p.route_messenger_to_inbox && <MiniTag label="Messenger" />}
+                                  {p.route_instagram_to_inbox && <MiniTag label="Instagram" />}
+                                  {p.sync_lead_ads && <MiniTag label="Lead Ads" />}
+                                </div>
+                              )}
+                            </button>
+                            {p.webhook_subscribed ? (
+                              <Badge variant="secondary" className="shrink-0 gap-1 text-[10px]">
+                                <CheckCircle2 className="size-3" /> Subscribed
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="shrink-0"
+                                onClick={() =>
+                                  patchPage.mutate({ pageRowId: p.id, patch: { subscribe: true } })
+                                }
+                              >
+                                Subscribe
+                              </Button>
+                            )}
+                          </div>
+
+                          {open && (
+                            <div className="space-y-1.5 border-t border-border bg-muted/20 p-4">
+                              <ToggleRow
+                                label="Messenger → Inbox"
+                                checked={p.route_messenger_to_inbox}
+                                onChange={(v) =>
+                                  patchPage.mutate({
+                                    pageRowId: p.id,
+                                    patch: { route_messenger_to_inbox: v },
+                                  })
+                                }
+                              />
+                              <ToggleRow
+                                label="Instagram DMs → Inbox"
+                                checked={p.route_instagram_to_inbox}
+                                disabled={!p.instagram_business_account_id}
+                                onChange={(v) =>
+                                  patchPage.mutate({
+                                    pageRowId: p.id,
+                                    patch: { route_instagram_to_inbox: v },
+                                  })
+                                }
+                              />
+                              <ToggleRow
+                                label="Lead Ads → Contacts"
+                                checked={p.sync_lead_ads}
+                                onChange={(v) =>
+                                  patchPage.mutate({ pageRowId: p.id, patch: { sync_lead_ads: v } })
+                                }
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
           </TabsContent>
+
 
           {/* ── Lead Ads routing ───────────────────────── */}
           <TabsContent value="leads" className="mt-4">
@@ -467,6 +619,14 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         </Alert>
       )}
     </div>
+  );
+}
+
+function MiniTag({ label }: { label: string }) {
+  return (
+    <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+      {label}
+    </span>
   );
 }
 
