@@ -116,6 +116,7 @@ export function moduleForPath(pathname: string): ModuleDef | undefined {
 }
 
 export async function fetchModuleState(subAccountId: string): Promise<ModuleState> {
+  const { applyPlanCeiling } = await import("@/lib/module-preview");
   const [{ data, error }, planModules] = await Promise.all([
     supabase
       .from("sub_account_modules")
@@ -127,13 +128,9 @@ export async function fetchModuleState(subAccountId: string): Promise<ModuleStat
   const state: ModuleState = {};
   for (const row of data ?? []) state[row.module_key] = row.enabled;
   // A subscription plan is a hard ceiling: modules it doesn't include stay off.
-  if (planModules) {
-    for (const m of MODULES) {
-      if (!m.locked && !planModules.includes(m.key)) state[m.key] = false;
-    }
-  }
-  return state;
+  return applyPlanCeiling(state, planModules);
 }
+
 
 
 export async function setModuleEnabled(
