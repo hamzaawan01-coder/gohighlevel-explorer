@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Pencil, Trash2, Mail, MessageSquare, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, Mail, MessageSquare, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useTenancy } from "@/lib/tenancy";
@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MergeTagField } from "@/components/MergeTagField";
+import { ListSkeleton, EmptyState, ErrorState } from "@/components/ui/states";
 import {
   fetchMessageTemplates,
   createMessageTemplate,
@@ -108,14 +109,15 @@ function TemplatesPage() {
             setEditing(null);
             setDialogOpen(true);
           }}
-          className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors"
+          className="flex min-h-11 sm:min-h-0 items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Plus className="size-3.5" /> New Template
         </button>
       }
     >
       <div className="h-full overflow-auto">
-        <div className="px-6 py-4 border-b border-border bg-secondary/20">
+        <h1 className="sr-only">Message templates</h1>
+        <div className="px-4 sm:px-6 py-4 border-b border-border bg-secondary/20">
           <p className="text-xs font-medium mb-1">Reusable message templates</p>
           <p className="text-[11px] text-muted-foreground">
             Save messages once and reuse them in workflows, campaigns, and manual sends. Use
@@ -123,31 +125,37 @@ function TemplatesPage() {
             to auto-fill each recipient's details.
           </p>
         </div>
-        {q.isLoading ? (
-          <div className="h-40 flex items-center justify-center text-muted-foreground">
-            <Loader2 className="size-4 animate-spin mr-2" />
-            <span className="text-xs">Loading…</span>
+        {q.isError ? (
+          <div className="p-6">
+            <ErrorState onRetry={() => q.refetch()} />
+          </div>
+        ) : q.isLoading ? (
+          <div className="p-4">
+            <ListSkeleton rows={5} />
           </div>
         ) : templates.length === 0 ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-            <Mail className="size-8 opacity-40" />
-            <p className="text-xs">No templates yet.</p>
-            <button
-              onClick={() => {
-                setEditing(null);
-                setDialogOpen(true);
-              }}
-              className="text-xs text-primary hover:underline"
-            >
-              Create your first template
-            </button>
-          </div>
+          <EmptyState
+            icon={Mail}
+            title="No templates yet"
+            description="Save a reusable email or SMS template to speed up campaigns and workflows."
+            action={
+              <Button
+                size="sm"
+                onClick={() => {
+                  setEditing(null);
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="size-3.5 mr-1.5" /> Create your first template
+              </Button>
+            }
+          />
         ) : (
           <ul className="divide-y divide-border">
             {templates.map((t) => (
               <li
                 key={t.id}
-                className="px-6 py-4 flex items-start gap-4 hover:bg-secondary/40"
+                className="px-4 sm:px-6 py-4 flex items-start gap-3 sm:gap-4 hover:bg-secondary/40"
               >
                 <div className="size-8 rounded bg-secondary flex items-center justify-center shrink-0">
                   {t.channel === "email" ? (
@@ -182,8 +190,9 @@ function TemplatesPage() {
                       body_text: t.body_text,
                     })
                   }
-                  className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   title="Duplicate"
+                  aria-label={`Duplicate ${t.name}`}
                 >
                   <Copy className="size-3" />
                 </button>
@@ -192,8 +201,9 @@ function TemplatesPage() {
                     setEditing(t);
                     setDialogOpen(true);
                   }}
-                  className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   title="Edit"
+                  aria-label={`Edit ${t.name}`}
                 >
                   <Pencil className="size-3" />
                 </button>
@@ -201,8 +211,9 @@ function TemplatesPage() {
                   onClick={() => {
                     if (confirm(`Delete "${t.name}"?`)) deleteMut.mutate(t.id);
                   }}
-                  className="size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive"
+                  className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   title="Delete"
+                  aria-label={`Delete ${t.name}`}
                 >
                   <Trash2 className="size-3" />
                 </button>

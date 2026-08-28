@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Send, MessageSquare, Search, Inbox } from "lucide-react";
+import { Loader2, Send, MessageSquare, Search, Inbox, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useTenancy } from "@/lib/tenancy";
@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { initials, stringHue } from "@/lib/initials";
+import { ListSkeleton, EmptyState, ErrorState } from "@/components/ui/states";
 
 export const Route = createFileRoute("/_authenticated/conversations")({
   head: () => ({
@@ -228,9 +229,10 @@ function ConversationsPage() {
 
   return (
     <AppShell>
-      <div className="h-full flex">
+      <h1 className="sr-only">Conversations</h1>
+      <div className="h-full flex flex-col md:flex-row">
         {/* Channel filter rail */}
-        <aside className="w-14 border-r border-border bg-card flex flex-col items-center py-3 gap-1 shrink-0">
+        <aside className="w-full md:w-14 border-b md:border-b-0 md:border-r border-border bg-card flex flex-row md:flex-col items-center py-1.5 md:py-3 gap-1 shrink-0 overflow-x-auto">
           <ChannelPill
             active={filter === "all"}
             onClick={() => setFilter("all")}
@@ -256,7 +258,11 @@ function ConversationsPage() {
         </aside>
 
         {/* Conversations list */}
-        <aside className="w-80 border-r border-border bg-card flex flex-col">
+        <aside
+          className={`w-full md:w-80 border-r border-border bg-card flex-col min-h-0 ${
+            selectedConvoId ? "hidden md:flex" : "flex"
+          }`}
+        >
           <div className="px-3 py-2.5 border-b border-border space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground px-1">
@@ -267,24 +273,37 @@ function ConversationsPage() {
               </span>
             </div>
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-muted-foreground" />
+              <Search aria-hidden className="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search"
+                aria-label="Search conversations"
+                data-page-search
                 className="h-7 pl-7 text-xs"
               />
             </div>
           </div>
           <div className="flex-1 overflow-auto">
-            {convosQ.isLoading || contactsQ.isLoading ? (
-              <div className="p-4 text-xs text-muted-foreground">Loading…</div>
-            ) : filteredConvos.length === 0 && orphanContacts.length === 0 ? (
-              <div className="p-4 text-xs text-muted-foreground italic">
-                {filter === "all"
-                  ? "No conversations yet."
-                  : `No ${CHANNEL_BY_KEY[filter].label} threads.`}
+            {convosQ.isError || contactsQ.isError ? (
+              <ErrorState
+                compact
+                onRetry={() => {
+                  convosQ.refetch();
+                  contactsQ.refetch();
+                }}
+              />
+            ) : convosQ.isLoading || contactsQ.isLoading ? (
+              <div className="p-3">
+                <ListSkeleton rows={5} />
               </div>
+            ) : filteredConvos.length === 0 && orphanContacts.length === 0 ? (
+              <EmptyState
+                compact
+                icon={Inbox}
+                title={filter === "all" ? "No conversations yet" : `No ${CHANNEL_BY_KEY[filter].label} threads`}
+                description="Start a conversation from a contact to see it here."
+              />
             ) : (
               <ul>
                 {filteredConvos.map((c) => {
@@ -375,7 +394,11 @@ function ConversationsPage() {
         </aside>
 
         {/* Thread */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div
+          className={`flex-1 flex-col min-w-0 min-h-0 ${
+            selectedConvoId ? "flex" : "hidden md:flex"
+          }`}
+        >
           {!selectedConvo || !selectedContact ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
               <MessageSquare className="size-8 opacity-40" />
@@ -383,9 +406,17 @@ function ConversationsPage() {
             </div>
           ) : (
             <>
-              <div className="px-6 py-3 border-b border-border flex items-center gap-3">
+              <div className="px-3 sm:px-6 py-3 border-b border-border flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedConvoId(null)}
+                  aria-label="Back to conversation list"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+                >
+                  <ArrowLeft className="size-4" />
+                </button>
                 <span
-                  className="size-8 shrink-0 rounded-full flex items-center justify-center text-[11px] font-semibold text-white"
+                  className="size-8 shrink-0 rounded-full hidden sm:flex items-center justify-center text-[11px] font-semibold text-white"
                   style={{ backgroundColor: `hsl(${stringHue(selectedContact.id)} 60% 45%)` }}
                 >
                   {initials(displayName(selectedContact))}
@@ -399,7 +430,7 @@ function ConversationsPage() {
                     {selectedContact.email ?? "no email"}
                   </p>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="hidden sm:flex items-center gap-1">
                   {CHANNELS.map((ch) => {
                     const Icon = ch.icon;
                     const active = ch.key === selectedChannel;
@@ -407,13 +438,15 @@ function ConversationsPage() {
                       <button
                         key={ch.key}
                         title={`Open ${ch.label} thread`}
+                        aria-label={`Open ${ch.label} thread`}
+                        aria-pressed={active}
                         onClick={() =>
                           openForContact.mutate({
                             contactId: selectedContact.id,
                             channel: ch.key,
                           })
                         }
-                        className={`size-7 rounded flex items-center justify-center transition-colors ${
+                        className={`min-h-11 min-w-11 sm:size-7 rounded flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                           active
                             ? `${ch.bg} ${ch.color}`
                             : "text-muted-foreground hover:text-foreground hover:bg-secondary"
@@ -426,8 +459,10 @@ function ConversationsPage() {
                 </div>
               </div>
 
-              <div ref={threadRef} className="flex-1 overflow-auto px-6 py-4 space-y-3 bg-secondary/20">
-                {msgsQ.isLoading ? (
+              <div ref={threadRef} className="flex-1 overflow-auto px-3 sm:px-6 py-4 space-y-3 bg-secondary/20">
+                {msgsQ.isError ? (
+                  <ErrorState compact onRetry={() => msgsQ.refetch()} />
+                ) : msgsQ.isLoading ? (
                   <div className="flex items-center justify-center text-muted-foreground">
                     <Loader2 className="size-4 animate-spin mr-2" />
                     <span className="text-xs">Loading…</span>
@@ -550,7 +585,9 @@ function ChannelPill({
     <button
       onClick={onClick}
       title={`${label}${count ? ` · ${count}` : ""}`}
-      className={`relative size-10 rounded-lg flex items-center justify-center transition-colors ${
+      aria-label={`${label}${count ? ` · ${count} conversations` : ""}`}
+      aria-pressed={active}
+      className={`relative min-h-11 min-w-11 md:size-10 rounded-lg flex items-center justify-center transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
         active
           ? `${bg} ${color} ring-1 ring-border`
           : "text-muted-foreground hover:bg-secondary hover:text-foreground"

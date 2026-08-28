@@ -179,7 +179,8 @@ function ModuleExplorerPage() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search modules — CRM, pipelines, campaigns, messaging…"
                 aria-label="Search modules"
-                className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-xs outline-none focus:border-primary"
+                data-page-search
+                className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-xs outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-ring"
               />
               {query && (
                 <button

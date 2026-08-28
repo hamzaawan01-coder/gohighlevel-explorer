@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { ErrorState, ListSkeleton } from "@/components/ui/states";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -137,7 +138,7 @@ function CalendarPage() {
   return (
     <AppShell
       headerStatus={
-        <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+        <span aria-live="polite" className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
           {monthLabel(cursor)}
         </span>
       }
@@ -150,31 +151,35 @@ function CalendarPage() {
         </button>
       }
     >
-      <div className="h-full flex">
+      <h1 className="sr-only">Calendar</h1>
+      <div className="h-full flex flex-col lg:flex-row">
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex items-center gap-2 px-6 py-3 border-b border-border">
+          <div className="flex items-center gap-2 px-4 sm:px-6 py-3 border-b border-border overflow-x-auto">
             <button
               onClick={() => setCursor(addMonths(cursor, -1))}
-              className="size-7 rounded hover:bg-secondary flex items-center justify-center"
+              aria-label="Previous month"
+              className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-secondary flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ChevronLeft className="size-3.5" />
             </button>
-            <span className="text-sm font-semibold">{monthLabel(cursor)}</span>
+            <span className="text-sm font-semibold truncate">{monthLabel(cursor)}</span>
             <button
               onClick={() => setCursor(addMonths(cursor, 1))}
-              className="size-7 rounded hover:bg-secondary flex items-center justify-center"
+              aria-label="Next month"
+              className="min-h-11 min-w-11 sm:size-7 rounded hover:bg-secondary flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ChevronRight className="size-3.5" />
             </button>
             <button
               onClick={() => { const now = new Date(); setCursor(now); setSelected(now); }}
-              className="ml-2 text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
+              className="ml-2 min-h-11 sm:min-h-0 shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Today
             </button>
           </div>
 
           <div className="flex-1 overflow-auto">
+            <div className="min-w-[560px] sm:min-w-0">
             <div className="grid grid-cols-7 border-b border-border sticky top-0 bg-card">
               {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
                 <div key={d} className="px-2 py-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground text-center">
@@ -236,7 +241,8 @@ function CalendarPage() {
                 );
               })}
             </div>
-            <div className="flex items-center gap-4 px-6 py-2 border-t border-border text-[10px] font-mono text-muted-foreground">
+            </div>
+            <div className="flex items-center gap-4 px-4 sm:px-6 py-2 border-t border-border text-[10px] font-mono text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <span className="size-2 rounded-sm bg-accent/40" /> Event
               </span>
@@ -247,7 +253,7 @@ function CalendarPage() {
           </div>
         </div>
 
-        <aside className="w-80 border-l border-border bg-card flex flex-col shrink-0">
+        <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col shrink-0">
           <div className="px-4 py-3 border-b border-border">
             <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
               {selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
@@ -255,8 +261,12 @@ function CalendarPage() {
           </div>
           <div className="flex-1 overflow-auto">
             {eventsQ.isLoading ? (
-              <div className="p-4 flex items-center text-xs text-muted-foreground">
-                <Loader2 className="size-3 animate-spin mr-2" /> Loading…
+              <div className="p-4">
+                <ListSkeleton rows={3} />
+              </div>
+            ) : eventsQ.isError ? (
+              <div className="p-4">
+                <ErrorState compact onRetry={() => eventsQ.refetch()} />
               </div>
             ) : selectedItems.length === 0 ? (
               <div className="p-4 text-xs text-muted-foreground italic">Nothing scheduled.</div>
@@ -281,7 +291,8 @@ function CalendarPage() {
                     {it.kind === "event" && (
                       <button
                         onClick={() => { if (confirm(`Delete "${it.title}"?`)) deleteMut.mutate(it.id); }}
-                        className="text-muted-foreground hover:text-destructive"
+                        aria-label={`Delete ${it.title}`}
+                        className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 flex items-center justify-center text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         title="Delete"
                       >
                         <Trash2 className="size-3" />

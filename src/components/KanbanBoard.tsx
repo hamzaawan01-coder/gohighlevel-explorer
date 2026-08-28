@@ -112,7 +112,7 @@ export function KanbanBoard({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
     >
-      <div className="flex gap-6 h-full min-w-max">
+      <div className="flex gap-4 sm:gap-6 h-full overflow-x-auto pb-2">
         {stages.map((stage) => {
           const stageDeals = dealsByStage.get(stage.id) ?? [];
           const total = stageDeals.reduce((s, d) => s + Number(d.value), 0);
@@ -168,7 +168,7 @@ function Column({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex w-72 flex-col">
+    <div className="flex w-[85vw] max-w-72 shrink-0 flex-col sm:w-72">
       <div
         className="sticky top-0 z-10 mb-3 rounded-lg border border-border bg-card/85 px-2.5 py-2 backdrop-blur-sm"
         style={{ borderTopColor: stage.color, borderTopWidth: 2 }}
@@ -233,7 +233,17 @@ function DealCard({
       style={style}
       {...attributes}
       {...listeners}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open deal ${deal.title}`}
       onClick={() => onOpen?.(deal.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen?.(deal.id);
+        }
+      }}
+      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
     >
       <DealCardView deal={deal} contact={contact} onOpen={() => onOpen?.(deal.id)} />
     </div>
@@ -274,7 +284,7 @@ function DealCardView({
   };
 
   const iconBtn =
-    "size-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground transition-colors";
+    "min-h-11 min-w-11 sm:size-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
   return (
     <div
@@ -327,6 +337,7 @@ function DealCardView({
           href={phone ? `tel:${phone}` : undefined}
           onClick={phone ? stop : (e) => act(e, () => onOpen?.())}
           aria-disabled={!phone}
+          aria-label={phone ? `Call ${phone}` : "No phone on contact"}
           title={phone ? `Call ${phone}` : "No phone on contact"}
           className={iconBtn}
         >
@@ -336,6 +347,7 @@ function DealCardView({
           href={email ? `mailto:${email}` : phone ? `sms:${phone}` : undefined}
           onClick={email || phone ? stop : (e) => act(e, () => onOpen?.())}
           aria-disabled={!email && !phone}
+          aria-label={email ? `Email ${email}` : phone ? `Text ${phone}` : "No contact info"}
           title={email ? `Email ${email}` : phone ? `Text ${phone}` : "No contact info"}
           className={iconBtn}
         >
@@ -344,6 +356,7 @@ function DealCardView({
         <button
           type="button"
           onClick={(e) => act(e, () => onOpen?.())}
+          aria-label="Open deal"
           title="Open deal"
           className={iconBtn}
         >
@@ -352,6 +365,7 @@ function DealCardView({
         <button
           type="button"
           onClick={(e) => act(e, () => onOpen?.())}
+          aria-label="Deal notes"
           title="Notes"
           className={iconBtn}
         >
@@ -360,6 +374,7 @@ function DealCardView({
         <button
           type="button"
           onClick={(e) => act(e, () => onOpen?.())}
+          aria-label="Deal tasks"
           title="Tasks"
           className={iconBtn}
         >
@@ -368,6 +383,7 @@ function DealCardView({
         <button
           type="button"
           onClick={(e) => act(e, () => onOpen?.())}
+          aria-label="Schedule for deal"
           title="Schedule"
           className={iconBtn}
         >
