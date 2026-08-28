@@ -130,7 +130,10 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         </div>
 
         {!conn ? (
-          <Button onClick={() => connect.mutate()} disabled={connect.isPending}>
+          <Button
+            onClick={() => connect.mutate()}
+            disabled={connect.isPending || data?.setup?.appConfigured === false}
+          >
             <Facebook className="size-4 mr-2" />
             {connect.isPending ? "Redirecting…" : "Connect Facebook"}
           </Button>
