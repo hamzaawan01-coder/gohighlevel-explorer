@@ -155,15 +155,8 @@ export function AppShell({
         )}
       </div>
 
-      <nav aria-label="Main navigation" className="flex-1 overflow-y-auto py-3">
-        {NAV_SECTIONS.map((section) => {
-          const items = visible(section.items);
-          if (items.length === 0) return null;
-          return (
-            <NavGroup key={section.label} label={section.label} items={items} collapsed={isCollapsed} />
-          );
-        })}
-      </nav>
+      <SidebarNav collapsed={isCollapsed} />
+
 
       <div className={`border-t border-border ${isCollapsed ? "p-2" : "p-3"}`}>
         <button
