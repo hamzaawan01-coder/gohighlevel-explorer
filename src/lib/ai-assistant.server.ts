@@ -13,6 +13,10 @@ export type DraftContext = {
   contact: { name: string; email: string | null; phone: string | null; stage: string | null } | null;
   deal: { title: string; stage: string | null; value: number | null } | null;
   messages: { direction: string; channel: string; body: string; at: string }[];
+  /** FAQs and business documents uploaded by the workspace. */
+  knowledge?: { title: string; content: string }[];
+  /** Recent teammate feedback on past drafts, used to steer style. */
+  feedback?: { rating: "up" | "down"; draft: string; note: string }[];
 };
 
 const CHANNEL_STYLE: Record<string, string> = {
