@@ -269,6 +269,27 @@ function ConversationsPage() {
     };
   }, [subId, qc]);
 
+  const suggestReplyFn = useServerFn(suggestReply);
+  const draftMut = useMutation({
+    mutationFn: async () => {
+      if (!selectedConvoId) throw new Error("Open a conversation first");
+      return suggestReplyFn({
+        data: { conversationId: selectedConvoId, origin: window.location.origin },
+      });
+    },
+    onSuccess: (res) => {
+      setBody(res.draft);
+      if (res.escalate) {
+        toast.warning("Suggested handing this to a human", {
+          description: res.escalation_reason || undefined,
+        });
+      } else {
+        toast.success("Draft ready — review before sending");
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const isRealChannel = composeChannel !== "note";
   const placeholder =
     composeChannel === "sms"
