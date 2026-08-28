@@ -235,10 +235,86 @@ export type Database = {
           },
         ]
       }
+      appointment_audit: {
+        Row: {
+          action: string
+          actor_label: string | null
+          actor_user_id: string | null
+          booking_page_id: string | null
+          channel: string | null
+          contact_id: string | null
+          created_at: string
+          detail: string | null
+          event_id: string | null
+          id: string
+          metadata: Json
+          sub_account_id: string
+        }
+        Insert: {
+          action: string
+          actor_label?: string | null
+          actor_user_id?: string | null
+          booking_page_id?: string | null
+          channel?: string | null
+          contact_id?: string | null
+          created_at?: string
+          detail?: string | null
+          event_id?: string | null
+          id?: string
+          metadata?: Json
+          sub_account_id: string
+        }
+        Update: {
+          action?: string
+          actor_label?: string | null
+          actor_user_id?: string | null
+          booking_page_id?: string | null
+          channel?: string | null
+          contact_id?: string | null
+          created_at?: string
+          detail?: string | null
+          event_id?: string | null
+          id?: string
+          metadata?: Json
+          sub_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_audit_booking_page_id_fkey"
+            columns: ["booking_page_id"]
+            isOneToOne: false
+            referencedRelation: "booking_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_audit_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_audit_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_audit_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_reminders: {
         Row: {
           channel: string
           created_at: string
+          delivered_at: string | null
+          delivery_status: string | null
           error: string | null
           event_id: string
           id: string
@@ -252,6 +328,8 @@ export type Database = {
         Insert: {
           channel: string
           created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
           error?: string | null
           event_id: string
           id?: string
@@ -265,6 +343,8 @@ export type Database = {
         Update: {
           channel?: string
           created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
           error?: string | null
           event_id?: string
           id?: string
@@ -302,6 +382,7 @@ export type Database = {
       booking_pages: {
         Row: {
           advance_days: number
+          allow_reschedule: boolean
           availability: Json
           buffer_minutes: number
           confirmation_enabled: boolean
@@ -314,6 +395,7 @@ export type Database = {
           name: string
           owner_user_id: string
           reminder_channel: string
+          reminder_in_app: boolean
           reminder_offsets: number[]
           reminder_template: string | null
           slug: string
@@ -323,6 +405,7 @@ export type Database = {
         }
         Insert: {
           advance_days?: number
+          allow_reschedule?: boolean
           availability?: Json
           buffer_minutes?: number
           confirmation_enabled?: boolean
@@ -335,6 +418,7 @@ export type Database = {
           name: string
           owner_user_id: string
           reminder_channel?: string
+          reminder_in_app?: boolean
           reminder_offsets?: number[]
           reminder_template?: string | null
           slug: string
@@ -344,6 +428,7 @@ export type Database = {
         }
         Update: {
           advance_days?: number
+          allow_reschedule?: boolean
           availability?: Json
           buffer_minutes?: number
           confirmation_enabled?: boolean
@@ -356,6 +441,7 @@ export type Database = {
           name?: string
           owner_user_id?: string
           reminder_channel?: string
+          reminder_in_app?: boolean
           reminder_offsets?: number[]
           reminder_template?: string | null
           slug?: string
@@ -387,7 +473,10 @@ export type Database = {
           external_id: string | null
           id: string
           location: string | null
+          original_starts_at: string | null
           owner_user_id: string
+          reschedule_token: string | null
+          rescheduled_at: string | null
           starts_at: string
           status: string
           sub_account_id: string
@@ -407,7 +496,10 @@ export type Database = {
           external_id?: string | null
           id?: string
           location?: string | null
+          original_starts_at?: string | null
           owner_user_id: string
+          reschedule_token?: string | null
+          rescheduled_at?: string | null
           starts_at: string
           status?: string
           sub_account_id: string
@@ -427,7 +519,10 @@ export type Database = {
           external_id?: string | null
           id?: string
           location?: string | null
+          original_starts_at?: string | null
           owner_user_id?: string
+          reschedule_token?: string | null
+          rescheduled_at?: string | null
           starts_at?: string
           status?: string
           sub_account_id?: string
