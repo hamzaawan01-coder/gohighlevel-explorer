@@ -1235,6 +1235,33 @@ export type Database = {
           },
         ]
       }
+      meta_deletion_requests: {
+        Row: {
+          confirmation_code: string
+          created_at: string
+          deleted_counts: Json
+          id: string
+          meta_user_id: string
+          status: string
+        }
+        Insert: {
+          confirmation_code: string
+          created_at?: string
+          deleted_counts?: Json
+          id?: string
+          meta_user_id: string
+          status?: string
+        }
+        Update: {
+          confirmation_code?: string
+          created_at?: string
+          deleted_counts?: Json
+          id?: string
+          meta_user_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       meta_lead_ad_events: {
         Row: {
           contact_id: string | null
