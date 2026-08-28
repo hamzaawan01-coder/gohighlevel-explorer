@@ -66,6 +66,8 @@ export function DataTable<T>({
   showColumnPicker = true,
   toolbar,
   maxBodyHeight = "60vh",
+  tableKey,
+  caption,
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -82,13 +84,69 @@ export function DataTable<T>({
   showColumnPicker?: boolean;
   toolbar?: ReactNode;
   maxBodyHeight?: string;
+  /** Enables saved views + persisted sort/columns/page size for this table. */
+  tableKey?: string;
+  /** Accessible description of the table contents. */
+  caption?: string;
 }) {
+  const defaultHidden = useMemo(
+    () => columns.filter((c) => c.hidden).map((c) => c.key),
+    [columns],
+  );
   const [sort, setSort] = useState<SortState>(null);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(initialPageSize);
-  const [hidden, setHidden] = useState<Set<string>>(
-    () => new Set(columns.filter((c) => c.hidden).map((c) => c.key)),
-  );
+  const [hidden, setHidden] = useState<Set<string>>(() => new Set(defaultHidden));
+  const [views, setViews] = useState<SavedTableView[]>([]);
+  const [activeView, setActiveView] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Restore persisted state + saved views once mounted (client only).
+  useEffect(() => {
+    if (!tableKey) {
+      setHydrated(true);
+      return;
+    }
+    setViews(loadSavedViews(tableKey));
+    const saved = loadTableState(tableKey);
+    if (saved) {
+      setSort(saved.sort ?? null);
+      setHidden(new Set(saved.hidden ?? []));
+      setPageSize(saved.pageSize || initialPageSize);
+    }
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableKey]);
+
+  useEffect(() => {
+    if (!tableKey || !hydrated) return;
+    saveTableState(tableKey, { sort, hidden: [...hidden], pageSize });
+  }, [tableKey, hydrated, sort, hidden, pageSize]);
+
+  function applyView(view: SavedTableView) {
+    setSort(view.sort ?? null);
+    setHidden(new Set(view.hidden ?? []));
+    setPageSize(view.pageSize || initialPageSize);
+    setActiveView(view.id);
+    setPage(0);
+  }
+
+  function resetView() {
+    setSort(null);
+    setHidden(new Set(defaultHidden));
+    setPageSize(initialPageSize);
+    setActiveView(null);
+    setPage(0);
+  }
+
+  function createView() {
+    if (!tableKey) return;
+    const name = window.prompt("Name this view")?.trim();
+    if (!name) return;
+    const next = addSavedView(tableKey, name, { sort, hidden: [...hidden], pageSize });
+    setViews(next);
+    setActiveView(next.find((v) => v.name === name)?.id ?? null);
+  }
 
   const visibleColumns = columns.filter((c) => c.locked || !hidden.has(c.key));
 
