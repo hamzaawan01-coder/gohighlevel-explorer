@@ -762,7 +762,7 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
       pipeline_id: string | null; stage_id: string | null; routing_source: string;
       status: string; error: string | null; is_test: boolean; created_at: string;
       lead_fields: Record<string, string> | null;
-      payload: Record<string, unknown> | null;
+      payload: unknown;
     };
     type LeadContact = {
       id: string; first_name: string | null; last_name: string | null; email: string | null;
@@ -771,7 +771,7 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
       meta_lead_id: string | null; created_at: string;
     };
     const empty = {
-      events: [] as LeadEvent[],
+      events: [] as Array<Omit<LeadEvent, "payload"> & { payloadJson: string | null }>,
       page: null as { page_id: string; page_name: string } | null,
       pipelineName: null as string | null,
       stageName: null as string | null,
@@ -793,7 +793,11 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
-    const events = (rows ?? []) as LeadEvent[];
+    const events = ((rows ?? []) as LeadEvent[]).map((e) => ({
+      ...e,
+      payload: undefined,
+      payloadJson: e.payload ? JSON.stringify(e.payload, null, 2) : null,
+    })) as Array<Omit<LeadEvent, "payload"> & { payloadJson: string | null }>;
     if (events.length === 0) return empty;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
