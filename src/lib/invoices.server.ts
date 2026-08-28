@@ -62,7 +62,11 @@ export type InvoiceBundle = {
   contact: { id: string; email: string | null; first_name: string | null; last_name: string | null } | null;
 };
 
-export async function loadInvoiceBundle(invoiceId: string, sb?: Sb): Promise<InvoiceBundle> {
+export async function loadInvoiceBundle(
+  invoiceId: string,
+  sb?: Sb,
+  templateIdOverride?: string | null,
+): Promise<InvoiceBundle> {
   const client = sb ?? (await admin());
   const { data: invoice, error } = await client.from("invoices").select("*").eq("id", invoiceId).single();
   if (error || !invoice) throw new Error(error?.message ?? "Invoice not found");
@@ -77,11 +81,12 @@ export async function loadInvoiceBundle(invoiceId: string, sb?: Sb): Promise<Inv
   // Template variant chosen on the invoice, else the workspace default, else
   // the legacy single-branding row.
   let templateRow: Record<string, unknown> | null = null;
-  if (inv.template_id) {
+  const wantedTemplateId = templateIdOverride ?? inv.template_id;
+  if (wantedTemplateId) {
     const { data } = await client
       .from("invoice_templates")
       .select("*")
-      .eq("id", inv.template_id)
+      .eq("id", wantedTemplateId)
       .maybeSingle();
     templateRow = (data as Record<string, unknown> | null) ?? null;
   }
@@ -191,10 +196,14 @@ export async function queueInvoiceEmail(input: {
   toOverride?: string | null;
   reminderSequence?: number | null;
   actor?: string | null;
+  /** Send with a specific template version instead of the invoice default. */
+  templateId?: string | null;
+  /** Marks the event as a manual resend in the invoice history. */
+  resend?: boolean;
   sb?: Sb;
 }): Promise<QueueResult> {
   const client = input.sb ?? (await admin());
-  const bundle = await loadInvoiceBundle(input.invoiceId, client);
+  const bundle = await loadInvoiceBundle(input.invoiceId, client, input.templateId ?? null);
   const to = (input.toOverride || bundle.contact?.email || "").trim();
   if (!to) throw new Error("This invoice has no client email address. Pick a contact with an email first.");
 
@@ -248,7 +257,15 @@ export async function queueInvoiceEmail(input: {
       invoiceId: bundle.invoice.id,
       subAccountId: bundle.invoice.sub_account_id,
       type: input.reminderSequence ? "reminder_sent" : "sent",
-      detail: { to, outbound_message_id: messageId, sequence: input.reminderSequence ?? null },
+      detail: {
+        to,
+        outbound_message_id: messageId,
+        sequence: input.reminderSequence ?? null,
+        resend: input.resend ?? false,
+        template_id: bundle.template.id,
+        template_name: bundle.template.name,
+        template_version: bundle.template.version,
+      },
       actor: input.actor ?? null,
     },
     client,

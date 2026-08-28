@@ -72,6 +72,18 @@ export async function fetchInvoiceTemplates(subAccountId: string): Promise<Invoi
   return (data ?? []) as unknown as InvoiceTemplate[];
 }
 
+/** Includes archived versions — needed for the version diff picker. */
+export async function fetchAllInvoiceTemplates(subAccountId: string): Promise<InvoiceTemplate[]> {
+  const { data, error } = await supabase
+    .from("invoice_templates")
+    .select("*")
+    .eq("sub_account_id", subAccountId)
+    .order("name", { ascending: true })
+    .order("version", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as InvoiceTemplate[];
+}
+
 export async function createInvoiceTemplate(
   subAccountId: string,
   input: TemplatePatch & {
