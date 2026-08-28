@@ -130,10 +130,12 @@ export function AppShell({
             {headerActions}
           </div>
         </header>
-        <div className="flex-1 overflow-auto min-h-0">{children}</div>
+        <div className="flex-1 overflow-auto min-h-0">
+          {blocked ? <ModuleDisabled label={currentModule!.label} /> : children}
+        </div>
       </main>
 
-      {rightPane ? (
+      {rightPane && !blocked ? (
         <aside className="w-80 border-l border-border bg-card flex flex-col shrink-0">{rightPane}</aside>
       ) : null}
       <CommandPalette />
