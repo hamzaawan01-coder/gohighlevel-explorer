@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMetaLeadSource } from "@/lib/meta.functions";
@@ -14,7 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLeadDisplayPrefs } from "@/lib/lead-display-prefs";
-import { useSavedLeadSearches } from "@/lib/lead-saved-searches";
+import {
+  useSavedLeadSearches,
+  readLeadFilterState,
+  writeLeadFilterState,
+  clearLeadFilterState,
+} from "@/lib/lead-saved-searches";
 import { CopyField } from "@/components/CopyField";
 import {
   dedupeValues,
@@ -36,6 +41,9 @@ import {
   Save,
   Trash2,
   ListChecks,
+  RotateCcw,
+  Loader2,
+
 } from "lucide-react";
 
 const FILE_RE = /^https?:\/\/\S+$/i;
@@ -97,6 +105,18 @@ const TIMELINE_KINDS: Array<{ key: TimelineKind; label: string }> = [
   { key: "webhook_error", label: "Webhooks · failed" },
 ];
 
+const COLUMN_KEYS = COLUMN_LABELS.map((c) => c.key);
+
+const DEFAULT_COLUMNS: Record<ColumnKey, boolean> = {
+  contact: true,
+  answers: true,
+  attachments: true,
+  metadata: true,
+  raw: false,
+};
+
+const DEFAULT_TIMELINE_KINDS: TimelineKind[] = TIMELINE_KINDS.map((k) => k.key);
+
 /** Collects date-ish values from raw Meta fields for the timeline. */
 function timelineFromFields(fields: Record<string, string>) {
   const out: Array<{ label: string; at: Date; kind: TimelineKind }> = [];
@@ -137,22 +157,104 @@ export function MetaLeadSourcePanel({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rawOpen, setRawOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
+  const [draftQuery, setDraftQuery] = useState("");
   const [query, setQuery] = useState("");
   const [csvOpen, setCsvOpen] = useState(false);
-  const [columns, setColumns] = useState<Record<ColumnKey, boolean>>({
-    contact: true,
-    answers: true,
-    attachments: true,
-    metadata: true,
-    raw: false,
-  });
-  const [timelineKinds, setTimelineKinds] = useState<TimelineKind[]>(
-    TIMELINE_KINDS.map((k) => k.key),
-  );
+  const [columns, setColumns] = useState<Record<ColumnKey, boolean>>(DEFAULT_COLUMNS);
+  const [timelineKinds, setTimelineKinds] = useState<TimelineKind[]>(DEFAULT_TIMELINE_KINDS);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkIds, setBulkIds] = useState<string[]>([]);
   const [searchName, setSearchName] = useState("");
+  const [busy, setBusy] = useState<null | "json" | "csv" | "bulk-csv" | "bulk-json" | "save">(null);
+  const [hydrated, setHydrated] = useState(false);
   const { searches, save: saveSearch, remove: removeSearch } = useSavedLeadSearches();
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
+
+  // Restore the last-used filter state so searches survive refreshes and sessions.
+  useEffect(() => {
+    const saved = readLeadFilterState();
+    if (saved) {
+      setDraftQuery(saved.query);
+      setQuery(saved.query);
+      setColumns((c) => ({ ...c, ...(saved.columns as Record<ColumnKey, boolean>) }));
+      if (saved.timelineKinds.length) setTimelineKinds(saved.timelineKinds as TimelineKind[]);
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    writeLeadFilterState({ query, columns, timelineKinds });
+  }, [hydrated, query, columns, timelineKinds]);
+
+  // Debounced live search; Enter applies immediately.
+  useEffect(() => {
+    const t = window.setTimeout(() => setQuery(draftQuery), 300);
+    return () => window.clearTimeout(t);
+  }, [draftQuery]);
+
+  const isDefaultFilters =
+    query.trim() === "" &&
+    draftQuery.trim() === "" &&
+    COLUMN_KEYS.every((k) => columns[k] === DEFAULT_COLUMNS[k]) &&
+    timelineKinds.length === DEFAULT_TIMELINE_KINDS.length;
+
+  const resetFilters = useCallback(() => {
+    setDraftQuery("");
+    setQuery("");
+    setColumns(DEFAULT_COLUMNS);
+    setTimelineKinds(DEFAULT_TIMELINE_KINDS);
+    setSearchName("");
+    setBulkIds([]);
+    clearLeadFilterState();
+  }, []);
+
+  // Keyboard shortcuts: "/" focuses search, Esc clears the search or closes panels.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing =
+        !!target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (e.key === "/" && !typing) {
+        e.preventDefault();
+        searchRef.current?.focus();
+        return;
+      }
+      if (e.key === "Escape") {
+        const inside = !!rootRef.current && !!target && rootRef.current.contains(target);
+        if (!inside) return;
+        e.preventDefault();
+        if (draftQuery || query) {
+          setDraftQuery("");
+          setQuery("");
+        } else if (csvOpen || bulkOpen || rawOpen || sourceOpen) {
+          setCsvOpen(false);
+          setBulkOpen(false);
+          setRawOpen(false);
+          setSourceOpen(false);
+        }
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [draftQuery, query, csvOpen, bulkOpen, rawOpen, sourceOpen]);
+
+  const runBusy = useCallback(
+    async (kind: "json" | "csv" | "bulk-csv" | "bulk-json" | "save", action: () => void) => {
+      setBusy(kind);
+      try {
+        action();
+        await new Promise((r) => window.setTimeout(r, 250));
+      } finally {
+        setBusy(null);
+      }
+    },
+    [],
+  );
 
   const selected = useMemo(
     () => events.find((e) => e.id === selectedId) ?? events[0] ?? null,
@@ -358,19 +460,42 @@ export function MetaLeadSourcePanel({
   const anyColumn = Object.values(columns).some(Boolean);
 
   return (
-    <div className="rounded-md border border-border overflow-hidden">
+    <div ref={rootRef} className="rounded-md border border-border overflow-hidden">
       <div className="px-4 py-2.5 border-b border-border flex items-center gap-2 flex-wrap">
         <Facebook className="size-3.5 text-muted-foreground" />
         <h4 className="text-xs font-medium">Lead source</h4>
         {selected.is_test && <Badge variant="outline">test</Badge>}
         <div className="ml-auto flex items-center gap-1.5">
-          <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={exportJson}>
-            <Download className="size-3 mr-1" /> JSON
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-[11px]"
+            disabled={isDefaultFilters || busy !== null}
+            title="Reset search, timeline filters and export columns"
+            onClick={resetFilters}
+          >
+            <RotateCcw className="size-3 mr-1" /> Reset filters
           </Button>
           <Button
             size="sm"
             variant="outline"
             className="h-7 px-2 text-[11px]"
+            disabled={busy !== null}
+            onClick={() => runBusy("json", exportJson)}
+          >
+            {busy === "json" ? (
+              <Loader2 className="size-3 mr-1 animate-spin" />
+            ) : (
+              <Download className="size-3 mr-1" />
+            )}{" "}
+            JSON
+          </Button>
+          <Button
+            size="sm"
+            variant={csvOpen ? "secondary" : "outline"}
+            className="h-7 px-2 text-[11px]"
+            aria-expanded={csvOpen}
+            disabled={busy !== null}
             onClick={() => setCsvOpen((o) => !o)}
           >
             <Download className="size-3 mr-1" /> CSV
@@ -380,6 +505,8 @@ export function MetaLeadSourcePanel({
               size="sm"
               variant={bulkOpen ? "secondary" : "outline"}
               className="h-7 px-2 text-[11px]"
+              aria-expanded={bulkOpen}
+              disabled={busy !== null}
               onClick={() => setBulkOpen((o) => !o)}
             >
               <ListChecks className="size-3 mr-1" /> Bulk
@@ -398,6 +525,7 @@ export function MetaLeadSourcePanel({
               <label key={key} className="flex items-center gap-1.5 text-xs">
                 <Checkbox
                   checked={columns[key]}
+                  disabled={busy !== null}
                   onCheckedChange={(v) => setColumns((c) => ({ ...c, [key]: Boolean(v) }))}
                 />
                 {label}
@@ -407,12 +535,15 @@ export function MetaLeadSourcePanel({
           <Button
             size="sm"
             className="h-7 px-2 text-[11px]"
-            disabled={!anyColumn}
-            onClick={() => {
-              download(`${baseName}.csv`, "text/csv", toCsv(exportRows(columns)));
-              setCsvOpen(false);
-            }}
+            disabled={!anyColumn || busy !== null}
+            onClick={() =>
+              runBusy("csv", () => {
+                download(`${baseName}.csv`, "text/csv", toCsv(exportRows(columns)));
+                setCsvOpen(false);
+              })
+            }
           >
+            {busy === "csv" && <Loader2 className="size-3 mr-1 animate-spin" />}
             Download CSV
           </Button>
         </div>
@@ -429,6 +560,7 @@ export function MetaLeadSourcePanel({
                 size="sm"
                 variant="ghost"
                 className="h-6 px-2 text-[11px]"
+                disabled={busy !== null || bulkIds.length === events.length}
                 onClick={() => setBulkIds(events.map((e) => e.id))}
               >
                 All
@@ -437,6 +569,7 @@ export function MetaLeadSourcePanel({
                 size="sm"
                 variant="ghost"
                 className="h-6 px-2 text-[11px]"
+                disabled={busy !== null || bulkIds.length === 0}
                 onClick={() => setBulkIds([])}
               >
                 None
@@ -448,6 +581,7 @@ export function MetaLeadSourcePanel({
               <label key={ev.id} className="flex items-center gap-2 px-3 py-2 text-xs">
                 <Checkbox
                   checked={bulkIds.includes(ev.id)}
+                  disabled={busy !== null}
                   onCheckedChange={(v) =>
                     setBulkIds((ids) =>
                       v ? [...new Set([...ids, ev.id])] : ids.filter((i) => i !== ev.id),
@@ -470,19 +604,29 @@ export function MetaLeadSourcePanel({
             <Button
               size="sm"
               className="h-7 px-2 text-[11px]"
-              disabled={bulkIds.length === 0 || !anyColumn}
-              onClick={exportBulkCsv}
+              disabled={bulkIds.length === 0 || !anyColumn || busy !== null}
+              onClick={() => runBusy("bulk-csv", exportBulkCsv)}
             >
-              <Download className="size-3 mr-1" /> Export CSV
+              {busy === "bulk-csv" ? (
+                <Loader2 className="size-3 mr-1 animate-spin" />
+              ) : (
+                <Download className="size-3 mr-1" />
+              )}{" "}
+              Export CSV
             </Button>
             <Button
               size="sm"
               variant="outline"
               className="h-7 px-2 text-[11px]"
-              disabled={bulkIds.length === 0 || !anyColumn}
-              onClick={exportBulkJson}
+              disabled={bulkIds.length === 0 || !anyColumn || busy !== null}
+              onClick={() => runBusy("bulk-json", exportBulkJson)}
             >
-              <Download className="size-3 mr-1" /> Export JSON
+              {busy === "bulk-json" ? (
+                <Loader2 className="size-3 mr-1 animate-spin" />
+              ) : (
+                <Download className="size-3 mr-1" />
+              )}{" "}
+              Export JSON
             </Button>
           </div>
         </div>
@@ -492,9 +636,25 @@ export function MetaLeadSourcePanel({
         <div className="relative">
           <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search any field, custom label or answer…"
+            ref={searchRef}
+            value={draftQuery}
+            onChange={(e) => setDraftQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                setQuery(draftQuery);
+              }
+              if (e.key === "Escape") {
+                e.preventDefault();
+                if (draftQuery || query) {
+                  setDraftQuery("");
+                  setQuery("");
+                } else {
+                  searchRef.current?.blur();
+                }
+              }
+            }}
+            placeholder="Search any field, custom label or answer…  ( / to focus, Enter to apply, Esc to clear )"
             className="h-8 pl-8 text-xs"
           />
         </div>
@@ -503,6 +663,21 @@ export function MetaLeadSourcePanel({
           <Input
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && searchName.trim() && draftQuery.trim()) {
+                e.preventDefault();
+                setQuery(draftQuery);
+                void runBusy("save", () => {
+                  saveSearch({
+                    name: searchName.trim(),
+                    query: draftQuery,
+                    columns,
+                    timelineKinds,
+                  });
+                  setSearchName("");
+                });
+              }
+            }}
             placeholder="Name this filter to save it…"
             className="h-7 text-xs"
           />
@@ -510,53 +685,73 @@ export function MetaLeadSourcePanel({
             size="sm"
             variant="outline"
             className="h-7 px-2 text-[11px] shrink-0"
-            disabled={!searchName.trim() || !query.trim()}
-            onClick={() => {
-              saveSearch({
-                name: searchName.trim(),
-                query,
-                columns,
-                timelineKinds,
-              });
-              setSearchName("");
-            }}
+            disabled={!searchName.trim() || !draftQuery.trim() || busy !== null}
+            onClick={() =>
+              runBusy("save", () => {
+                setQuery(draftQuery);
+                saveSearch({
+                  name: searchName.trim(),
+                  query: draftQuery,
+                  columns,
+                  timelineKinds,
+                });
+                setSearchName("");
+              })
+            }
           >
-            <Save className="size-3 mr-1" /> Save
+            {busy === "save" ? (
+              <Loader2 className="size-3 mr-1 animate-spin" />
+            ) : (
+              <Save className="size-3 mr-1" />
+            )}{" "}
+            Save
           </Button>
         </div>
 
         {searches.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {searches.map((s) => (
-              <span
-                key={s.id}
-                className="inline-flex items-center gap-1 rounded-full border border-border pl-2 pr-1 py-0.5 text-[11px]"
-              >
-                <button
-                  type="button"
-                  className="hover:text-accent"
-                  onClick={() => {
-                    setQuery(s.query);
-                    setColumns((c) => ({ ...c, ...(s.columns as Record<ColumnKey, boolean>) }));
-                    setTimelineKinds(
-                      (s.timelineKinds as TimelineKind[] | undefined)?.length
-                        ? (s.timelineKinds as TimelineKind[])
-                        : TIMELINE_KINDS.map((k) => k.key),
-                    );
-                  }}
+            {searches.map((s) => {
+              const active =
+                s.query === query &&
+                (s.timelineKinds?.length ? s.timelineKinds : DEFAULT_TIMELINE_KINDS).every((k) =>
+                  timelineKinds.includes(k as TimelineKind),
+                );
+              return (
+                <span
+                  key={s.id}
+                  className={`inline-flex items-center gap-1 rounded-full border pl-2 pr-1 py-0.5 text-[11px] ${
+                    active ? "border-accent text-accent" : "border-border"
+                  }`}
                 >
-                  {s.name}
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Delete saved filter ${s.name}`}
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={() => removeSearch(s.id)}
-                >
-                  <Trash2 className="size-3" />
-                </button>
-              </span>
-            ))}
+                  <button
+                    type="button"
+                    className="hover:text-accent disabled:opacity-50"
+                    disabled={busy !== null}
+                    onClick={() => {
+                      setDraftQuery(s.query);
+                      setQuery(s.query);
+                      setColumns((c) => ({ ...c, ...(s.columns as Record<ColumnKey, boolean>) }));
+                      setTimelineKinds(
+                        (s.timelineKinds as TimelineKind[] | undefined)?.length
+                          ? (s.timelineKinds as TimelineKind[])
+                          : DEFAULT_TIMELINE_KINDS,
+                      );
+                    }}
+                  >
+                    {s.name}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Delete saved filter ${s.name}`}
+                    className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+                    disabled={busy !== null}
+                    onClick={() => removeSearch(s.id)}
+                  >
+                    <Trash2 className="size-3" />
+                  </button>
+                </span>
+              );
+            })}
           </div>
         )}
 
@@ -713,6 +908,8 @@ export function MetaLeadSourcePanel({
                 <button
                   key={key}
                   type="button"
+                  aria-pressed={active}
+                  disabled={busy !== null}
                   onClick={() =>
                     setTimelineKinds((k) =>
                       active ? k.filter((x) => x !== key) : [...k, key],
