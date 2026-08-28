@@ -88,6 +88,20 @@ export const SETTINGS_ITEMS: NavItem[] = [
 
 const ALL_ITEMS: NavItem[] = [...NAV_SECTIONS.flatMap((s) => s.items), ...SETTINGS_ITEMS];
 
+/**
+ * A nav row is active for its own path and any nested path beneath it, so the
+ * left menu keeps highlighting the section while you browse inside it. The
+ * longest matching entry wins, so `/settings/booking` highlights "Booking
+ * pages" rather than the generic "Settings" hub row.
+ */
+export function isNavActive(pathname: string, to: string) {
+  const clean = pathname.replace(/\/+$/, "") || "/";
+  const match = (p: string) => clean === p || clean.startsWith(`${p}/`);
+  if (!match(to)) return false;
+  const better = ALL_ITEMS.some((i) => i.to !== to && i.to.startsWith(to) && match(i.to));
+  return !better;
+}
+
 function matches(item: NavItem, query: string) {
   const q = query.trim().toLowerCase();
   if (!q) return true;
@@ -207,7 +221,7 @@ export function SidebarNav({ collapsed }: { collapsed: boolean }) {
         ) : null}
 
         {sections.map((section) => {
-          const hasActive = section.items.some((i) => pathname.startsWith(i.to));
+          const hasActive = section.items.some((i) => isNavActive(pathname, i.to));
           const open = query.trim() ? true : (groups[section.label] ?? hasActive);
           return (
             <NavGroup
@@ -236,7 +250,7 @@ export function SidebarNav({ collapsed }: { collapsed: boolean }) {
               <NavRow
                 key={item.to}
                 item={item}
-                active={pathname.startsWith(item.to)}
+                active={isNavActive(pathname, item.to)}
                 badges={badges}
               />
             ))}
@@ -350,7 +364,7 @@ function NavGroup({
             <NavRow
               key={`${label}-${item.to}`}
               item={item}
-              active={pathname === item.to}
+              active={isNavActive(pathname, item.to)}
               badges={badges}
             />
           ))}
@@ -381,7 +395,7 @@ function NavRailGroup({
       <div className="space-y-0.5">
         {items.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.to;
+          const active = isNavActive(pathname, item.to);
           const count = item.badge ? badges[item.badge] : 0;
           return (
             <Link
@@ -410,7 +424,7 @@ function NavRailGroup({
           <p className="mb-1 px-2 eyebrow">{label}</p>
           <div className="space-y-0.5">
             {items.map((item) => {
-              const active = pathname === item.to;
+              const active = isNavActive(pathname, item.to);
               const count = item.badge ? badges[item.badge] : 0;
               return (
                 <Link
