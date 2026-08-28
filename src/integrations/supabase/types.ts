@@ -200,6 +200,41 @@ export type Database = {
           },
         ]
       }
+      agency_module_presets: {
+        Row: {
+          agency_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          module_key: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module_key: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_module_presets_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_pages: {
         Row: {
           advance_days: number
@@ -2069,6 +2104,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sub_account_memberships_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sub_account_module_audit: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          module_key: string
+          source: string
+          sub_account_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          enabled: boolean
+          id?: string
+          module_key: string
+          source?: string
+          sub_account_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          module_key?: string
+          source?: string
+          sub_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_account_module_audit_sub_account_id_fkey"
             columns: ["sub_account_id"]
             isOneToOne: false
             referencedRelation: "sub_accounts"
