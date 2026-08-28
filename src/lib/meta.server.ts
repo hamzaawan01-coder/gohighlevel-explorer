@@ -263,14 +263,19 @@ export type MetaFormLead = {
 /**
  * List existing (historical) leads for a Lead Ad form, following Graph paging.
  * Used by the "Import past leads" action — the webhook only catches new leads.
+ * Optional window filters on Meta's created_time (leads come back newest-first,
+ * so paging stops once we walk past the start of the window).
  */
 export async function fetchFormLeads(
   formId: string,
   pageAccessToken: string,
   maxLeads = 500,
+  window?: { sinceMs?: number | null; untilMs?: number | null },
 ): Promise<MetaFormLead[]> {
   const out: MetaFormLead[] = [];
   let after: string | undefined;
+  const sinceMs = window?.sinceMs ?? null;
+  const untilMs = window?.untilMs ?? null;
   for (let page = 0; page < 20 && out.length < maxLeads; page++) {
     const params: Record<string, string> = { fields: "id,created_time,field_data", limit: "100" };
     if (after) params.after = after;
@@ -280,12 +285,21 @@ export async function fetchFormLeads(
       pageAccessToken,
     );
     const batch = res.data ?? [];
-    out.push(...batch);
+    let walkedPastWindow = false;
+    for (const lead of batch) {
+      const t = lead.created_time ? Date.parse(lead.created_time) : NaN;
+      if (!Number.isNaN(t)) {
+        if (sinceMs !== null && t < sinceMs) { walkedPastWindow = true; continue; }
+        if (untilMs !== null && t > untilMs) continue;
+      }
+      out.push(lead);
+    }
     after = res.paging?.next ? res.paging?.cursors?.after : undefined;
-    if (!after || batch.length === 0) break;
+    if (!after || batch.length === 0 || walkedPastWindow) break;
   }
   return out.slice(0, maxLeads);
 }
+
 
 /** Flatten Meta field_data into a simple { field: value } map. */
 export function flattenLeadFields(fieldData: Array<{ name: string; values: string[] }> | undefined): Record<string, string> {
