@@ -62,7 +62,10 @@ function IntegrationsPage() {
             </TabsList>
             <TabsContent value="email"><EmailPanel subId={subId} /></TabsContent>
             <TabsContent value="sms"><SmsPanel subId={subId} /></TabsContent>
-            <TabsContent value="meta"><MetaConnectPanel subId={subId} /></TabsContent>
+            <TabsContent value="meta" className="space-y-4">
+              <MetaConnectPanel subId={subId} />
+              <LeadDisplaySettings />
+            </TabsContent>
             <TabsContent value="history"><HistoryPanel subId={subId} /></TabsContent>
           </Tabs>
         )}
