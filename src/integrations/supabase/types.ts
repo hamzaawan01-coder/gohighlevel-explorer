@@ -1200,6 +1200,102 @@ export type Database = {
           },
         ]
       }
+      meta_lead_ad_events: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          deal_id: string | null
+          error: string | null
+          form_id: string | null
+          form_name: string | null
+          id: string
+          is_test: boolean
+          lead_fields: Json
+          leadgen_id: string | null
+          page_id: string | null
+          payload: Json
+          pipeline_id: string | null
+          routing_source: string
+          stage_id: string | null
+          status: string
+          sub_account_id: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          error?: string | null
+          form_id?: string | null
+          form_name?: string | null
+          id?: string
+          is_test?: boolean
+          lead_fields?: Json
+          leadgen_id?: string | null
+          page_id?: string | null
+          payload?: Json
+          pipeline_id?: string | null
+          routing_source?: string
+          stage_id?: string | null
+          status?: string
+          sub_account_id: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          error?: string | null
+          form_id?: string | null
+          form_name?: string | null
+          id?: string
+          is_test?: boolean
+          lead_fields?: Json
+          leadgen_id?: string | null
+          page_id?: string | null
+          payload?: Json
+          pipeline_id?: string | null
+          routing_source?: string
+          stage_id?: string | null
+          status?: string
+          sub_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_lead_ad_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_lead_ad_events_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_lead_ad_events_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_lead_ad_events_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_lead_ad_events_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meta_lead_form_routes: {
         Row: {
           created_at: string
