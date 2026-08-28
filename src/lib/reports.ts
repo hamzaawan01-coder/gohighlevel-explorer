@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { waitForSession } from "@/lib/session-ready";
+
 
 export type ReportData = {
   winRate: number;
