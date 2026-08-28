@@ -129,6 +129,30 @@ export const suggestReply = createServerFn({ method: "POST" })
       if (slug) bookingUrl = `${data.origin.replace(/\/$/, "")}/b/${slug}`;
     }
 
+    const { data: kbRows } = await context.supabase
+      .from("ai_knowledge_docs" as never)
+      .select("title, content")
+      .eq("sub_account_id", conversation.sub_account_id)
+      .eq("enabled", true)
+      .order("updated_at", { ascending: false })
+      .limit(10);
+    const knowledge = ((kbRows ?? []) as unknown as { title: string; content: string }[]).map((k) => ({
+      title: k.title,
+      content: k.content,
+    }));
+
+    const { data: fbRows } = await context.supabase
+      .from("ai_draft_feedback" as never)
+      .select("rating, draft, note")
+      .eq("sub_account_id", conversation.sub_account_id)
+      .order("created_at", { ascending: false })
+      .limit(12);
+    const feedback = ((fbRows ?? []) as unknown as {
+      rating: "up" | "down";
+      draft: string;
+      note: string;
+    }[]).map((f) => ({ rating: f.rating, draft: f.draft, note: f.note }));
+
     const { generateReplyDraft } = await import("@/lib/ai-assistant.server");
     return generateReplyDraft({
       channel: conversation.channel,
