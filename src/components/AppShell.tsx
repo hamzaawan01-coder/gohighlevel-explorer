@@ -35,32 +35,34 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   to: string;
+  /** Module key gating this item; omit for always-visible items. */
+  module?: string;
 };
 
 const salesNav: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-  { label: "Opportunities", icon: LayoutGrid, to: "/opportunities" },
-  { label: "Contacts", icon: Users, to: "/contacts" },
-  { label: "Tasks", icon: CheckSquare, to: "/tasks" },
-  { label: "Calendar", icon: Calendar, to: "/calendar" },
-  { label: "Conversations", icon: MessageSquare, to: "/conversations" },
-  { label: "Conversations", icon: MessageSquare, to: "/conversations" },
-  { label: "Calls", icon: PhoneCall, to: "/calls" },
-  { label: "Reports", icon: BarChart3, to: "/reports" },
-  { label: "Inbox", icon: Inbox, to: "/inbox" },
+  { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard", module: "dashboard" },
+  { label: "Opportunities", icon: LayoutGrid, to: "/opportunities", module: "opportunities" },
+  { label: "Contacts", icon: Users, to: "/contacts", module: "contacts" },
+  { label: "Tasks", icon: CheckSquare, to: "/tasks", module: "tasks" },
+  { label: "Calendar", icon: Calendar, to: "/calendar", module: "calendar" },
+  { label: "Conversations", icon: MessageSquare, to: "/conversations", module: "conversations" },
+  { label: "Calls", icon: PhoneCall, to: "/calls", module: "calls" },
+  { label: "Reports", icon: BarChart3, to: "/reports", module: "reports" },
+  { label: "Inbox", icon: Inbox, to: "/inbox", module: "conversations" },
 ];
 
 const automationNav: NavItem[] = [
-  { label: "Marketing", icon: Megaphone, to: "/marketing" },
-  { label: "Workflows", icon: Workflow, to: "/workflows" },
-  { label: "Templates", icon: FileText, to: "/templates" },
-  { label: "Forms", icon: FileText, to: "/forms" },
-  { label: "WordPress", icon: Webhook, to: "/settings/wordpress" },
-  { label: "Booking pages", icon: CalendarClock, to: "/settings/booking" },
-  { label: "Phone numbers", icon: Phone, to: "/settings/phone-numbers" },
-  { label: "Call flows", icon: PhoneCall, to: "/settings/call-flows" },
-  { label: "Integrations", icon: Settings, to: "/settings/integrations" },
-  { label: "Quiet hours", icon: Settings, to: "/settings/messaging" },
+  { label: "Marketing", icon: Megaphone, to: "/marketing", module: "marketing" },
+  { label: "Workflows", icon: Workflow, to: "/workflows", module: "workflows" },
+  { label: "Templates", icon: FileText, to: "/templates", module: "templates" },
+  { label: "Forms", icon: FileText, to: "/forms", module: "forms" },
+  { label: "WordPress", icon: Webhook, to: "/settings/wordpress", module: "integrations" },
+  { label: "Booking pages", icon: CalendarClock, to: "/settings/booking", module: "calendar" },
+  { label: "Phone numbers", icon: Phone, to: "/settings/phone-numbers", module: "calls" },
+  { label: "Call flows", icon: PhoneCall, to: "/settings/call-flows", module: "calls" },
+  { label: "Integrations", icon: Settings, to: "/settings/integrations", module: "integrations" },
+  { label: "Quiet hours", icon: Settings, to: "/settings/messaging", module: "integrations" },
+  { label: "Modules", icon: ToggleLeft, to: "/settings/modules" },
 ];
 
 export function AppShell({
