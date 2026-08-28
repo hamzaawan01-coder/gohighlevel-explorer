@@ -29,6 +29,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Softphone } from "@/components/Softphone";
 import { isModuleEnabled, moduleForPath, useModules } from "@/lib/modules";
+import { SiteFooter } from "@/components/SiteFooter";
 
 function openPalette() {
   (window as unknown as { __openPalette?: () => void }).__openPalette?.();
