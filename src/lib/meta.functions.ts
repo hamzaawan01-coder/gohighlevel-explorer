@@ -777,8 +777,10 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
       pipeline_id: string | null; stage_id: string | null; routing_source: string;
       status: string; error: string | null; is_test: boolean; created_at: string;
       lead_fields: Record<string, string> | null;
+      payload: unknown;
     }>;
-    if (events.length === 0) return { events: [], page: null, pipelineName: null, stageName: null, leadFields: {} as Record<string, string> };
+    if (events.length === 0) return { events, page: null, pipelineName: null, stageName: null, leadFields: {} as Record<string, string>, contact: null };
+
 
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
