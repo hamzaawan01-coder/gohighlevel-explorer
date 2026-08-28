@@ -10,6 +10,8 @@ import {
   subscribePageToApp,
   sendPageMessage,
   metaWebhookUrl,
+  metaRedirectUri,
+  META_SCOPES,
 } from "./meta.server";
 
 type MetaConnectionRow = {
