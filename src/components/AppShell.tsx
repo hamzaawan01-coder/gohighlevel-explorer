@@ -119,6 +119,14 @@ export function AppShell({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { state, isLoading: modulesLoading } = useModules();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useGlobalShortcuts();
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const visible = (items: NavItem[]) =>
     items.filter((i) => !i.module || isModuleEnabled(state, i.module));
@@ -130,57 +138,89 @@ export function AppShell({
     !isModuleEnabled(state, currentModule.key) &&
     !pathname.startsWith("/settings/modules");
 
+  const sidebar = (isCollapsed: boolean) => (
+    <>
+      <div className={`border-b border-border ${isCollapsed ? "p-2" : "p-4"}`}>
+        {isCollapsed ? (
+          <div className="flex justify-center">
+            <span className="gradient-primary flex size-9 items-center justify-center rounded-lg text-[11px] font-bold text-primary-foreground">
+              AE
+            </span>
+          </div>
+        ) : (
+          <SubAccountSwitcher />
+        )}
+      </div>
+
+      <nav aria-label="Main navigation" className="flex-1 overflow-y-auto py-3">
+        {NAV_SECTIONS.map((section) => {
+          const items = visible(section.items);
+          if (items.length === 0) return null;
+          return (
+            <NavGroup key={section.label} label={section.label} items={items} collapsed={isCollapsed} />
+          );
+        })}
+      </nav>
+
+      <div className={`border-t border-border ${isCollapsed ? "p-2" : "p-3"}`}>
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          className="mb-2 hidden w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex"
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-pressed={isCollapsed}
+        >
+          {isCollapsed ? (
+            <PanelLeftOpen className="size-3.5" />
+          ) : (
+            <>
+              <PanelLeftClose className="size-3.5" />
+              Collapse
+            </>
+          )}
+        </button>
+        <UserMenu collapsed={isCollapsed} />
+      </div>
+    </>
+  );
+
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+    <div className="flex h-dvh w-full overflow-hidden bg-background text-foreground">
       <aside
-        className={`flex shrink-0 flex-col border-r border-border bg-sidebar transition-[width] duration-200 ${
+        className={`hidden shrink-0 flex-col border-r border-border bg-sidebar transition-[width] duration-200 lg:flex ${
           collapsed ? "w-[4.25rem]" : "w-64"
         }`}
       >
-        <div className={`border-b border-border ${collapsed ? "p-2" : "p-4"}`}>
-          {collapsed ? (
-            <div className="flex justify-center">
-              <span className="gradient-primary flex size-9 items-center justify-center rounded-lg text-[11px] font-bold text-primary-foreground">
-                AE
-              </span>
-            </div>
-          ) : (
-            <SubAccountSwitcher />
-          )}
-        </div>
-
-        <nav className="flex-1 overflow-y-auto py-3">
-          {NAV_SECTIONS.map((section) => {
-            const items = visible(section.items);
-            if (items.length === 0) return null;
-            return <NavGroup key={section.label} label={section.label} items={items} collapsed={collapsed} />;
-          })}
-        </nav>
-
-        <div className={`border-t border-border ${collapsed ? "p-2" : "p-3"}`}>
-          <button
-            type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            className="mb-2 flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? (
-              <PanelLeftOpen className="size-3.5" />
-            ) : (
-              <>
-                <PanelLeftClose className="size-3.5" />
-                Collapse
-              </>
-            )}
-          </button>
-          <UserMenu collapsed={collapsed} />
-        </div>
+        {sidebar(collapsed)}
       </aside>
 
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="flex w-[17rem] flex-col gap-0 bg-sidebar p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation</SheetTitle>
+          </SheetHeader>
+          {sidebar(false)}
+        </SheetContent>
+      </Sheet>
+
       <main className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-card px-4 md:px-6">
-          <div className="flex flex-1 items-center gap-4">
-            <button type="button" onClick={openPalette} className="relative w-full max-w-md text-left">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-card px-3 sm:gap-4 sm:px-4 md:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open navigation menu"
+              className="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+            >
+              <Menu className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={openPalette}
+              aria-label="Search contacts, deals and tasks"
+              className="relative hidden w-full max-w-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:block"
+            >
               <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <span className="block w-full rounded-md border border-border bg-secondary py-1.5 pl-9 pr-3 text-xs text-muted-foreground transition-colors hover:bg-secondary/70">
                 Search contacts, deals, tasks…
@@ -189,11 +229,19 @@ export function AppShell({
                 ⌘K
               </kbd>
             </button>
+            <button
+              type="button"
+              onClick={openPalette}
+              aria-label="Search"
+              className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:hidden"
+            >
+              <Search className="size-4" />
+            </button>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {headerStatus}
             <AppearanceQuickToggles />
-            <div className="h-4 w-px bg-border" />
+            <div className="hidden h-4 w-px bg-border sm:block" />
             <NotificationBell />
             {headerActions}
           </div>
@@ -206,13 +254,64 @@ export function AppShell({
       </main>
 
       {rightPane && !blocked ? (
-        <aside className="flex w-80 shrink-0 flex-col border-l border-border bg-card">{rightPane}</aside>
+        <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-card xl:flex">
+          {rightPane}
+        </aside>
       ) : null}
       <CommandPalette />
       <Softphone />
       <OnboardingTour />
+      <ShortcutsDialog />
     </div>
   );
+}
+
+/**
+ * Keyboard-first navigation: `g` then a letter jumps between areas, and `/`
+ * focuses the page search input (falling back to the command palette).
+ */
+function useGlobalShortcuts() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    let pendingG = 0;
+    const routes: Record<string, string> = {
+      d: "/dashboard",
+      o: "/opportunities",
+      c: "/contacts",
+      t: "/tasks",
+      i: "/inbox",
+      s: "/settings/integrations",
+    };
+    function isTyping(target: EventTarget | null) {
+      const el = target as HTMLElement | null;
+      const tag = el?.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!el?.isContentEditable;
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target)) return;
+      const key = e.key.toLowerCase();
+      if (key === "/") {
+        const input = document.querySelector<HTMLInputElement>("[data-page-search]");
+        e.preventDefault();
+        if (input) input.focus();
+        else openPalette();
+        return;
+      }
+      if (key === "g") {
+        pendingG = Date.now();
+        return;
+      }
+      if (pendingG && Date.now() - pendingG < 1200 && routes[key]) {
+        pendingG = 0;
+        e.preventDefault();
+        navigate({ to: routes[key] });
+        return;
+      }
+      pendingG = 0;
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navigate]);
 }
 
 function AppearanceQuickToggles() {
