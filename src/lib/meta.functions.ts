@@ -755,10 +755,33 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
-    if (!data.contactId && !data.dealId) return { events: [], page: null, pipelineName: null, stageName: null };
+
+    type LeadEvent = {
+      id: string; page_id: string | null; form_id: string | null; form_name: string | null;
+      leadgen_id: string | null; contact_id: string | null; deal_id: string | null;
+      pipeline_id: string | null; stage_id: string | null; routing_source: string;
+      status: string; error: string | null; is_test: boolean; created_at: string;
+      lead_fields: Record<string, string> | null;
+      payload: unknown;
+    };
+    type LeadContact = {
+      id: string; first_name: string | null; last_name: string | null; email: string | null;
+      phone: string | null; company: string | null; lead_source: string | null;
+      lifecycle_stage: string; tags: string[]; notes: string | null;
+      meta_lead_id: string | null; created_at: string;
+    };
+    const empty = {
+      events: [] as Array<Omit<LeadEvent, "payload"> & { payloadJson: string | null }>,
+      page: null as { page_id: string; page_name: string } | null,
+      pipelineName: null as string | null,
+      stageName: null as string | null,
+      leadFields: {} as Record<string, string>,
+      contact: null as LeadContact | null,
+    };
+    if (!data.contactId && !data.dealId) return empty;
 
     const sel =
-      "id, page_id, form_id, form_name, leadgen_id, contact_id, deal_id, pipeline_id, stage_id, routing_source, status, error, is_test, lead_fields, created_at";
+      "id, page_id, form_id, form_name, leadgen_id, contact_id, deal_id, pipeline_id, stage_id, routing_source, status, error, is_test, lead_fields, payload, created_at";
 
     let q = (context.supabase as any)
       .from("meta_lead_ad_events")
@@ -770,15 +793,12 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
-    const events = (rows ?? []) as Array<{
-      id: string; page_id: string | null; form_id: string | null; form_name: string | null;
-      leadgen_id: string | null; contact_id: string | null; deal_id: string | null;
-      pipeline_id: string | null; stage_id: string | null; routing_source: string;
-      status: string; error: string | null; is_test: boolean; created_at: string;
-      lead_fields: Record<string, string> | null;
-    }>;
-    if (events.length === 0) return { events: [], page: null, pipelineName: null, stageName: null, leadFields: {} as Record<string, string> };
-
+    const events = ((rows ?? []) as LeadEvent[]).map((e) => ({
+      ...e,
+      payload: undefined,
+      payloadJson: e.payload ? JSON.stringify(e.payload, null, 2) : null,
+    })) as Array<Omit<LeadEvent, "payload"> & { payloadJson: string | null }>;
+    if (events.length === 0) return empty;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const pageId = events.find((e) => e.page_id)?.page_id ?? null;
@@ -802,9 +822,21 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
       stageName = (s ?? [])[0]?.name ?? null;
     }
 
+    const contactId = data.contactId ?? events.find((e) => e.contact_id)?.contact_id ?? null;
+    let contact: LeadContact | null = null;
+    if (contactId) {
+      const { data: cRows } = await (context.supabase as any)
+        .from("contacts")
+        .select("id, first_name, last_name, email, phone, company, lead_source, lifecycle_stage, tags, notes, meta_lead_id, created_at")
+        .eq("id", contactId)
+        .limit(1);
+      contact = ((cRows ?? [])[0] as LeadContact | undefined) ?? null;
+    }
+
     const leadFields =
       (events.find((e) => e.lead_fields && Object.keys(e.lead_fields).length > 0)?.lead_fields ?? {}) as Record<string, string>;
 
-    return { events, page, pipelineName, stageName, leadFields };
+    return { events, page, pipelineName, stageName, leadFields, contact };
+
   });
 
