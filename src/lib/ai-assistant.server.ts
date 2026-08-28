@@ -1,5 +1,4 @@
-import { generateText, Output } from "ai";
-import { z } from "zod";
+import { generateText } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 export type DraftContext = {
