@@ -301,14 +301,17 @@ export async function fetchFormLeads(
 }
 
 
-/** Flatten Meta field_data into a simple { field: value } map. */
+/** Flatten Meta field_data into a simple { field: value } map (multi-values joined). */
 export function flattenLeadFields(fieldData: Array<{ name: string; values: string[] }> | undefined): Record<string, string> {
   const out: Record<string, string> = {};
   for (const f of fieldData ?? []) {
-    if (f?.name && Array.isArray(f.values) && f.values.length > 0) out[f.name] = String(f.values[0]);
+    if (f?.name && Array.isArray(f.values) && f.values.length > 0) {
+      out[f.name] = f.values.map((v) => String(v)).join(", ");
+    }
   }
   return out;
 }
+
 
 /** Verify Meta X-Hub-Signature-256 header against the raw request body. */
 export function verifyMetaSignature(rawBody: string, signatureHeader: string | null): boolean {
