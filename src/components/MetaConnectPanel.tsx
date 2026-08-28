@@ -367,91 +367,163 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
 
           {/* ── Channels: pages & routing ───────────────── */}
           <TabsContent value="channels" className="mt-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">
-                {pages.length === 0
-                  ? "No pages found yet — click Refresh above."
-                  : "Choose what each Page sends into this workspace."}
+            {pages.length === 0 ? (
+              <p className="surface-card p-5 text-xs text-muted-foreground">
+                No pages found yet — use <b>Refresh counts</b> above.
               </p>
-              {pages.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={enableAll.isPending}
-                  onClick={() => enableAll.mutate()}
-                >
-                  {enableAll.isPending ? "Enabling…" : "Enable everything"}
-                </Button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-              {pages.map((p) => (
-                <div key={p.id} className="surface-card space-y-3 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-1.5 truncate text-sm font-medium">
-                        <Facebook className="size-3.5 shrink-0 text-[#1877F2]" />
-                        {p.page_name}
-                        {p.instagram_business_account_id && (
-                          <Instagram className="size-3.5 shrink-0 text-[#E4405F]" />
-                        )}
-                      </p>
-                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                        {p.category ?? "Page"} · {p.page_id}
-                      </p>
-                    </div>
-                    {p.webhook_subscribed ? (
-                      <Badge variant="secondary" className="shrink-0 gap-1 text-[10px]">
-                        <CheckCircle2 className="size-3" /> Subscribed
-                      </Badge>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0"
-                        onClick={() =>
-                          patchPage.mutate({ pageRowId: p.id, patch: { subscribe: true } })
-                        }
+            ) : (
+              <>
+                <div className="surface-card space-y-3 p-3">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      value={ui.search}
+                      onChange={(e) => patchUi({ search: e.target.value })}
+                      placeholder="Search pages by name, category or ID…"
+                      aria-label="Search Facebook pages"
+                      className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-xs outline-none focus:border-primary"
+                    />
+                    {ui.search && (
+                      <button
+                        type="button"
+                        onClick={() => patchUi({ search: "" })}
+                        aria-label="Clear search"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
-                        Subscribe
-                      </Button>
+                        <X className="size-3.5" />
+                      </button>
                     )}
                   </div>
-                  <div className="space-y-1.5 border-t border-border pt-3">
-                    <ToggleRow
-                      label="Messenger → Inbox"
-                      checked={p.route_messenger_to_inbox}
-                      onChange={(v) =>
-                        patchPage.mutate({
-                          pageRowId: p.id,
-                          patch: { route_messenger_to_inbox: v },
-                        })
-                      }
-                    />
-                    <ToggleRow
-                      label="Instagram DMs → Inbox"
-                      checked={p.route_instagram_to_inbox}
-                      disabled={!p.instagram_business_account_id}
-                      onChange={(v) =>
-                        patchPage.mutate({
-                          pageRowId: p.id,
-                          patch: { route_instagram_to_inbox: v },
-                        })
-                      }
-                    />
-                    <ToggleRow
-                      label="Lead Ads → Contacts"
-                      checked={p.sync_lead_ads}
-                      onChange={(v) =>
-                        patchPage.mutate({ pageRowId: p.id, patch: { sync_lead_ads: v } })
-                      }
-                    />
+                  <div className="flex flex-wrap gap-1.5">
+                    {(
+                      [
+                        ["all", "All"],
+                        ["subscribed", "Subscribed"],
+                        ["unsubscribed", "Not subscribed"],
+                        ["instagram", "Has Instagram"],
+                        ["leadads", "Lead Ads on"],
+                      ] as [MetaChannelFilter, string][]
+                    ).map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => patchUi({ filter: key })}
+                        aria-pressed={ui.filter === key}
+                        className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                          ui.filter === key
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Showing {visiblePages.length} of {pages.length} pages · your search, filters and
+                    open sections are remembered on this device.
+                  </p>
                 </div>
-              ))}
-            </div>
+
+                {visiblePages.length === 0 ? (
+                  <p className="surface-card p-5 text-xs text-muted-foreground">
+                    No pages match this search or filter.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                    {visiblePages.map((p) => {
+                      const open = ui.expanded.includes(p.id);
+                      return (
+                        <div key={p.id} className="surface-card overflow-hidden">
+                          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 p-4">
+                            <button
+                              type="button"
+                              onClick={() => toggleExpanded(p.id)}
+                              aria-expanded={open}
+                              className="min-w-0 text-left"
+                            >
+                              <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+                                <ChevronDown
+                                  className={`size-3.5 shrink-0 text-muted-foreground transition-transform ${
+                                    open ? "" : "-rotate-90"
+                                  }`}
+                                />
+                                <Facebook className="size-3.5 shrink-0 text-[#1877F2]" />
+                                <span className="truncate">{p.page_name}</span>
+                                {p.instagram_business_account_id && (
+                                  <Instagram className="size-3.5 shrink-0 text-[#E4405F]" />
+                                )}
+                              </p>
+                              <p className="mt-0.5 truncate pl-5 text-[11px] text-muted-foreground">
+                                {p.category ?? "Page"} · {p.page_id}
+                              </p>
+                              {!open && (
+                                <div className="mt-2 flex flex-wrap gap-1 pl-5">
+                                  {p.route_messenger_to_inbox && <MiniTag label="Messenger" />}
+                                  {p.route_instagram_to_inbox && <MiniTag label="Instagram" />}
+                                  {p.sync_lead_ads && <MiniTag label="Lead Ads" />}
+                                </div>
+                              )}
+                            </button>
+                            {p.webhook_subscribed ? (
+                              <Badge variant="secondary" className="shrink-0 gap-1 text-[10px]">
+                                <CheckCircle2 className="size-3" /> Subscribed
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="shrink-0"
+                                onClick={() =>
+                                  patchPage.mutate({ pageRowId: p.id, patch: { subscribe: true } })
+                                }
+                              >
+                                Subscribe
+                              </Button>
+                            )}
+                          </div>
+
+                          {open && (
+                            <div className="space-y-1.5 border-t border-border bg-muted/20 p-4">
+                              <ToggleRow
+                                label="Messenger → Inbox"
+                                checked={p.route_messenger_to_inbox}
+                                onChange={(v) =>
+                                  patchPage.mutate({
+                                    pageRowId: p.id,
+                                    patch: { route_messenger_to_inbox: v },
+                                  })
+                                }
+                              />
+                              <ToggleRow
+                                label="Instagram DMs → Inbox"
+                                checked={p.route_instagram_to_inbox}
+                                disabled={!p.instagram_business_account_id}
+                                onChange={(v) =>
+                                  patchPage.mutate({
+                                    pageRowId: p.id,
+                                    patch: { route_instagram_to_inbox: v },
+                                  })
+                                }
+                              />
+                              <ToggleRow
+                                label="Lead Ads → Contacts"
+                                checked={p.sync_lead_ads}
+                                onChange={(v) =>
+                                  patchPage.mutate({ pageRowId: p.id, patch: { sync_lead_ads: v } })
+                                }
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
           </TabsContent>
+
 
           {/* ── Lead Ads routing ───────────────────────── */}
           <TabsContent value="leads" className="mt-4">
