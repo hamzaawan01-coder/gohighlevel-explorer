@@ -1367,6 +1367,142 @@ export type Database = {
           },
         ]
       }
+      invoice_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          position: number
+          quantity: number
+          sub_account_id: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id: string
+          position?: number
+          quantity?: number
+          sub_account_id: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          position?: number
+          quantity?: number
+          sub_account_id?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          deal_id: string | null
+          due_date: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          number: string
+          paid_at: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          sub_account_id: string
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deal_id?: string | null
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          number: string
+          paid_at?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          sub_account_id: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deal_id?: string | null
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          number?: string
+          paid_at?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          sub_account_id?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_forms: {
         Row: {
           created_at: string
@@ -3541,6 +3677,7 @@ export type Database = {
           sub_account_name: string
         }[]
       }
+      recalc_invoice_totals: { Args: { _invoice: string }; Returns: undefined }
       release_billing_reconcile_lease: {
         Args: { _result?: Json }
         Returns: undefined
@@ -3566,6 +3703,7 @@ export type Database = {
       app_role: "admin" | "user"
       campaign_status: "draft" | "scheduled" | "sending" | "sent" | "failed"
       contact_lifecycle_stage: "lead" | "mql" | "sql" | "customer" | "lost"
+      invoice_status: "draft" | "sent" | "paid" | "overdue" | "void"
       message_channel:
         | "note"
         | "email"
@@ -3733,6 +3871,7 @@ export const Constants = {
       app_role: ["admin", "user"],
       campaign_status: ["draft", "scheduled", "sending", "sent", "failed"],
       contact_lifecycle_stage: ["lead", "mql", "sql", "customer", "lost"],
+      invoice_status: ["draft", "sent", "paid", "overdue", "void"],
       message_channel: [
         "note",
         "email",
