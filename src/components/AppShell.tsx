@@ -31,6 +31,7 @@ import {
   PanelLeftOpen,
   Users2,
   Clock,
+  Menu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -43,6 +44,8 @@ import { Softphone } from "@/components/Softphone";
 import { isModuleEnabled, moduleForPath, useModules } from "@/lib/modules";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useAppearance } from "@/lib/appearance";
+import { ShortcutsDialog } from "@/components/ShortcutsDialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 function openPalette() {
   (window as unknown as { __openPalette?: () => void }).__openPalette?.();
