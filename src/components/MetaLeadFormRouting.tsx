@@ -46,6 +46,27 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
   const setFn = useServerFn(setMetaLeadFormRoute);
   const replayFn = useServerFn(replayMetaLeadAdTest);
   const eventsFn = useServerFn(listMetaLeadAdEvents);
+  const importFn = useServerFn(importPastMetaLeads);
+  const [importing, setImporting] = useState<string | null>(null);
+
+  const importLeads = useMutation({
+    mutationFn: (input: { formId: string; formName?: string | null; pageId?: string | null }) =>
+      importFn({ data: { subAccountId: subId, ...input } }),
+    onSuccess: (res: { total: number; imported: number; skipped: number; failed: number; errors: string[] }) => {
+      if (res.total === 0) toast.info("Meta returned no past leads for this form");
+      else
+        toast.success(
+          `Imported ${res.imported} of ${res.total} leads · ${res.skipped} already in CRM${res.failed ? ` · ${res.failed} failed` : ""}`,
+        );
+      if (res.errors?.length) toast.error(res.errors[0]);
+      qc.invalidateQueries({ queryKey: ["meta-lead-ad-events", subId] });
+      qc.invalidateQueries({ queryKey: ["contacts"] });
+      qc.invalidateQueries({ queryKey: ["deals"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSettled: () => setImporting(null),
+  });
+
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["meta-lead-form-routes", subId],
