@@ -111,7 +111,7 @@ function InboxPage() {
               title={filter === "unread" ? "You're all caught up" : "No notifications yet"}
               description={filter === "unread" ? "Nothing unread right now." : "Notifications about your workspace will show up here."}
             />
-          ) : 
+          ) : (
             <ul className="divide-y divide-border">
               {visible.map((n) => (
                 <NoteRow key={n.id} note={n} onRead={(id) => readOne.mutate(id)} />
