@@ -576,8 +576,8 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                     ))}
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Showing {visiblePages.length} of {pages.length} pages · your search, filters and
-                    open sections are remembered on this device.
+                    Showing {visiblePages.length} of {pages.length} pages · search, filters and open
+                    sections are remembered per sub-tab on this device.
                   </p>
                 </div>
 
