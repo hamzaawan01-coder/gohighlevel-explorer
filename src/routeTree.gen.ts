@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -58,6 +59,11 @@ import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/ap
 import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
 import { Route as ApiPublicHooksMetaTokenRouteImport } from './routes/api/public/hooks/meta.$token'
 
+const DataDeletionRoute = DataDeletionRouteImport.update({
+  id: '/data-deletion',
+  path: '/data-deletion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -326,6 +332,7 @@ const ApiPublicHooksMetaTokenRoute = ApiPublicHooksMetaTokenRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/data-deletion': typeof DataDeletionRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
@@ -375,6 +382,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/data-deletion': typeof DataDeletionRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
@@ -426,6 +434,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/data-deletion': typeof DataDeletionRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/calls': typeof AuthenticatedCallsRoute
   '/_authenticated/conversations': typeof AuthenticatedConversationsRoute
@@ -477,6 +486,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/data-deletion'
     | '/calendar'
     | '/calls'
     | '/conversations'
@@ -526,6 +536,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/data-deletion'
     | '/calendar'
     | '/calls'
     | '/conversations'
@@ -576,6 +587,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/data-deletion'
     | '/_authenticated/calendar'
     | '/_authenticated/calls'
     | '/_authenticated/conversations'
@@ -627,6 +639,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  DataDeletionRoute: typeof DataDeletionRoute
   BSlugRoute: typeof BSlugRoute
   FSlugRoute: typeof FSlugRoute
   InviteTokenRoute: typeof InviteTokenRoute
@@ -652,6 +665,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/data-deletion': {
+      id: '/data-deletion'
+      path: '/data-deletion'
+      fullPath: '/data-deletion'
+      preLoaderRoute: typeof DataDeletionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -1054,6 +1074,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  DataDeletionRoute: DataDeletionRoute,
   BSlugRoute: BSlugRoute,
   FSlugRoute: FSlugRoute,
   InviteTokenRoute: InviteTokenRoute,
