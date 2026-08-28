@@ -164,7 +164,7 @@ function InvoicesPage() {
           {invoicesQ.isLoading ? (
             <ListSkeleton />
           ) : invoicesQ.error ? (
-            <ErrorState message={(invoicesQ.error as Error).message} onRetry={() => invoicesQ.refetch()} />
+            <ErrorState error={invoicesQ.error} onRetry={() => void invoicesQ.refetch()} />
           ) : rows.length === 0 ? (
             <EmptyState
               icon={Receipt}
