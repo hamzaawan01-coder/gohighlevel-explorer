@@ -28,6 +28,7 @@ import { SubAccountSwitcher } from "@/components/SubAccountSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Softphone } from "@/components/Softphone";
+import { isModuleEnabled, moduleForPath, useModules } from "@/lib/modules";
 
 function openPalette() {
   (window as unknown as { __openPalette?: () => void }).__openPalette?.();
