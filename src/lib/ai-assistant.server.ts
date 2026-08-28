@@ -52,6 +52,30 @@ export function buildDraftPrompt(ctx: DraftContext): { system: string; prompt: s
   const lines: string[] = [];
   lines.push("BUSINESS INFORMATION:");
   lines.push(ctx.businessInfo.trim() || "(none provided)");
+
+  const knowledge = (ctx.knowledge ?? []).filter((k) => k.content.trim());
+  if (knowledge.length > 0) {
+    lines.push("", "KNOWLEDGE BASE (FAQs and business documents — treat as authoritative):");
+    for (const k of knowledge) {
+      lines.push(`--- ${k.title} ---`);
+      lines.push(k.content.trim().slice(0, 6000));
+    }
+  }
+
+  const feedback = (ctx.feedback ?? []).filter((f) => f.draft.trim() || f.note.trim());
+  if (feedback.length > 0) {
+    lines.push("", "TEAM FEEDBACK ON PAST DRAFTS (learn from this):");
+    for (const f of feedback) {
+      const verdict = f.rating === "up" ? "LIKED" : "REJECTED";
+      lines.push(
+        `${verdict}${f.note.trim() ? ` (reason: ${f.note.trim()})` : ""}: ${f.draft.trim().slice(0, 500)}`,
+      );
+    }
+    lines.push(
+      "Imitate the liked drafts. Avoid the phrasing, length and mistakes of the rejected drafts.",
+    );
+  }
+
   if (ctx.contact) {
     lines.push("", "CUSTOMER:");
     lines.push(
