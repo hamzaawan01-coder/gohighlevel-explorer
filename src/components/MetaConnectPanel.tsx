@@ -71,8 +71,32 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   const disconnectFn = useServerFn(disconnectMeta);
   const configureWebhooksFn = useServerFn(configureMetaWebhooks);
 
+  // Freshness stamps: when counts / webhook status were last checked.
+  const [stamps, setStamps] = useState<MetaStamps>(() => loadMetaStamps());
+  const stampNow = useCallback((patch: Partial<MetaStamps>) => {
+    setStamps((s) => {
+      const next = { ...s, ...patch };
+      saveMetaStamps(next);
+      return next;
+    });
+  }, []);
+  // Re-render every 30s so the "last refreshed" age stays accurate.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  // Confirmation prompts before destructive/bulk actions.
+  const [confirmAction, setConfirmAction] = useState<null | "webhooks" | "enableAll">(null);
+
   const configureWebhooks = useMutation({
-    mutationFn: () => configureWebhooksFn({ data: { subAccountId: subId } }),
+    mutationFn: () => {
+      const id = toast.loading("Resyncing webhooks with Meta…");
+      return configureWebhooksFn({ data: { subAccountId: subId } }).finally(() =>
+        toast.dismiss(id),
+      );
+    },
     onSuccess: (res: { results: { object: string; ok: boolean; error?: string }[] }) => {
       const failed = (res.results ?? []).filter((r) => !r.ok);
       if (failed.length === 0) toast.success("Webhooks registered with Meta (Page + Instagram)");
@@ -80,9 +104,11 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
         toast.warning(
           `Partially configured: ${failed.map((f) => `${f.object} — ${f.error}`).join("; ")}`,
         );
+      stampNow({ webhooksAt: new Date().toISOString() });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(`Webhook resync failed — ${e.message}`),
   });
+
 
   const q = useQuery({
     queryKey: ["meta-connection", subId],
