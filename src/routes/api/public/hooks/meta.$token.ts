@@ -11,7 +11,7 @@
  * events to the right workspace when multiple accounts share our app.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { verifyMetaSignature, fetchLeadById, createOpportunityForLead } from "@/lib/meta.server";
+import { verifyMetaSignature, fetchLeadById, ingestLeadAdLead, recordLeadAdEvent } from "@/lib/meta.server";
 
 type MessagingEntry = {
   id: string; // page id
