@@ -1,4 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  loadMetaTabUi,
+  saveMetaTabUi,
+  type MetaChannelFilter,
+  type MetaTabUiState,
+} from "@/lib/meta-ui-prefs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
