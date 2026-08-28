@@ -60,7 +60,6 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
         if (!verifyMetaSignature(raw, sig)) return new Response("Invalid signature", { status: 401 });
 
         const connectionId = params.token;
-        console.log("[meta-hook] received", connectionId, raw.slice(0, 200));
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         const { data: connRows } = await (supabaseAdmin as any)
@@ -130,7 +129,6 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
               .from("meta_pages").select("*")
               .eq("sub_account_id", conn.sub_account_id).eq("page_id", pageId).limit(1);
             const page = (pageRows ?? [])[0] as { page_access_token: string; sync_lead_ads: boolean } | undefined;
-            console.log("[meta-hook] leadgen", pageId, !!page, page?.sync_lead_ads);
             if (!page || !page.sync_lead_ads) continue;
 
             try {
