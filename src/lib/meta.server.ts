@@ -513,11 +513,19 @@ export async function ingestLeadAdLead(
   },
 ): Promise<LeadRoutingResult & { contactId: string | null }> {
   const f = args.fields;
-  const email = f["email"] ?? null;
-  const phone = f["phone_number"] ?? f["phone"] ?? null;
-  const full = f["full_name"] ? String(f["full_name"]) : null;
+  const pick = (test: (k: string) => boolean) => {
+    for (const [k, v] of Object.entries(f)) {
+      if (v && test(k.toLowerCase())) return String(v);
+    }
+    return null;
+  };
+  const email = f["email"] ?? pick((k) => k.includes("email"));
+  const phone =
+    f["phone_number"] ?? f["phone"] ?? pick((k) => k.includes("phone") || k.includes("mobile"));
+  const full = f["full_name"] ? String(f["full_name"]) : pick((k) => k === "name" || k.includes("full_name"));
   const first = f["first_name"] ?? (full ? full.split(" ")[0] : null);
   const last = f["last_name"] ?? (full ? full.split(" ").slice(1).join(" ") : null);
+
 
   const audit = (extra: Partial<Parameters<typeof recordLeadAdEvent>[1]>) =>
     recordLeadAdEvent(admin, {
