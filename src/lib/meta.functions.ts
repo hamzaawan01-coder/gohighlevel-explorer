@@ -522,3 +522,153 @@ export const replayMetaLeadAdTest = createServerFn({ method: "POST" })
 
     return { ...result, pipelineName, stageName, usedSample };
   });
+
+/**
+ * Pull existing (historical) leads for one Lead Ad form from Meta and ingest
+ * them. Deduplicates by Meta lead ID, so re-running is safe.
+ */
+export const importPastMetaLeads = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string; formId: string; formName?: string | null; pageId?: string | null; maxLeads?: number }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      formId: z.string().min(1),
+      formName: z.string().nullish(),
+      pageId: z.string().nullish(),
+      maxLeads: z.number().int().min(1).max(500).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { fetchFormLeads, flattenLeadFields, ingestLeadAdLead } = await import("./meta.server");
+
+    let pq = (supabaseAdmin as any)
+      .from("meta_pages")
+      .select("page_id, page_name, page_access_token, connection_id")
+      .eq("sub_account_id", data.subAccountId)
+      .order("sync_lead_ads", { ascending: false })
+      .limit(1);
+    if (data.pageId) pq = pq.eq("page_id", data.pageId);
+    const { data: pageRows } = await pq;
+    const page = (pageRows ?? [])[0] as { page_id: string; page_name: string; page_access_token: string } | undefined;
+    if (!page) throw new Error("No connected Facebook Page found for this form. Connect Meta and refresh accounts first.");
+
+    const { data: conns } = await (supabaseAdmin as any)
+      .from("meta_connections").select("created_by")
+      .eq("sub_account_id", data.subAccountId)
+      .order("created_at", { ascending: false }).limit(1);
+    const ownerId = ((conns ?? [])[0]?.created_by as string | undefined) ?? context.userId;
+
+    let leads: Awaited<ReturnType<typeof fetchFormLeads>>;
+    try {
+      leads = await fetchFormLeads(data.formId, page.page_access_token, data.maxLeads ?? 200);
+    } catch (e) {
+      throw new Error(`Meta rejected the lead history request: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
+    // Dedupe against leads already stored on contacts.
+    const ids = leads.map((l) => l.id).filter(Boolean);
+    const existing = new Set<string>();
+    for (let i = 0; i < ids.length; i += 200) {
+      const { data: rows } = await (supabaseAdmin as any)
+        .from("contacts").select("meta_lead_id")
+        .eq("sub_account_id", data.subAccountId)
+        .in("meta_lead_id", ids.slice(i, i + 200));
+      for (const r of (rows ?? []) as Array<{ meta_lead_id: string | null }>) {
+        if (r.meta_lead_id) existing.add(r.meta_lead_id);
+      }
+    }
+
+    let imported = 0;
+    let skipped = 0;
+    let failed = 0;
+    const errors: string[] = [];
+    for (const lead of leads) {
+      if (!lead.id) continue;
+      if (existing.has(lead.id)) { skipped++; continue; }
+      const fields = flattenLeadFields(lead.field_data);
+      try {
+        const res = await ingestLeadAdLead(supabaseAdmin as any, {
+          subAccountId: data.subAccountId,
+          ownerId,
+          pageId: page.page_id,
+          formId: data.formId,
+          formName: data.formName ?? null,
+          leadgenId: lead.id,
+          fields,
+          payload: { source: "import", lead },
+          isTest: false,
+        });
+        if (res.error) { failed++; if (errors.length < 5) errors.push(res.error); }
+        else imported++;
+      } catch (e) {
+        failed++;
+        if (errors.length < 5) errors.push(e instanceof Error ? e.message : String(e));
+      }
+    }
+
+    return { total: leads.length, imported, skipped, failed, errors, pageName: page.page_name };
+  });
+
+/**
+ * Where did this contact / opportunity come from? Returns the Meta Page, Lead Ad
+ * form and the webhook audit events that created the records.
+ */
+export const getMetaLeadSource = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string; contactId?: string | null; dealId?: string | null }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      contactId: z.string().uuid().nullish(),
+      dealId: z.string().uuid().nullish(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
+    if (!data.contactId && !data.dealId) return { events: [], page: null, pipelineName: null, stageName: null };
+
+    const sel =
+      "id, page_id, form_id, form_name, leadgen_id, contact_id, deal_id, pipeline_id, stage_id, routing_source, status, error, is_test, created_at";
+    let q = (context.supabase as any)
+      .from("meta_lead_ad_events")
+      .select(sel)
+      .eq("sub_account_id", data.subAccountId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    q = data.contactId ? q.eq("contact_id", data.contactId) : q.eq("deal_id", data.dealId);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const events = (rows ?? []) as Array<{
+      id: string; page_id: string | null; form_id: string | null; form_name: string | null;
+      leadgen_id: string | null; contact_id: string | null; deal_id: string | null;
+      pipeline_id: string | null; stage_id: string | null; routing_source: string;
+      status: string; error: string | null; is_test: boolean; created_at: string;
+    }>;
+    if (events.length === 0) return { events: [], page: null, pipelineName: null, stageName: null };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const pageId = events.find((e) => e.page_id)?.page_id ?? null;
+    let page: { page_id: string; page_name: string } | null = null;
+    if (pageId) {
+      const { data: pRows } = await (supabaseAdmin as any)
+        .from("meta_pages").select("page_id, page_name")
+        .eq("sub_account_id", data.subAccountId).eq("page_id", pageId).limit(1);
+      page = ((pRows ?? [])[0] as { page_id: string; page_name: string } | undefined) ?? null;
+    }
+
+    const latest = events[0];
+    let pipelineName: string | null = null;
+    let stageName: string | null = null;
+    if (latest.pipeline_id) {
+      const { data: p } = await (context.supabase as any).from("pipelines").select("name").eq("id", latest.pipeline_id).limit(1);
+      pipelineName = (p ?? [])[0]?.name ?? null;
+    }
+    if (latest.stage_id) {
+      const { data: s } = await (context.supabase as any).from("pipeline_stages").select("name").eq("id", latest.stage_id).limit(1);
+      stageName = (s ?? [])[0]?.name ?? null;
+    }
+
+    return { events, page, pipelineName, stageName };
+  });
