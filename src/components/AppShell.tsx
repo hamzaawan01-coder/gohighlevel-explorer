@@ -1,43 +1,23 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  LayoutGrid,
-  LayoutDashboard,
-  Users,
-  Calendar,
-  MessageSquare,
-  Workflow,
-  Settings,
   Search,
   LogOut,
-  CheckSquare,
-  BarChart3,
-  FileText,
-  Inbox,
-  CalendarClock,
-  Megaphone,
-  Webhook,
-  Phone,
-  PhoneCall,
   ToggleLeft,
   Ban,
-  ShieldCheck,
-  Palette,
   Sun,
   Moon,
   Rows3,
   Rows4,
   PanelLeftClose,
   PanelLeftOpen,
-  Users2,
-  Clock,
   Menu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { SubAccountSwitcher } from "@/components/SubAccountSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
-import { Compass } from "lucide-react";
+
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Softphone } from "@/components/Softphone";
@@ -46,67 +26,11 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { useAppearance } from "@/lib/appearance";
 import { ShortcutsDialog } from "@/components/ShortcutsDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SidebarNav } from "@/components/SidebarNav";
 
 function openPalette() {
   (window as unknown as { __openPalette?: () => void }).__openPalette?.();
 }
-
-type NavItem = {
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  to: string;
-  /** Module key gating this item; omit for always-visible items. */
-  module?: string;
-};
-
-type NavSection = { label: string; items: NavItem[] };
-
-const NAV_SECTIONS: NavSection[] = [
-  {
-    label: "Sales",
-    items: [
-      { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard", module: "dashboard" },
-      { label: "Opportunities", icon: LayoutGrid, to: "/opportunities", module: "opportunities" },
-      { label: "Contacts", icon: Users, to: "/contacts", module: "contacts" },
-      { label: "Tasks", icon: CheckSquare, to: "/tasks", module: "tasks" },
-      { label: "Reports", icon: BarChart3, to: "/reports", module: "reports" },
-    ],
-  },
-  {
-    label: "Communication",
-    items: [
-      { label: "Inbox", icon: Inbox, to: "/inbox", module: "conversations" },
-      { label: "Conversations", icon: MessageSquare, to: "/conversations", module: "conversations" },
-      { label: "Calls", icon: PhoneCall, to: "/calls", module: "calls" },
-      { label: "Calendar", icon: Calendar, to: "/calendar", module: "calendar" },
-    ],
-  },
-  {
-    label: "Marketing",
-    items: [
-      { label: "Campaigns", icon: Megaphone, to: "/marketing", module: "marketing" },
-      { label: "Workflows", icon: Workflow, to: "/workflows", module: "workflows" },
-      { label: "Templates", icon: FileText, to: "/templates", module: "templates" },
-      { label: "Forms", icon: FileText, to: "/forms", module: "forms" },
-      { label: "Booking pages", icon: CalendarClock, to: "/settings/booking", module: "calendar" },
-    ],
-  },
-  {
-    label: "Settings",
-    items: [
-      { label: "Appearance", icon: Palette, to: "/settings/appearance" },
-      { label: "Phone numbers", icon: Phone, to: "/settings/phone-numbers", module: "calls" },
-      { label: "Call flows", icon: PhoneCall, to: "/settings/call-flows", module: "calls" },
-      { label: "Integrations", icon: Settings, to: "/settings/integrations", module: "integrations" },
-      { label: "WordPress", icon: Webhook, to: "/settings/wordpress", module: "integrations" },
-      { label: "Quiet hours", icon: Clock, to: "/settings/messaging", module: "integrations" },
-      { label: "Team", icon: Users2, to: "/settings/team" },
-      { label: "App review", icon: ShieldCheck, to: "/settings/app-review", module: "integrations" },
-      { label: "Modules", icon: ToggleLeft, to: "/settings/modules" },
-      { label: "Module explorer", icon: Compass, to: "/modules-explorer" },
-    ],
-  },
-];
 
 export function AppShell({
   children,
@@ -131,9 +55,6 @@ export function AppShell({
     setMobileOpen(false);
   }, [pathname]);
 
-  const visible = (items: NavItem[]) =>
-    items.filter((i) => !i.module || isModuleEnabled(state, i.module));
-
   const currentModule = moduleForPath(pathname);
   const blocked =
     !modulesLoading &&
@@ -155,15 +76,8 @@ export function AppShell({
         )}
       </div>
 
-      <nav aria-label="Main navigation" className="flex-1 overflow-y-auto py-3">
-        {NAV_SECTIONS.map((section) => {
-          const items = visible(section.items);
-          if (items.length === 0) return null;
-          return (
-            <NavGroup key={section.label} label={section.label} items={items} collapsed={isCollapsed} />
-          );
-        })}
-      </nav>
+      <SidebarNav collapsed={isCollapsed} />
+
 
       <div className={`border-t border-border ${isCollapsed ? "p-2" : "p-3"}`}>
         <button
@@ -283,7 +197,7 @@ function useGlobalShortcuts() {
       c: "/contacts",
       t: "/tasks",
       i: "/inbox",
-      s: "/settings/integrations",
+      s: "/settings",
     };
     function isTyping(target: EventTarget | null) {
       const el = target as HTMLElement | null;
@@ -363,50 +277,6 @@ function ModuleDisabled({ label }: { label: string }) {
           <ToggleLeft className="size-3.5" />
           Manage modules
         </Link>
-      </div>
-    </div>
-  );
-}
-
-function NavGroup({
-  label,
-  items,
-  collapsed,
-}: {
-  label: string;
-  items: NavItem[];
-  collapsed: boolean;
-}) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  return (
-    <div className={`mb-4 ${collapsed ? "px-2" : "px-3"}`}>
-      {collapsed ? (
-        <div className="mx-auto mb-2 h-px w-6 bg-sidebar-border" />
-      ) : (
-        <p className="mb-1.5 px-3 eyebrow">{label}</p>
-      )}
-      <div className="space-y-0.5">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const active = pathname === item.to;
-          return (
-            <Link
-              key={item.label}
-              to={item.to}
-              title={collapsed ? item.label : undefined}
-              className={[
-                "flex items-center gap-3 rounded-md text-sm transition-colors",
-                collapsed ? "justify-center px-2 py-2" : "px-3 py-1.5",
-                active
-                  ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/40 hover:text-foreground",
-              ].join(" ")}
-            >
-              <Icon className="size-3.5 shrink-0" />
-              {collapsed ? null : <span className="truncate">{item.label}</span>}
-            </Link>
-          );
-        })}
       </div>
     </div>
   );

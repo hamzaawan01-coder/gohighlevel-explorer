@@ -31,6 +31,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedConversationsRouteImport } from './routes/_authenticated/conversations'
 import { Route as AuthenticatedCallsRouteImport } from './routes/_authenticated/calls'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
 import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
 import { Route as AuthenticatedSettingsWordpressRouteImport } from './routes/_authenticated/settings.wordpress'
@@ -176,6 +177,12 @@ const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContactsIndexRoute =
   AuthenticatedContactsIndexRouteImport.update({
     id: '/contacts/',
@@ -399,6 +406,7 @@ export interface FileRoutesByFullPath {
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts/': typeof AuthenticatedContactsIndexRoute
+  '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
@@ -454,6 +462,7 @@ export interface FileRoutesByTo {
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/contacts': typeof AuthenticatedContactsIndexRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
@@ -511,6 +520,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
   '/_authenticated/contacts/': typeof AuthenticatedContactsIndexRoute
+  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
@@ -568,6 +578,7 @@ export interface FileRouteTypes {
     | '/settings/wordpress'
     | '/api/public/process-outbound'
     | '/contacts/'
+    | '/settings/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
@@ -623,6 +634,7 @@ export interface FileRouteTypes {
     | '/settings/wordpress'
     | '/api/public/process-outbound'
     | '/contacts'
+    | '/settings'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
@@ -679,6 +691,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/wordpress'
     | '/api/public/process-outbound'
     | '/_authenticated/contacts/'
+    | '/_authenticated/settings/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
@@ -882,6 +895,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof AuthenticatedCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contacts/': {
@@ -1139,6 +1159,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
   AuthenticatedSettingsWordpressRoute: typeof AuthenticatedSettingsWordpressRoute
   AuthenticatedContactsIndexRoute: typeof AuthenticatedContactsIndexRoute
+  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1171,6 +1192,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
   AuthenticatedSettingsWordpressRoute: AuthenticatedSettingsWordpressRoute,
   AuthenticatedContactsIndexRoute: AuthenticatedContactsIndexRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
