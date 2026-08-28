@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Mail, MessageSquare, CheckCircle2, AlertCircle, ExternalLink, Facebook } from "lucide-react";
 import { MetaConnectPanel } from "@/components/MetaConnectPanel";
+import { LeadDisplaySettings } from "@/components/LeadDisplaySettings";
 import { useTenancy } from "@/lib/tenancy";
 import {
   fetchIntegrations,
