@@ -758,7 +758,8 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
     if (!data.contactId && !data.dealId) return { events: [], page: null, pipelineName: null, stageName: null };
 
     const sel =
-      "id, page_id, form_id, form_name, leadgen_id, contact_id, deal_id, pipeline_id, stage_id, routing_source, status, error, is_test, lead_fields, created_at";
+      "id, page_id, form_id, form_name, leadgen_id, contact_id, deal_id, pipeline_id, stage_id, routing_source, status, error, is_test, lead_fields, payload, created_at";
+
 
     let q = (context.supabase as any)
       .from("meta_lead_ad_events")
