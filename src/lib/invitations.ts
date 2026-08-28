@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { requireSession } from "@/lib/session-ready";
+
 
 export type Invitation = {
   id: string;
