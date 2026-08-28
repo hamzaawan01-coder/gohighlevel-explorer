@@ -280,7 +280,53 @@ export function DealDetailPanel({
   );
 }
 
+function ContactInfoCard({ contact }: { contact: Contact }) {
+  const rows: [string, React.ReactNode][] = [
+    ["Name", [contact.first_name, contact.last_name].filter(Boolean).join(" ") || "—"],
+    [
+      "Phone",
+      contact.phone ? (
+        <a href={`tel:${contact.phone}`} className="text-accent hover:underline">{contact.phone}</a>
+      ) : "—",
+    ],
+    [
+      "Email",
+      contact.email ? (
+        <a href={`mailto:${contact.email}`} className="text-accent hover:underline break-all">{contact.email}</a>
+      ) : "—",
+    ],
+    ["Company", contact.company || "—"],
+    ["Lifecycle", contact.lifecycle_stage ?? "—"],
+    ["Lead source", contact.lead_source ?? "—"],
+    ["Tags", (contact.tags ?? []).length ? (contact.tags ?? []).join(", ") : "—"],
+    ["Contact notes", contact.notes ? <span className="whitespace-pre-wrap">{contact.notes}</span> : "—"],
+  ];
+  return (
+    <div className="rounded-md border border-border overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-border flex items-center gap-2">
+        <User className="size-3.5 text-muted-foreground" />
+        <h4 className="text-xs font-medium">Contact details</h4>
+        <Link
+          to="/contacts"
+          className="ml-auto text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+        >
+          Open contacts <ArrowUpRight className="size-3" />
+        </Link>
+      </div>
+      <dl className="divide-y divide-border">
+        {rows.map(([k, v]) => (
+          <div key={k} className="px-4 py-2.5 grid grid-cols-[120px_1fr] gap-4 text-xs">
+            <dt className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground self-center">{k}</dt>
+            <dd className="min-w-0">{v}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 function OverviewTab({
+
   deal,
   stages,
   contacts,
