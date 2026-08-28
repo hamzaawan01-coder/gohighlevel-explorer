@@ -271,6 +271,36 @@ function ConversationsPage() {
   }, [subId, qc]);
 
   const suggestReplyFn = useServerFn(suggestReply);
+  const [lastDraft, setLastDraft] = useState<string | null>(null);
+  const [draftRated, setDraftRated] = useState<null | "up" | "down">(null);
+  const [rejectNote, setRejectNote] = useState("");
+  const [showRejectNote, setShowRejectNote] = useState(false);
+
+  const feedbackMut = useMutation({
+    mutationFn: async (input: { rating: "up" | "down"; note?: string }) => {
+      if (!subId || !lastDraft) throw new Error("Nothing to rate yet");
+      await submitDraftFeedback({
+        subAccountId: subId,
+        conversationId: selectedConvoId ?? null,
+        rating: input.rating,
+        draft: lastDraft,
+        note: input.note ?? "",
+        channel: composeChannel,
+      });
+    },
+    onSuccess: (_d, vars) => {
+      setDraftRated(vars.rating);
+      setShowRejectNote(false);
+      setRejectNote("");
+      toast.success(
+        vars.rating === "up"
+          ? "Thanks — the assistant will lean on drafts like this"
+          : "Thanks — the assistant will avoid drafts like this",
+      );
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const draftMut = useMutation({
     mutationFn: async () => {
       if (!selectedConvoId) throw new Error("Open a conversation first");
@@ -280,6 +310,10 @@ function ConversationsPage() {
     },
     onSuccess: (res) => {
       setBody(res.draft);
+      setLastDraft(res.draft);
+      setDraftRated(null);
+      setShowRejectNote(false);
+      setRejectNote("");
       if (res.escalate) {
         toast.warning("Suggested handing this to a human", {
           description: res.escalation_reason || undefined,
