@@ -697,11 +697,39 @@ export function MetaLeadSourcePanel({
         </div>
       )}
 
-      {timeline.length > 0 && (
+      {allTimeline.length > 0 && (
         <div className="border-t border-border">
           <div className="px-4 py-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            Timeline · {timeline.length}
+            Timeline · {timeline.length}/{allTimeline.length}
           </div>
+          <div className="px-4 pb-2 flex flex-wrap gap-1.5">
+            {TIMELINE_KINDS.map(({ key, label }) => {
+              const active = timelineKinds.includes(key);
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() =>
+                    setTimelineKinds((k) =>
+                      active ? k.filter((x) => x !== key) : [...k, key],
+                    )
+                  }
+                  className={`rounded-full border px-2 py-0.5 text-[11px] transition-colors ${
+                    active
+                      ? "border-accent text-accent"
+                      : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          {timeline.length === 0 && (
+            <div className="px-4 pb-3 text-xs text-muted-foreground">
+              No events match the selected categories.
+            </div>
+          )}
           <ul className="divide-y divide-border">
             {timeline.map((t, i) => (
               <li key={`${t.label}-${i}`} className="px-4 py-2.5 text-xs flex items-center gap-2">
