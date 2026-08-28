@@ -460,19 +460,42 @@ export function MetaLeadSourcePanel({
   const anyColumn = Object.values(columns).some(Boolean);
 
   return (
-    <div className="rounded-md border border-border overflow-hidden">
+    <div ref={rootRef} className="rounded-md border border-border overflow-hidden">
       <div className="px-4 py-2.5 border-b border-border flex items-center gap-2 flex-wrap">
         <Facebook className="size-3.5 text-muted-foreground" />
         <h4 className="text-xs font-medium">Lead source</h4>
         {selected.is_test && <Badge variant="outline">test</Badge>}
         <div className="ml-auto flex items-center gap-1.5">
-          <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={exportJson}>
-            <Download className="size-3 mr-1" /> JSON
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-[11px]"
+            disabled={isDefaultFilters || busy !== null}
+            title="Reset search, timeline filters and export columns"
+            onClick={resetFilters}
+          >
+            <RotateCcw className="size-3 mr-1" /> Reset filters
           </Button>
           <Button
             size="sm"
             variant="outline"
             className="h-7 px-2 text-[11px]"
+            disabled={busy !== null}
+            onClick={() => runBusy("json", exportJson)}
+          >
+            {busy === "json" ? (
+              <Loader2 className="size-3 mr-1 animate-spin" />
+            ) : (
+              <Download className="size-3 mr-1" />
+            )}{" "}
+            JSON
+          </Button>
+          <Button
+            size="sm"
+            variant={csvOpen ? "secondary" : "outline"}
+            className="h-7 px-2 text-[11px]"
+            aria-expanded={csvOpen}
+            disabled={busy !== null}
             onClick={() => setCsvOpen((o) => !o)}
           >
             <Download className="size-3 mr-1" /> CSV
@@ -482,6 +505,8 @@ export function MetaLeadSourcePanel({
               size="sm"
               variant={bulkOpen ? "secondary" : "outline"}
               className="h-7 px-2 text-[11px]"
+              aria-expanded={bulkOpen}
+              disabled={busy !== null}
               onClick={() => setBulkOpen((o) => !o)}
             >
               <ListChecks className="size-3 mr-1" /> Bulk
@@ -500,6 +525,7 @@ export function MetaLeadSourcePanel({
               <label key={key} className="flex items-center gap-1.5 text-xs">
                 <Checkbox
                   checked={columns[key]}
+                  disabled={busy !== null}
                   onCheckedChange={(v) => setColumns((c) => ({ ...c, [key]: Boolean(v) }))}
                 />
                 {label}
@@ -509,12 +535,15 @@ export function MetaLeadSourcePanel({
           <Button
             size="sm"
             className="h-7 px-2 text-[11px]"
-            disabled={!anyColumn}
-            onClick={() => {
-              download(`${baseName}.csv`, "text/csv", toCsv(exportRows(columns)));
-              setCsvOpen(false);
-            }}
+            disabled={!anyColumn || busy !== null}
+            onClick={() =>
+              runBusy("csv", () => {
+                download(`${baseName}.csv`, "text/csv", toCsv(exportRows(columns)));
+                setCsvOpen(false);
+              })
+            }
           >
+            {busy === "csv" && <Loader2 className="size-3 mr-1 animate-spin" />}
             Download CSV
           </Button>
         </div>
