@@ -272,12 +272,22 @@ export function verifyMetaSignature(rawBody: string, signatureHeader: string | n
  * to the Lead Ad form when configured, otherwise the sub-account's first
  * pipeline and its first stage. Safe no-op when no pipeline exists.
  */
+export type LeadRoutingResult = {
+  dealId: string | null;
+  pipelineId: string | null;
+  stageId: string | null;
+  routingSource: "mapped" | "default" | "none";
+  duplicate: boolean;
+  error?: string;
+};
+
 export async function createOpportunityForLead(
   admin: { from: (t: string) => any },
   args: { subAccountId: string; contactId: string | null; title: string; source: string; formId?: string | null },
-): Promise<string | null> {
+): Promise<LeadRoutingResult> {
   let pipeline: { id: string; owner_id: string } | undefined;
   let stage: { id: string } | undefined;
+  let routingSource: LeadRoutingResult["routingSource"] = "default";
 
   if (args.formId) {
     const { data: routes } = await admin
@@ -306,12 +316,14 @@ export async function createOpportunityForLead(
         if (routedStage) {
           pipeline = routedPipe;
           stage = routedStage;
+          routingSource = "mapped";
         }
       }
     }
   }
 
   if (!pipeline || !stage) {
+    routingSource = "default";
     const { data: pipes } = await admin
       .from("pipelines")
       .select("id, owner_id")
@@ -319,7 +331,9 @@ export async function createOpportunityForLead(
       .order("created_at", { ascending: true })
       .limit(1);
     pipeline = (pipes ?? [])[0] as { id: string; owner_id: string } | undefined;
-    if (!pipeline) return null;
+    if (!pipeline) {
+      return { dealId: null, pipelineId: null, stageId: null, routingSource: "none", duplicate: false, error: "No pipeline exists in this workspace" };
+    }
 
     const { data: stages } = await admin
       .from("pipeline_stages")
@@ -328,17 +342,28 @@ export async function createOpportunityForLead(
       .order("position", { ascending: true })
       .limit(1);
     stage = (stages ?? [])[0] as { id: string } | undefined;
-    if (!stage) return null;
+    if (!stage) {
+      return { dealId: null, pipelineId: pipeline.id, stageId: null, routingSource: "none", duplicate: false, error: "The default pipeline has no stages" };
+    }
   }
 
   if (args.contactId) {
     const { data: dupe } = await admin
       .from("deals")
-      .select("id")
+      .select("id, pipeline_id, stage_id")
       .eq("sub_account_id", args.subAccountId)
       .eq("contact_id", args.contactId)
       .limit(1);
-    if ((dupe ?? [])[0]?.id) return (dupe ?? [])[0].id as string;
+    const existing = (dupe ?? [])[0] as { id: string; pipeline_id: string; stage_id: string } | undefined;
+    if (existing?.id) {
+      return {
+        dealId: existing.id,
+        pipelineId: existing.pipeline_id,
+        stageId: existing.stage_id,
+        routingSource,
+        duplicate: true,
+      };
+    }
   }
 
   const { data: created, error } = await admin
@@ -356,7 +381,157 @@ export async function createOpportunityForLead(
     .single();
   if (error) {
     console.error("createOpportunityForLead failed", error);
-    return null;
+    return {
+      dealId: null,
+      pipelineId: pipeline.id,
+      stageId: stage.id,
+      routingSource,
+      duplicate: false,
+      error: error.message ?? String(error),
+    };
   }
-  return created.id as string;
+  return { dealId: created.id as string, pipelineId: pipeline.id, stageId: stage.id, routingSource, duplicate: false };
+}
+
+/** Append one row to the Lead Ad audit trail. Never throws. */
+export async function recordLeadAdEvent(
+  admin: { from: (t: string) => any },
+  row: {
+    subAccountId: string;
+    pageId?: string | null;
+    formId?: string | null;
+    formName?: string | null;
+    leadgenId?: string | null;
+    contactId?: string | null;
+    dealId?: string | null;
+    pipelineId?: string | null;
+    stageId?: string | null;
+    routingSource?: string;
+    status?: string;
+    error?: string | null;
+    isTest?: boolean;
+    leadFields?: Record<string, unknown>;
+    payload?: unknown;
+  },
+): Promise<void> {
+  try {
+    await admin.from("meta_lead_ad_events").insert({
+      sub_account_id: row.subAccountId,
+      page_id: row.pageId ?? null,
+      form_id: row.formId ?? null,
+      form_name: row.formName ?? null,
+      leadgen_id: row.leadgenId ?? null,
+      contact_id: row.contactId ?? null,
+      deal_id: row.dealId ?? null,
+      pipeline_id: row.pipelineId ?? null,
+      stage_id: row.stageId ?? null,
+      routing_source: row.routingSource ?? "default",
+      status: row.status ?? "ok",
+      error: row.error ?? null,
+      is_test: row.isTest ?? false,
+      lead_fields: row.leadFields ?? {},
+      payload: row.payload ?? {},
+    });
+  } catch (e) {
+    console.error("recordLeadAdEvent failed", e);
+  }
+}
+
+/**
+ * Single ingestion path for a Lead Ad lead (live webhook or replayed test).
+ * Upserts the contact by meta_lead_id, creates/reuses the opportunity using the
+ * form's pipeline/stage mapping, and writes an audit-trail row either way.
+ */
+export async function ingestLeadAdLead(
+  admin: { from: (t: string) => any },
+  args: {
+    subAccountId: string;
+    ownerId: string;
+    pageId?: string | null;
+    formId?: string | null;
+    formName?: string | null;
+    leadgenId: string;
+    fields: Record<string, string>;
+    payload?: unknown;
+    isTest?: boolean;
+  },
+): Promise<LeadRoutingResult & { contactId: string | null }> {
+  const f = args.fields;
+  const email = f["email"] ?? null;
+  const phone = f["phone_number"] ?? f["phone"] ?? null;
+  const full = f["full_name"] ? String(f["full_name"]) : null;
+  const first = f["first_name"] ?? (full ? full.split(" ")[0] : null);
+  const last = f["last_name"] ?? (full ? full.split(" ").slice(1).join(" ") : null);
+
+  const audit = (extra: Partial<Parameters<typeof recordLeadAdEvent>[1]>) =>
+    recordLeadAdEvent(admin, {
+      subAccountId: args.subAccountId,
+      pageId: args.pageId ?? null,
+      formId: args.formId ?? null,
+      formName: args.formName ?? null,
+      leadgenId: args.leadgenId,
+      isTest: args.isTest ?? false,
+      leadFields: f,
+      payload: args.payload ?? {},
+      ...extra,
+    });
+
+  const { data: existingRows } = await admin
+    .from("contacts")
+    .select("id")
+    .eq("sub_account_id", args.subAccountId)
+    .eq("meta_lead_id", args.leadgenId)
+    .limit(1);
+  let contactId = (existingRows ?? [])[0]?.id as string | undefined;
+
+  const patch = {
+    first_name: first,
+    last_name: last,
+    email,
+    phone,
+    lead_source: "meta_lead_ads",
+    lifecycle_stage: "lead",
+  };
+
+  if (contactId) {
+    await admin.from("contacts").update(patch).eq("id", contactId);
+  } else {
+    const { data: created, error: cErr } = await admin
+      .from("contacts")
+      .insert({
+        ...patch,
+        sub_account_id: args.subAccountId,
+        owner_id: args.ownerId,
+        meta_lead_id: args.leadgenId,
+        tags: [],
+      })
+      .select("id")
+      .single();
+    if (cErr) {
+      await audit({ status: "error", error: `Contact insert failed: ${cErr.message ?? String(cErr)}`, routingSource: "none" });
+      return { contactId: null, dealId: null, pipelineId: null, stageId: null, routingSource: "none", duplicate: false, error: cErr.message };
+    }
+    contactId = created.id as string;
+  }
+
+  const title = [first, last].filter(Boolean).join(" ").trim() || email || phone || "Facebook lead";
+  const result = await createOpportunityForLead(admin, {
+    subAccountId: args.subAccountId,
+    contactId: contactId ?? null,
+    title,
+    source: args.isTest ? "Facebook Lead Ad (test replay)" : "Facebook Lead Ad",
+    formId: args.formId ?? null,
+  });
+
+  await audit({
+    contactId: contactId ?? null,
+    dealId: result.dealId,
+    pipelineId: result.pipelineId,
+    stageId: result.stageId,
+    routingSource: result.routingSource,
+    status: result.error ? "error" : result.duplicate ? "duplicate" : "ok",
+    error: result.error ?? null,
+  });
+
+  return { ...result, contactId: contactId ?? null };
 }
