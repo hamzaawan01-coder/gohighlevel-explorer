@@ -288,9 +288,18 @@ function DealCardView({
           <dd className="text-foreground truncate">{business}</dd>
         </div>
         <div className="grid grid-cols-[92px_1fr] gap-2">
+          <dt className="text-muted-foreground">Phone:</dt>
+          <dd className="text-foreground truncate">{phone ?? "—"}</dd>
+        </div>
+        <div className="grid grid-cols-[92px_1fr] gap-2">
+          <dt className="text-muted-foreground">Email:</dt>
+          <dd className="text-foreground truncate">{email ?? "—"}</dd>
+        </div>
+        <div className="grid grid-cols-[92px_1fr] gap-2">
           <dt className="text-muted-foreground">Source:</dt>
           <dd className="text-foreground truncate">{source}</dd>
         </div>
+
         <div className="grid grid-cols-[92px_1fr] gap-2">
           <dt className="text-muted-foreground">Value:</dt>
           <dd className="font-medium text-foreground">
