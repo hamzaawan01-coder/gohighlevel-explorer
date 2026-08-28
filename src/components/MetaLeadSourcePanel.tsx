@@ -226,14 +226,24 @@ export function MetaLeadSourcePanel({
   const missing = [...missingContact, ...missingAnswers, ...emptyAnswers];
 
   // Timeline
-  const timeline = [
+  const allTimeline: Array<{ label: string; at: Date; kind: TimelineKind }> = [
     ...timelineFromFields(fields),
-    ...(contact ? [{ label: "Contact created in CRM", at: new Date(contact.created_at) }] : []),
+    ...(contact
+      ? [
+          {
+            label: "Contact created in CRM",
+            at: new Date(contact.created_at),
+            kind: "crm" as TimelineKind,
+          },
+        ]
+      : []),
     ...events.map((ev) => ({
       label: `Webhook ${ev.status}${ev.form_name ? ` · ${ev.form_name}` : ""}`,
       at: new Date(ev.created_at),
+      kind: (ev.status === "error" ? "webhook_error" : "webhook_ok") as TimelineKind,
     })),
   ].sort((a, b) => a.at.getTime() - b.at.getTime());
+  const timeline = allTimeline.filter((t) => timelineKinds.includes(t.kind));
 
   // Search index
   const q = query.trim().toLowerCase();
@@ -250,6 +260,39 @@ export function MetaLeadSourcePanel({
           group.toLowerCase().includes(q),
       )
     : [];
+
+  const eventRows = (
+    ev: (typeof events)[number],
+    cols: Record<ColumnKey, boolean>,
+  ): Array<[string, string]> => {
+    const evFields = (ev.lead_fields ?? {}) as Record<string, string>;
+    const evEntries = Object.entries(evFields);
+    const evAttachments = evEntries.filter(([, v]) => typeof v === "string" && isAttachment(v));
+    const evAnswers = evEntries.filter(([, v]) => !(typeof v === "string" && isAttachment(v)));
+    const evMeta: Array<[string, string]> = [
+      ["Facebook Page", ev.page_id ?? "—"],
+      ["Lead Ad form", ev.form_name ?? ev.form_id ?? "—"],
+      ["Form ID", ev.form_id ?? "—"],
+      ["Meta lead ID", ev.leadgen_id ?? "—"],
+      ["Webhook event ID", ev.id],
+      ["Status", ev.status],
+      ["Test lead", ev.is_test ? "yes" : "no"],
+      ["Received", new Date(ev.created_at).toLocaleString()],
+    ];
+    return [
+      ...(cols.contact ? contactRows.map(([k, v]) => [`Contact · ${k}`, v] as [string, string]) : []),
+      ...(cols.answers
+        ? evAnswers.map(([k, v]) => [`Answer · ${prettyLabel(k)}`, String(v)] as [string, string])
+        : []),
+      ...(cols.attachments
+        ? evAttachments.map(
+            ([k, v]) => [`Attachment · ${prettyLabel(k)}`, String(v)] as [string, string],
+          )
+        : []),
+      ...(cols.metadata ? evMeta : []),
+      ...(cols.raw ? [["Raw payload", ev.payloadJson ?? ""] as [string, string]] : []),
+    ];
+  };
 
   const exportRows = (cols: Record<ColumnKey, boolean>): Array<[string, string]> => [
     ...(cols.contact
@@ -281,6 +324,32 @@ export function MetaLeadSourcePanel({
           timeline: timeline.map((t) => ({ label: t.label, at: t.at.toISOString() })),
           rawPayload: selected.payloadJson ? JSON.parse(selected.payloadJson) : null,
         },
+        null,
+        2,
+      ),
+    );
+
+  const bulkSelected = events.filter((ev) => bulkIds.includes(ev.id));
+
+  const exportBulkCsv = () => {
+    const esc = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = ["Lead,Field,Value"];
+    for (const ev of bulkSelected) {
+      const name = ev.leadgen_id ?? ev.id;
+      for (const [k, v] of eventRows(ev, columns)) lines.push(`${esc(name)},${esc(k)},${esc(v)}`);
+    }
+    download(`leads-${bulkSelected.length}.csv`, "text/csv", lines.join("\n"));
+  };
+
+  const exportBulkJson = () =>
+    download(
+      `leads-${bulkSelected.length}.json`,
+      "application/json",
+      JSON.stringify(
+        bulkSelected.map((ev) => ({
+          leadId: ev.leadgen_id ?? ev.id,
+          fields: Object.fromEntries(eventRows(ev, columns)),
+        })),
         null,
         2,
       ),
