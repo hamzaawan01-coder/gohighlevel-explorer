@@ -1,5 +1,4 @@
-import { generateText, Output } from "ai";
-import { z } from "zod";
+import { generateText } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 export type DraftContext = {
@@ -113,17 +112,36 @@ export function buildDraftPrompt(ctx: DraftContext): { system: string; prompt: s
   return { system, prompt: lines.join("\n") };
 }
 
-const draftSchema = z.object({
-  draft: z.string(),
-  escalate: z.boolean(),
-  escalation_reason: z.string(),
-});
-
 export type DraftResult = {
   draft: string;
   escalate: boolean;
   escalation_reason: string;
 };
+
+/** Pull a draft out of the model's answer, whether it returned JSON or plain text. */
+export function parseDraftResponse(text: string): DraftResult {
+  const raw = text.trim();
+  const fenced = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+  const start = fenced.indexOf("{");
+  const end = fenced.lastIndexOf("}");
+  if (start !== -1 && end > start) {
+    try {
+      const obj = JSON.parse(fenced.slice(start, end + 1)) as Record<string, unknown>;
+      const draft = typeof obj["draft"] === "string" ? (obj["draft"] as string).trim() : "";
+      if (draft) {
+        return {
+          draft,
+          escalate: obj["escalate"] === true || obj["escalate"] === "true",
+          escalation_reason:
+            typeof obj["escalation_reason"] === "string" ? (obj["escalation_reason"] as string) : "",
+        };
+      }
+    } catch {
+      // fall through to plain text
+    }
+  }
+  return { draft: fenced || raw, escalate: false, escalation_reason: "" };
+}
 
 /** Ask Lovable AI for a suggested reply. Throws with a readable message on failure. */
 export async function generateReplyDraft(ctx: DraftContext): Promise<DraftResult> {
@@ -133,17 +151,14 @@ export async function generateReplyDraft(ctx: DraftContext): Promise<DraftResult
   const { system, prompt } = buildDraftPrompt(ctx);
 
   try {
-    const { output } = await generateText({
+    const { text } = await generateText({
       model: gateway("google/gemini-3.7-flash"),
-      system,
+      system: `${system}\n\nReply with ONLY a JSON object, no code fences, shaped exactly: {"draft": "the reply text", "escalate": true|false, "escalation_reason": "short reason or empty string"}.`,
       prompt,
-      output: Output.object({ schema: draftSchema }),
     });
-    return {
-      draft: output.draft.trim(),
-      escalate: Boolean(output.escalate),
-      escalation_reason: output.escalation_reason ?? "",
-    };
+    const result = parseDraftResponse(text ?? "");
+    if (!result.draft) throw new Error("the assistant returned an empty reply");
+    return result;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (/402/.test(message)) {
