@@ -24,6 +24,7 @@ import {
 } from "@/lib/conversations";
 import { sendTwilioSms, sendTwilioWhatsapp } from "@/lib/twilio.functions";
 import { suggestReply } from "@/lib/ai-assistant.functions";
+import { submitDraftFeedback } from "@/lib/ai-knowledge";
 import { CHANNELS, CHANNEL_BY_KEY } from "@/lib/channels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
