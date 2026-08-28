@@ -113,12 +113,19 @@ export async function updateInvoice(
     >
   >,
 ): Promise<void> {
-  const next: Record<string, unknown> = { ...patch };
-  if (patch.status === "paid") next.paid_at = new Date().toISOString();
-  if (patch.status && patch.status !== "paid") next.paid_at = null;
-  const { error } = await supabase.from("invoices").update(next).eq("id", id);
+  const paidAt =
+    patch.status === "paid"
+      ? new Date().toISOString()
+      : patch.status
+        ? null
+        : undefined;
+  const { error } = await supabase
+    .from("invoices")
+    .update({ ...patch, ...(paidAt !== undefined ? { paid_at: paidAt } : {}) })
+    .eq("id", id);
   if (error) throw error;
 }
+
 
 export async function deleteInvoice(id: string): Promise<void> {
   const { error } = await supabase.from("invoices").delete().eq("id", id);
