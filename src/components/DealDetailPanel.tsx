@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { MetaLeadSourcePanel } from "@/components/MetaLeadSourcePanel";
 
 export function DealDetailPanel({
   dealId,
