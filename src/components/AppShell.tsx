@@ -36,6 +36,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { SubAccountSwitcher } from "@/components/SubAccountSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
+import { Compass } from "lucide-react";
+import { OnboardingTour } from "@/components/OnboardingTour";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Softphone } from "@/components/Softphone";
 import { isModuleEnabled, moduleForPath, useModules } from "@/lib/modules";
@@ -98,6 +100,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Team", icon: Users2, to: "/settings/team" },
       { label: "App review", icon: ShieldCheck, to: "/settings/app-review", module: "integrations" },
       { label: "Modules", icon: ToggleLeft, to: "/settings/modules" },
+      { label: "Module explorer", icon: Compass, to: "/modules-explorer" },
     ],
   },
 ];
@@ -207,6 +210,7 @@ export function AppShell({
       ) : null}
       <CommandPalette />
       <Softphone />
+      <OnboardingTour />
     </div>
   );
 }
