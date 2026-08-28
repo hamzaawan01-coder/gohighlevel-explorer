@@ -203,8 +203,10 @@ export function DealDetailPanel({
             onSave={(patch) => updateMut.mutate(patch)}
             saving={updateMut.isPending}
           />
+          {contact && <ContactInfoCard contact={contact} />}
           {subId && <MetaLeadSourcePanel subId={subId} dealId={d.id} />}
         </TabsContent>
+
 
         <TabsContent value="messages" className="flex-1 overflow-auto px-6 py-4">
           <MessagesTab contactId={d.contact_id} contact={contact} />
