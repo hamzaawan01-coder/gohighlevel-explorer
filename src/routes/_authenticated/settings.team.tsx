@@ -33,6 +33,7 @@ type RoleValue = "admin" | "member" | "client";
 
 function TeamPage() {
   const qc = useQueryClient();
+  const { ready: sessionReady } = useSessionReady();
   const agenciesQ = useQuery({ queryKey: ["my-agencies"], queryFn: fetchMyAgencies });
   const subsQ = useQuery({ queryKey: ["my-sub-accounts"], queryFn: fetchMySubAccounts });
 
@@ -42,14 +43,15 @@ function TeamPage() {
   const invitesQ = useQuery({
     queryKey: ["invitations", agencyId],
     queryFn: () => fetchInvitations(agencyId!),
-    enabled: !!agencyId,
+    enabled: !!agencyId && sessionReady,
   });
 
   const membersQ = useQuery({
     queryKey: ["agency-members", agencyId],
     queryFn: () => fetchAgencyMembers(agencyId!),
-    enabled: !!agencyId,
+    enabled: !!agencyId && sessionReady,
   });
+
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<RoleValue>("member");
