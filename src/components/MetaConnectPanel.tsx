@@ -8,6 +8,7 @@ import {
   updateMetaPage,
   updateMetaAdAccount,
   disconnectMeta,
+  configureMetaWebhooks,
 } from "@/lib/meta.functions";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
