@@ -301,6 +301,104 @@ export type Database = {
           },
         ]
       }
+      ai_draft_feedback: {
+        Row: {
+          channel: string | null
+          conversation_id: string | null
+          created_at: string
+          draft: string
+          id: string
+          note: string
+          rating: string
+          sub_account_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          channel?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          draft?: string
+          id?: string
+          note?: string
+          rating: string
+          sub_account_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          channel?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          draft?: string
+          id?: string
+          note?: string
+          rating?: string
+          sub_account_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_draft_feedback_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_draft_feedback_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_knowledge_docs: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          id: string
+          source_name: string | null
+          sub_account_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          source_name?: string | null
+          sub_account_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          source_name?: string | null
+          sub_account_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_knowledge_docs_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_audit: {
         Row: {
           action: string

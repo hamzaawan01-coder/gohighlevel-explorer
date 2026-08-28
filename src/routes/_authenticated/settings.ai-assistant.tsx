@@ -1,7 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, Loader2, Save } from "lucide-react";
+import { useRef } from "react";
+import {
+  Bot,
+  Loader2,
+  Save,
+  Upload,
+  Trash2,
+  FileText,
+  ThumbsUp,
+  ThumbsDown,
+  Plus,
+} from "lucide-react";
+import {
+  fetchKnowledgeDocs,
+  createKnowledgeDoc,
+  updateKnowledgeDoc,
+  deleteKnowledgeDoc,
+  fetchDraftFeedback,
+  readTextFile,
+  KNOWLEDGE_ACCEPT,
+} from "@/lib/ai-knowledge";
 import { PageHeader, PageBody } from "@/components/PageHeader";
 import { useTenancy } from "@/lib/tenancy";
 import { fetchBookingPages } from "@/lib/booking";
@@ -134,6 +154,8 @@ function AiAssistantSettingsPage() {
                 />
               </section>
 
+              <KnowledgeBaseSection subId={subId} />
+
               <section className="rounded-lg border border-border bg-card p-4 space-y-3">
                 <Label htmlFor="extra">Extra instructions (optional)</Label>
                 <Textarea
@@ -151,6 +173,8 @@ function AiAssistantSettingsPage() {
                   placeholder="— Team Click Away"
                 />
               </section>
+
+              <FeedbackSection subId={subId} />
             </div>
 
             <div className="space-y-4">
@@ -250,5 +274,225 @@ function ToggleRow({
       </div>
       <Switch checked={checked} onCheckedChange={onChange} aria-label={label} />
     </div>
+  );
+}
+
+function KnowledgeBaseSection({ subId }: { subId: string | null }) {
+  const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  const docsQ = useQuery({
+    queryKey: ["ai-knowledge", subId],
+    enabled: !!subId,
+    queryFn: () => fetchKnowledgeDocs(subId!),
+  });
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["ai-knowledge", subId] });
+
+  const addMut = useMutation({
+    mutationFn: async (input: { title: string; content: string; sourceName?: string | null }) => {
+      if (!subId) throw new Error("Pick a workspace first");
+      if (!input.content.trim()) throw new Error("Add some text before saving");
+      await createKnowledgeDoc({ subAccountId: subId, ...input });
+    },
+    onSuccess: () => {
+      setTitle("");
+      setContent("");
+      invalidate();
+      toast.success("Added to the knowledge base");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggleMut = useMutation({
+    mutationFn: (v: { id: string; enabled: boolean }) => updateKnowledgeDoc(v.id, { enabled: v.enabled }),
+    onSuccess: invalidate,
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeMut = useMutation({
+    mutationFn: (id: string) => deleteKnowledgeDoc(id),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Removed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const onFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    for (const file of Array.from(files)) {
+      try {
+        const text = await readTextFile(file);
+        if (!text) {
+          toast.error(`${file.name} looks empty`);
+          continue;
+        }
+        await addMut.mutateAsync({
+          title: file.name.replace(/\.[^.]+$/, ""),
+          content: text,
+          sourceName: file.name,
+        });
+      } catch {
+        toast.error(`Could not read ${file.name}`);
+      }
+    }
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4 space-y-4">
+      <div>
+        <h2 className="font-display text-sm font-bold">Knowledge base</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Upload FAQs, price lists, policies or service notes. The assistant answers from these
+          documents and treats them as the source of truth. Text files (.txt, .md, .csv, .json,
+          .html) — for PDFs or Word docs, copy the text and paste it below.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          accept={KNOWLEDGE_ACCEPT}
+          className="hidden"
+          aria-label="Upload knowledge files"
+          onChange={(e) => void onFiles(e.target.files)}
+        />
+        <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={!subId || addMut.isPending}>
+          {addMut.isPending ? (
+            <Loader2 className="size-3.5 mr-1 animate-spin" />
+          ) : (
+            <Upload className="size-3.5 mr-1" />
+          )}
+          Upload files
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          {(docsQ.data ?? []).length} document{(docsQ.data ?? []).length === 1 ? "" : "s"}
+        </span>
+      </div>
+
+      <div className="space-y-2 rounded-md border border-dashed border-border p-3">
+        <Label htmlFor="kb-title">Or paste text</Label>
+        <Input
+          id="kb-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Title — e.g. Pricing FAQ"
+        />
+        <Textarea
+          rows={5}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Q: Do you charge broker fees? A: No, we never charge broker fees."
+          aria-label="Knowledge document text"
+        />
+        <Button
+          size="sm"
+          onClick={() => addMut.mutate({ title, content })}
+          disabled={!subId || !content.trim() || addMut.isPending}
+        >
+          <Plus className="size-3.5 mr-1" /> Add document
+        </Button>
+      </div>
+
+      {docsQ.isError ? (
+        <ErrorState onRetry={() => docsQ.refetch()} />
+      ) : (docsQ.data ?? []).length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          No documents yet — the assistant will rely only on the business information above.
+        </p>
+      ) : (
+        <ul className="divide-y divide-border rounded-md border border-border">
+          {(docsQ.data ?? []).map((d) => (
+            <li key={d.id} className="flex items-start gap-3 p-3">
+              <FileText className="size-4 mt-0.5 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium truncate">{d.title}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {d.source_name ? `${d.source_name} · ` : ""}
+                  {d.content.length.toLocaleString()} characters
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{d.content.slice(0, 200)}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Switch
+                  checked={d.enabled}
+                  onCheckedChange={(v) => toggleMut.mutate({ id: d.id, enabled: v })}
+                  aria-label={`Use ${d.title} when drafting`}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Delete ${d.title}`}
+                  onClick={() => removeMut.mutate(d.id)}
+                  disabled={removeMut.isPending}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function FeedbackSection({ subId }: { subId: string | null }) {
+  const fbQ = useQuery({
+    queryKey: ["ai-draft-feedback", subId],
+    enabled: !!subId,
+    queryFn: () => fetchDraftFeedback(subId!),
+  });
+  const rows = fbQ.data ?? [];
+  const up = rows.filter((r) => r.rating === "up").length;
+  const down = rows.length - up;
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <div>
+        <h2 className="font-display text-sm font-bold">Draft feedback</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Rate drafts in Conversations with thumbs up or down. Recent ratings are fed back into the
+          assistant so it copies what worked and avoids what didn't.
+        </p>
+      </div>
+      <div className="flex items-center gap-4 text-xs">
+        <span className="flex items-center gap-1 text-primary">
+          <ThumbsUp className="size-3.5" /> {up}
+        </span>
+        <span className="flex items-center gap-1 text-destructive">
+          <ThumbsDown className="size-3.5" /> {down}
+        </span>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No ratings yet.</p>
+      ) : (
+        <ul className="space-y-2">
+          {rows.slice(0, 8).map((r) => (
+            <li key={r.id} className="rounded-md border border-border p-2 text-xs">
+              <div className="flex items-center gap-2">
+                {r.rating === "up" ? (
+                  <ThumbsUp className="size-3 text-primary" />
+                ) : (
+                  <ThumbsDown className="size-3 text-destructive" />
+                )}
+                <span className="text-muted-foreground">
+                  {new Date(r.created_at).toLocaleString()}
+                  {r.channel ? ` · ${r.channel}` : ""}
+                </span>
+              </div>
+              {r.note && <p className="mt-1 text-foreground">“{r.note}”</p>}
+              <p className="mt-1 text-muted-foreground line-clamp-2">{r.draft}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

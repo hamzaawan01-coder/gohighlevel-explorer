@@ -2,7 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Send, MessageSquare, Search, Inbox, ArrowLeft, Star, UserCheck, Bot } from "lucide-react";
+import {
+  Loader2,
+  Send,
+  MessageSquare,
+  Search,
+  Inbox,
+  ArrowLeft,
+  Star,
+  UserCheck,
+  Bot,
+  ThumbsUp,
+  ThumbsDown,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useTenancy, fetchMySubAccounts } from "@/lib/tenancy";
@@ -24,6 +36,7 @@ import {
 } from "@/lib/conversations";
 import { sendTwilioSms, sendTwilioWhatsapp } from "@/lib/twilio.functions";
 import { suggestReply } from "@/lib/ai-assistant.functions";
+import { submitDraftFeedback } from "@/lib/ai-knowledge";
 import { CHANNELS, CHANNEL_BY_KEY } from "@/lib/channels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -271,6 +284,36 @@ function ConversationsPage() {
   }, [subId, qc]);
 
   const suggestReplyFn = useServerFn(suggestReply);
+  const [lastDraft, setLastDraft] = useState<string | null>(null);
+  const [draftRated, setDraftRated] = useState<null | "up" | "down">(null);
+  const [rejectNote, setRejectNote] = useState("");
+  const [showRejectNote, setShowRejectNote] = useState(false);
+
+  const feedbackMut = useMutation({
+    mutationFn: async (input: { rating: "up" | "down"; note?: string }) => {
+      if (!subId || !lastDraft) throw new Error("Nothing to rate yet");
+      await submitDraftFeedback({
+        subAccountId: subId,
+        conversationId: selectedConvoId ?? null,
+        rating: input.rating,
+        draft: lastDraft,
+        note: input.note ?? "",
+        channel: composeChannel,
+      });
+    },
+    onSuccess: (_d, vars) => {
+      setDraftRated(vars.rating);
+      setShowRejectNote(false);
+      setRejectNote("");
+      toast.success(
+        vars.rating === "up"
+          ? "Thanks — the assistant will lean on drafts like this"
+          : "Thanks — the assistant will avoid drafts like this",
+      );
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const draftMut = useMutation({
     mutationFn: async () => {
       if (!selectedConvoId) throw new Error("Open a conversation first");
@@ -280,6 +323,10 @@ function ConversationsPage() {
     },
     onSuccess: (res) => {
       setBody(res.draft);
+      setLastDraft(res.draft);
+      setDraftRated(null);
+      setShowRejectNote(false);
+      setRejectNote("");
       if (res.escalate) {
         toast.warning("Suggested handing this to a human", {
           description: res.escalation_reason || undefined,
@@ -728,6 +775,60 @@ function ConversationsPage() {
                     </Button>
                   </div>
                 </div>
+                {lastDraft && (
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Bot className="size-3" /> Was this AI draft helpful?
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="AI draft was helpful"
+                      disabled={feedbackMut.isPending || draftRated !== null}
+                      onClick={() => feedbackMut.mutate({ rating: "up" })}
+                      className={`flex items-center gap-1 rounded-md border px-2 py-1 transition-colors disabled:opacity-60 ${
+                        draftRated === "up"
+                          ? "border-primary/40 bg-primary/10 text-primary"
+                          : "border-border hover:bg-secondary"
+                      }`}
+                    >
+                      <ThumbsUp className="size-3" /> Good
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="AI draft was not helpful"
+                      disabled={feedbackMut.isPending || draftRated !== null}
+                      onClick={() => setShowRejectNote(true)}
+                      className={`flex items-center gap-1 rounded-md border px-2 py-1 transition-colors disabled:opacity-60 ${
+                        draftRated === "down"
+                          ? "border-destructive/40 bg-destructive/10 text-destructive"
+                          : "border-border hover:bg-secondary"
+                      }`}
+                    >
+                      <ThumbsDown className="size-3" /> Needs work
+                    </button>
+                    {feedbackMut.isPending && <Loader2 className="size-3 animate-spin" />}
+                    {draftRated && <span>Saved — future drafts will use this.</span>}
+                    {showRejectNote && draftRated === null && (
+                      <div className="flex w-full items-center gap-2">
+                        <Input
+                          value={rejectNote}
+                          onChange={(e) => setRejectNote(e.target.value)}
+                          placeholder="What was wrong? (optional — e.g. too long, wrong price)"
+                          className="h-8 text-xs"
+                          aria-label="Why the draft needs work"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={feedbackMut.isPending}
+                          onClick={() => feedbackMut.mutate({ rating: "down", note: rejectNote })}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {isRealChannel && (
                   <p className="text-[10px] text-muted-foreground">
                     {CHANNEL_BY_KEY[composeChannel].label} sending isn't connected yet —
