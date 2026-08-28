@@ -87,7 +87,7 @@ export const getMetaConnection = createServerFn({ method: "GET" })
       appConfigured: Boolean(process.env.META_APP_ID && process.env.META_APP_SECRET),
       verifyTokenConfigured: Boolean(process.env.META_WEBHOOK_VERIFY_TOKEN),
       redirectUri: metaRedirectUri(),
-      webhookBaseUrl: metaWebhookUrl("<connection-id>"),
+      webhookBaseUrl: metaWebhookUrl("CONNECTION_ID"),
       scopes: [...META_SCOPES],
     };
     if (!conn) return { connection: null, pages: [], adAccounts: [], setup };
