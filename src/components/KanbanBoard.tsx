@@ -168,21 +168,31 @@ function Column({
   children: React.ReactNode;
 }) {
   return (
-    <div className="w-72 flex flex-col">
-      <div className="flex items-center justify-between mb-4 px-1">
-        <div className="flex items-center gap-2">
-          <span className="size-2 rounded-full" style={{ background: stage.color }} />
-          <h3 className="text-xs font-bold uppercase tracking-widest">{stage.name}</h3>
-          <span className="font-mono text-[10px] bg-secondary px-1.5 rounded">
-            {String(count).padStart(2, "0")}
-          </span>
+    <div className="flex w-72 flex-col">
+      <div
+        className="sticky top-0 z-10 mb-3 rounded-lg border border-border bg-card/85 px-2.5 py-2 backdrop-blur-sm"
+        style={{ borderTopColor: stage.color, borderTopWidth: 2 }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="size-2 shrink-0 rounded-full" style={{ background: stage.color }} />
+            <h3 className="truncate font-display text-[11px] font-bold uppercase tracking-widest">
+              {stage.name}
+            </h3>
+            <span className="rounded bg-secondary px-1.5 font-mono text-[10px] tabular-nums">
+              {String(count).padStart(2, "0")}
+            </span>
+          </div>
+          <div className="font-mono text-[10px] tabular-nums text-muted-foreground">
+            {formatMoney(total)}
+          </div>
         </div>
-        <div className="font-mono text-[10px] text-muted-foreground">{formatMoney(total)}</div>
       </div>
       {children}
     </div>
   );
 }
+
 
 function EmptyDropzone({ stageId }: { stageId: string }) {
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
