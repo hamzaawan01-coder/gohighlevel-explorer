@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Printer, Trash2 } from "lucide-react";
+import { ArrowLeft, Bell, CreditCard, Plus, Printer, Send, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -23,6 +24,16 @@ import {
   updateInvoiceItem,
   type InvoiceStatus,
 } from "@/lib/invoices";
+import { fetchInvoiceBranding } from "@/lib/invoice-branding";
+import { renderInvoiceHtml } from "@/lib/invoice-render";
+import {
+  fetchInvoiceDeliveries,
+  fetchInvoiceEvents,
+  fetchInvoiceReminders,
+} from "@/lib/invoice-history";
+import { createInvoicePaymentLink, sendInvoiceEmail } from "@/lib/invoices.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/invoices/$id")({
   head: () => ({
@@ -51,6 +62,18 @@ function InvoiceDetailPage() {
     enabled: !!subId,
   });
 
+  const brandingQ = useQuery({
+    queryKey: ["invoice-branding", subId],
+    queryFn: () => fetchInvoiceBranding(subId!),
+    enabled: !!subId,
+  });
+  const eventsQ = useQuery({ queryKey: ["invoice-events", id], queryFn: () => fetchInvoiceEvents(id) });
+  const remindersQ = useQuery({ queryKey: ["invoice-reminders", id], queryFn: () => fetchInvoiceReminders(id) });
+  const deliveriesQ = useQuery({
+    queryKey: ["invoice-deliveries", id],
+    queryFn: () => fetchInvoiceDeliveries(id),
+  });
+
   const invoice = invoiceQ.data;
   const items = itemsQ.data ?? [];
   const contacts = contactsQ.data ?? [];
@@ -59,6 +82,67 @@ function InvoiceDetailPage() {
     qc.invalidateQueries({ queryKey: ["invoice", id] });
     qc.invalidateQueries({ queryKey: ["invoice-items", id] });
     qc.invalidateQueries({ queryKey: ["invoices"] });
+    qc.invalidateQueries({ queryKey: ["invoice-events", id] });
+    qc.invalidateQueries({ queryKey: ["invoice-reminders", id] });
+    qc.invalidateQueries({ queryKey: ["invoice-deliveries", id] });
+  };
+
+  const sendFn = useServerFn(sendInvoiceEmail);
+  const payLinkFn = useServerFn(createInvoicePaymentLink);
+
+  const send = useMutation({
+    mutationFn: async () => {
+      const res = await sendFn({ data: { invoiceId: id } });
+      if ("error" in res) throw new Error(res.error);
+      return res;
+    },
+    onSuccess: (res) => {
+      toast.success(`Invoice queued to ${res.to}`);
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const payLink = useMutation({
+    mutationFn: async () => {
+      const res = await payLinkFn({ data: { invoiceId: id, environment: getStripeEnvironment() } });
+      if ("error" in res) throw new Error(res.error);
+      return res;
+    },
+    onSuccess: (res) => {
+      toast.success("Payment link ready");
+      window.open(res.url, "_blank", "noopener");
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  /** Print the branded document (same layout the client receives by email). */
+  const printBranded = () => {
+    if (!invoice) return;
+    const html = renderInvoiceHtml({
+      invoice,
+      items,
+      branding: brandingQ.data ?? null,
+      recipientName:
+        contacts.find((c) => c.id === invoice.contact_id) &&
+        [
+          contacts.find((c) => c.id === invoice.contact_id)?.first_name,
+          contacts.find((c) => c.id === invoice.contact_id)?.last_name,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      payUrl: invoice.stripe_payment_link_url,
+    });
+    const w = window.open("", "_blank");
+    if (!w) {
+      toast.error("Allow pop-ups to print the branded invoice");
+      return;
+    }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 300);
   };
 
   const saveInvoice = useMutation({
@@ -98,7 +182,13 @@ function InvoiceDetailPage() {
     <AppShell
       headerActions={
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => window.print()}>
+          <Button size="sm" onClick={() => send.mutate()} disabled={send.isPending}>
+            <Send className="size-3.5" /> {send.isPending ? "Sending…" : "Send invoice"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => payLink.mutate()} disabled={payLink.isPending}>
+            <CreditCard className="size-3.5" /> {invoice?.stripe_payment_link_url ? "Payment link" : "Create pay link"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={printBranded}>
             <Printer className="size-3.5" /> Print / PDF
           </Button>
           <Link to="/invoices">
@@ -303,6 +393,108 @@ function InvoiceDetailPage() {
                   <span>{formatMoney(Number(invoice.total), invoice.currency)}</span>
                 </div>
               </div>
+            </section>
+
+            <section className="surface-card space-y-4 p-4">
+              <div className="flex items-center gap-2">
+                <Bell className="size-4 text-muted-foreground" />
+                <h2 className="text-sm font-medium">Overdue reminders</h2>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="flex items-center justify-between gap-2 rounded-lg border p-3">
+                  <Label htmlFor="rem" className="text-xs text-muted-foreground">
+                    Auto follow-ups
+                  </Label>
+                  <Switch
+                    id="rem"
+                    checked={invoice.reminders_enabled}
+                    onCheckedChange={(v) => saveInvoice.mutate({ reminders_enabled: v })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="interval" className="text-xs text-muted-foreground">
+                    Every N days
+                  </Label>
+                  <Input
+                    id="interval"
+                    type="number"
+                    min={1}
+                    defaultValue={String(invoice.reminder_interval_days)}
+                    onBlur={(e) =>
+                      saveInvoice.mutate({ reminder_interval_days: Number(e.target.value) || 3 })
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="maxrem" className="text-xs text-muted-foreground">
+                    Max reminders
+                  </Label>
+                  <Input
+                    id="maxrem"
+                    type="number"
+                    min={1}
+                    defaultValue={String(invoice.max_reminders)}
+                    onBlur={(e) => saveInvoice.mutate({ max_reminders: Number(e.target.value) || 3 })}
+                  />
+                </div>
+              </div>
+              {(remindersQ.data ?? []).length > 0 && (
+                <ul className="space-y-1 text-xs text-muted-foreground">
+                  {(remindersQ.data ?? []).map((r) => (
+                    <li key={r.id}>
+                      Reminder {r.sequence}: {r.status}
+                      {r.sent_at ? ` · sent ${new Date(r.sent_at).toLocaleString()}` : ""}
+                      {r.error ? ` · ${r.error}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="surface-card space-y-3 p-4">
+              <h2 className="text-sm font-medium">Delivery status</h2>
+              {(deliveriesQ.data ?? []).length === 0 ? (
+                <p className="text-xs text-muted-foreground">Nothing sent yet.</p>
+              ) : (
+                <ul className="space-y-1 text-xs">
+                  {(deliveriesQ.data ?? []).map((d) => (
+                    <li key={d.id} className="flex flex-wrap gap-2">
+                      <span className="font-medium capitalize">{d.status}</span>
+                      <span className="text-muted-foreground">
+                        {d.to_address} · {d.provider ?? "pending provider"} · attempts {d.attempts}
+                        {d.sent_at ? ` · ${new Date(d.sent_at).toLocaleString()}` : ""}
+                      </span>
+                      {d.error && <span className="text-destructive">{d.error}</span>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="surface-card space-y-3 p-4">
+              <h2 className="text-sm font-medium">Invoice history</h2>
+              {(eventsQ.data ?? []).length === 0 ? (
+                <p className="text-xs text-muted-foreground">No activity recorded yet.</p>
+              ) : (
+                <ol className="space-y-1.5 text-xs">
+                  {(eventsQ.data ?? []).map((ev) => (
+                    <li key={ev.id} className="flex flex-wrap items-baseline gap-2">
+                      <span className="font-medium capitalize">{ev.type.replace(/_/g, " ")}</span>
+                      <span className="text-muted-foreground">
+                        {new Date(ev.created_at).toLocaleString()}
+                      </span>
+                      {Object.keys(ev.detail ?? {}).length > 0 && (
+                        <span className="text-muted-foreground">
+                          {Object.entries(ev.detail)
+                            .filter(([, v]) => v !== null && v !== "")
+                            .map(([k, v]) => `${k.replace(/_/g, " ")}: ${String(v)}`)
+                            .join(" · ")}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              )}
             </section>
           </div>
         )}
