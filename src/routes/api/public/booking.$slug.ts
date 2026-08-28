@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-
-type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
-const DAY_ORDER: DayKey[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+import { freeSlots, type Availability, type DayKey } from "@/lib/availability";
 
 const bookSchema = z.object({
   starts_at: z.string().datetime(),
@@ -31,45 +29,30 @@ export const Route = createFileRoute("/api/public/booking/$slug")({
         } | null;
         if (!p || !p.enabled) return new Response("Not found", { status: 404 });
 
-        // Compute candidate slots for next `advance_days`
         const now = new Date();
-        const minStart = new Date(now.getTime() + p.min_notice_minutes * 60_000);
         const horizon = new Date(now.getTime() + p.advance_days * 24 * 60 * 60_000);
-        const step = (p.duration_minutes + p.buffer_minutes) * 60_000;
-
-        const candidates: Date[] = [];
-        for (let d = new Date(now); d <= horizon; d.setDate(d.getDate() + 1)) {
-          const dayKey = DAY_ORDER[d.getDay()];
-          const windows = p.availability?.[dayKey] ?? [];
-          for (const w of windows) {
-            const [sh, sm] = w.start.split(":").map(Number);
-            const [eh, em] = w.end.split(":").map(Number);
-            const dayStart = new Date(d);
-            dayStart.setHours(sh, sm, 0, 0);
-            const dayEnd = new Date(d);
-            dayEnd.setHours(eh, em, 0, 0);
-            for (let t = dayStart.getTime(); t + p.duration_minutes * 60_000 <= dayEnd.getTime(); t += step) {
-              const slot = new Date(t);
-              if (slot >= minStart && slot <= horizon) candidates.push(slot);
-            }
-          }
-        }
-
-        // Filter out slots already taken on the owner's calendar
         const { data: taken } = await supabaseAdmin
           .from("calendar_events")
-          .select("starts_at, ends_at")
+          .select("starts_at, ends_at, status")
           .eq("sub_account_id", p.sub_account_id)
           .eq("owner_user_id", p.owner_user_id)
           .gte("starts_at", now.toISOString())
           .lte("starts_at", horizon.toISOString());
-        const busy = (taken ?? []).map((t) => [new Date(t.starts_at).getTime(), new Date(t.ends_at).getTime()] as const);
+        const busy = (taken ?? [])
+          .filter((t) => (t as { status?: string }).status !== "cancelled")
+          .map((t) => ({ starts_at: t.starts_at, ends_at: t.ends_at }));
 
-        const slots = candidates.filter((c) => {
-          const s = c.getTime();
-          const e = s + p.duration_minutes * 60_000;
-          return !busy.some(([bs, be]) => s < be && e > bs);
-        }).map((d) => d.toISOString());
+        const slots = freeSlots(
+          {
+            availability: p.availability as Availability,
+            durationMinutes: p.duration_minutes,
+            bufferMinutes: p.buffer_minutes,
+            advanceDays: p.advance_days,
+            minNoticeMinutes: p.min_notice_minutes,
+          },
+          busy,
+          now,
+        );
 
         return Response.json({
           page: {
@@ -78,7 +61,7 @@ export const Route = createFileRoute("/api/public/booking/$slug")({
             advance_days: p.advance_days, min_notice_minutes: p.min_notice_minutes,
             timezone: p.timezone, availability: p.availability, enabled: p.enabled,
           },
-          slots: slots.slice(0, 200),
+          slots,
         });
       },
       POST: async ({ params, request }) => {
@@ -99,6 +82,7 @@ export const Route = createFileRoute("/api/public/booking/$slug")({
           name: string; duration_minutes: number; min_notice_minutes: number; enabled: boolean;
           reminder_offsets: number[] | null; reminder_channel: "sms" | "email" | "both" | null;
           reminder_template: string | null; confirmation_enabled: boolean | null; timezone: string;
+          reminder_in_app: boolean | null; allow_reschedule: boolean | null;
         } | null;
         if (!p || !p.enabled) return new Response("Not found", { status: 404 });
 
@@ -165,21 +149,40 @@ export const Route = createFileRoute("/api/public/booking/$slug")({
             attendee_email: body.email,
             attendee_phone: body.phone ?? null,
             status: "confirmed",
+            reschedule_token: crypto.randomUUID().replace(/-/g, ""),
+            original_starts_at: starts.toISOString(),
           } as never)
-          .select("id")
+          .select("id, reschedule_token")
           .single();
         if (eErr || !event) return new Response("Could not create event", { status: 500 });
 
         // Schedule reminders + optional instant confirmation. Never fail the
         // booking itself if reminder scheduling has a problem.
         try {
-          const { scheduleRemindersForEvent, renderReminder } = await import("@/lib/appointments.server");
+          const { scheduleRemindersForEvent, renderReminder, logAppointmentAudit, postAppointmentNote } =
+            await import("@/lib/appointments.server");
           await scheduleRemindersForEvent({
             subAccountId: p.sub_account_id,
             eventId: event.id,
             startsAt: starts.toISOString(),
             offsets: p.reminder_offsets ?? [1440, 60],
             channel: p.reminder_channel ?? "sms",
+            inApp: p.reminder_in_app !== false,
+          });
+          await logAppointmentAudit({
+            subAccountId: p.sub_account_id,
+            action: "booked",
+            eventId: event.id,
+            bookingPageId: p.id,
+            contactId: contactId,
+            actorLabel: body.email,
+            detail: `Booked ${p.name} for ${starts.toISOString()}`,
+            metadata: { source: "public booking page", slug: params.slug },
+          });
+          await postAppointmentNote({
+            subAccountId: p.sub_account_id,
+            contactId,
+            body: `Appointment booked: ${p.name} on ${starts.toISOString()}`,
           });
 
           if (p.confirmation_enabled !== false) {
@@ -215,7 +218,12 @@ export const Route = createFileRoute("/api/public/booking/$slug")({
           // best-effort
         }
 
-        return Response.json({ ok: true });
+        const token = (event as { reschedule_token: string | null }).reschedule_token;
+        return Response.json({
+          ok: true,
+          reschedule_url:
+            p.allow_reschedule !== false && token ? `/booking/reschedule/${token}` : null,
+        });
       },
     },
   },
