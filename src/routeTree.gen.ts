@@ -50,6 +50,7 @@ import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authentic
 import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta.data-deletion'
 import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
+import { Route as ApiPublicHooksAppointmentsRouteImport } from './routes/api/public/hooks/appointments'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
 import { Route as ApiPublicTwilioTokenWhatsappRouteImport } from './routes/api/public/twilio.$token.whatsapp'
@@ -289,6 +290,12 @@ const ApiPublicHooksSyncGoogleAdsRoute =
     path: '/api/public/hooks/sync-google-ads',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAppointmentsRoute =
+  ApiPublicHooksAppointmentsRouteImport.update({
+    id: '/api/public/hooks/appointments',
+    path: '/api/public/hooks/appointments',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicFormsSlugRoute = ApiPublicFormsSlugRouteImport.update({
   id: '/api/public/forms/$slug',
   path: '/api/public/forms/$slug',
@@ -416,6 +423,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
+  '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
@@ -473,6 +481,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
+  '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
@@ -532,6 +541,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
+  '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
@@ -591,6 +601,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
+    | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
@@ -648,6 +659,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
+    | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
@@ -706,6 +718,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/api/public/booking/$slug'
     | '/api/public/forms/$slug'
+    | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
@@ -737,6 +750,7 @@ export interface RootRouteChildren {
   ApiPublicProcessOutboundRoute: typeof ApiPublicProcessOutboundRoute
   ApiPublicBookingSlugRoute: typeof ApiPublicBookingSlugRoute
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
+  ApiPublicHooksAppointmentsRoute: typeof ApiPublicHooksAppointmentsRoute
   ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
   ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
@@ -1044,6 +1058,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncGoogleAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/appointments': {
+      id: '/api/public/hooks/appointments'
+      path: '/api/public/hooks/appointments'
+      fullPath: '/api/public/hooks/appointments'
+      preLoaderRoute: typeof ApiPublicHooksAppointmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/forms/$slug': {
       id: '/api/public/forms/$slug'
       path: '/api/public/forms/$slug'
@@ -1232,6 +1253,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicProcessOutboundRoute: ApiPublicProcessOutboundRoute,
   ApiPublicBookingSlugRoute: ApiPublicBookingSlugRoute,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
+  ApiPublicHooksAppointmentsRoute: ApiPublicHooksAppointmentsRoute,
   ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
   ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,
