@@ -1,6 +1,6 @@
 import { History } from "lucide-react";
 import { ConsoleSection } from "@/components/console";
-import { EmptyState, ListSkeleton } from "@/components/states";
+import { EmptyState, ListSkeleton } from "@/components/ui/states";
 import {
   auditActorLabel,
   describeAuditEntry,
