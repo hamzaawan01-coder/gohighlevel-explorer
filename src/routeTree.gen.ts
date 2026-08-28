@@ -40,6 +40,7 @@ import { Route as AuthenticatedSettingsCallFlowsRouteImport } from './routes/_au
 import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
+import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta.data-deletion'
 import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
@@ -224,6 +225,12 @@ const AuthenticatedContactsIdRoute = AuthenticatedContactsIdRouteImport.update({
   path: '/contacts/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicMetaDataDeletionRoute =
+  ApiPublicMetaDataDeletionRouteImport.update({
+    id: '/api/public/meta/data-deletion',
+    path: '/api/public/meta/data-deletion',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicLSlugRoute = ApiPublicLSlugRouteImport.update({
   id: '/api/public/l/$slug',
   path: '/api/public/l/$slug',
@@ -351,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -399,6 +407,7 @@ export interface FileRoutesByTo {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -449,6 +458,7 @@ export interface FileRoutesById {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
+  '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -499,6 +509,7 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
+    | '/api/public/meta/data-deletion'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
+    | '/api/public/meta/data-deletion'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
@@ -596,6 +608,7 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/sync-google-ads'
     | '/api/public/l/$slug'
+    | '/api/public/meta/data-deletion'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
@@ -622,6 +635,7 @@ export interface RootRouteChildren {
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
   ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
+  ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
   ApiPublicHooksMetaTokenRoute: typeof ApiPublicHooksMetaTokenRoute
   ApiPublicHooksWordpressTokenRoute: typeof ApiPublicHooksWordpressTokenRoute
   ApiPublicOauthGoogleAdsCallbackRoute: typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -855,6 +869,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/meta/data-deletion': {
+      id: '/api/public/meta/data-deletion'
+      path: '/api/public/meta/data-deletion'
+      fullPath: '/api/public/meta/data-deletion'
+      preLoaderRoute: typeof ApiPublicMetaDataDeletionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/l/$slug': {
       id: '/api/public/l/$slug'
       path: '/api/public/l/$slug'
@@ -1041,6 +1062,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
   ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
+  ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,
   ApiPublicHooksMetaTokenRoute: ApiPublicHooksMetaTokenRoute,
   ApiPublicHooksWordpressTokenRoute: ApiPublicHooksWordpressTokenRoute,
   ApiPublicOauthGoogleAdsCallbackRoute: ApiPublicOauthGoogleAdsCallbackRoute,
