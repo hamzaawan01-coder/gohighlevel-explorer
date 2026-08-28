@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Bell, CreditCard, Plus, Printer, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Bell, CreditCard, Download, Plus, Printer, Send, Trash2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
@@ -24,12 +24,19 @@ import {
   updateInvoiceItem,
   type InvoiceStatus,
 } from "@/lib/invoices";
-import { fetchInvoiceBranding } from "@/lib/invoice-branding";
+import {
+  fetchInvoiceTemplates,
+  templateBranding,
+  type InvoiceTemplate,
+} from "@/lib/invoice-templates";
 import { renderInvoiceHtml } from "@/lib/invoice-render";
 import {
   fetchInvoiceDeliveries,
   fetchInvoiceEvents,
   fetchInvoiceReminders,
+  fetchInvoiceRenders,
+  recordInvoiceRender,
+  type InvoiceRender,
 } from "@/lib/invoice-history";
 import { createInvoicePaymentLink, sendInvoiceEmail } from "@/lib/invoices.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
@@ -62,11 +69,12 @@ function InvoiceDetailPage() {
     enabled: !!subId,
   });
 
-  const brandingQ = useQuery({
-    queryKey: ["invoice-branding", subId],
-    queryFn: () => fetchInvoiceBranding(subId!),
+  const templatesQ = useQuery({
+    queryKey: ["invoice-templates", subId],
+    queryFn: () => fetchInvoiceTemplates(subId!),
     enabled: !!subId,
   });
+  const rendersQ = useQuery({ queryKey: ["invoice-renders", id], queryFn: () => fetchInvoiceRenders(id) });
   const eventsQ = useQuery({ queryKey: ["invoice-events", id], queryFn: () => fetchInvoiceEvents(id) });
   const remindersQ = useQuery({ queryKey: ["invoice-reminders", id], queryFn: () => fetchInvoiceReminders(id) });
   const deliveriesQ = useQuery({
@@ -85,6 +93,7 @@ function InvoiceDetailPage() {
     qc.invalidateQueries({ queryKey: ["invoice-events", id] });
     qc.invalidateQueries({ queryKey: ["invoice-reminders", id] });
     qc.invalidateQueries({ queryKey: ["invoice-deliveries", id] });
+    qc.invalidateQueries({ queryKey: ["invoice-renders", id] });
   };
 
   const sendFn = useServerFn(sendInvoiceEmail);
@@ -117,32 +126,75 @@ function InvoiceDetailPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  /** Print the branded document (same layout the client receives by email). */
-  const printBranded = () => {
-    if (!invoice) return;
-    const html = renderInvoiceHtml({
-      invoice,
-      items,
-      branding: brandingQ.data ?? null,
-      recipientName:
-        contacts.find((c) => c.id === invoice.contact_id) &&
-        [
-          contacts.find((c) => c.id === invoice.contact_id)?.first_name,
-          contacts.find((c) => c.id === invoice.contact_id)?.last_name,
-        ]
-          .filter(Boolean)
-          .join(" "),
-      payUrl: invoice.stripe_payment_link_url,
-    });
+  const templates = templatesQ.data ?? [];
+  /** Template variant used by this invoice (explicit choice, else default). */
+  const activeTemplate: InvoiceTemplate | null =
+    templates.find((t) => t.id === invoice?.template_id) ??
+    templates.find((t) => t.is_default) ??
+    templates[0] ??
+    null;
+
+  const openHtmlWindow = (html: string, print: boolean) => {
     const w = window.open("", "_blank");
     if (!w) {
-      toast.error("Allow pop-ups to print the branded invoice");
+      toast.error("Allow pop-ups to open the invoice document");
       return;
     }
     w.document.write(html);
     w.document.close();
     w.focus();
-    setTimeout(() => w.print(), 300);
+    if (print) setTimeout(() => w.print(), 300);
+  };
+
+  /**
+   * Print the branded document (same layout the client receives by email) and
+   * snapshot it, together with the template version used, into render history.
+   */
+  const printBranded = async () => {
+    if (!invoice) return;
+    const contact = contacts.find((c) => c.id === invoice.contact_id);
+    const branding = templateBranding(activeTemplate);
+    const html = renderInvoiceHtml({
+      invoice,
+      items,
+      branding,
+      recipientName: [contact?.first_name, contact?.last_name].filter(Boolean).join(" ") || null,
+      payUrl: invoice.stripe_payment_link_url,
+    });
+    openHtmlWindow(html, true);
+    try {
+      await recordInvoiceRender({
+        invoiceId: invoice.id,
+        subAccountId: invoice.sub_account_id,
+        templateId: activeTemplate?.id ?? null,
+        templateName: activeTemplate?.name ?? null,
+        templateVersion: activeTemplate?.version ?? null,
+        brandingSnapshot: branding as Record<string, unknown>,
+        invoiceSnapshot: {
+          number: invoice.number,
+          status: invoice.status,
+          total: invoice.total,
+          currency: invoice.currency,
+        },
+        html,
+        source: "print",
+      });
+      qc.invalidateQueries({ queryKey: ["invoice-renders", id] });
+    } catch {
+      // history is best-effort; the document already opened
+    }
+  };
+
+  const downloadRender = (r: InvoiceRender) => {
+    const blob = new Blob([r.html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${invoice?.number ?? "invoice"}-${r.template_name ?? "template"}-v${
+      r.template_version ?? 1
+    }-${r.created_at.slice(0, 10)}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const saveInvoice = useMutation({
@@ -188,7 +240,7 @@ function InvoiceDetailPage() {
           <Button variant="outline" size="sm" onClick={() => payLink.mutate()} disabled={payLink.isPending}>
             <CreditCard className="size-3.5" /> {invoice?.stripe_payment_link_url ? "Payment link" : "Create pay link"}
           </Button>
-          <Button variant="outline" size="sm" onClick={printBranded}>
+          <Button variant="outline" size="sm" onClick={() => void printBranded()}>
             <Printer className="size-3.5" /> Print / PDF
           </Button>
           <Link to="/invoices">
@@ -249,6 +301,26 @@ function InvoiceDetailPage() {
                     {contacts.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {[c.first_name, c.last_name].filter(Boolean).join(" ") || c.email || c.phone || "Contact"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Template</Label>
+                <Select
+                  value={invoice.template_id ?? activeTemplate?.id ?? "none"}
+                  onValueChange={(v) => saveInvoice.mutate({ template_id: v === "none" ? null : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Workspace default" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Workspace default</SelectItem>
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name} · v{t.version}
+                        {t.is_default ? " (default)" : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -465,6 +537,42 @@ function InvoiceDetailPage() {
                         {d.sent_at ? ` · ${new Date(d.sent_at).toLocaleString()}` : ""}
                       </span>
                       {d.error && <span className="text-destructive">{d.error}</span>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="surface-card space-y-3 p-4">
+              <h2 className="text-sm font-medium">Generated documents</h2>
+              <p className="text-xs text-muted-foreground">
+                Every emailed, reminded and printed copy is stored with the template version and branding
+                that produced it.
+              </p>
+              {(rendersQ.data ?? []).length === 0 ? (
+                <p className="text-xs text-muted-foreground">Nothing generated yet.</p>
+              ) : (
+                <ul className="divide-y divide-border text-xs">
+                  {(rendersQ.data ?? []).map((r) => (
+                    <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                      <span className="space-x-2">
+                        <span className="font-medium capitalize">{r.source}</span>
+                        <span className="text-muted-foreground">
+                          {r.template_name ?? "Legacy branding"}
+                          {r.template_version ? ` · v${r.template_version}` : ""}
+                          {r.reminder_sequence ? ` · reminder ${r.reminder_sequence}` : ""}
+                          {" · "}
+                          {new Date(r.created_at).toLocaleString()}
+                        </span>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => openHtmlWindow(r.html, true)}>
+                          <Printer className="size-3.5" /> Open / PDF
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => downloadRender(r)}>
+                          <Download className="size-3.5" /> Download
+                        </Button>
+                      </span>
                     </li>
                   ))}
                 </ul>
