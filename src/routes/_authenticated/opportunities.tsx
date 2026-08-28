@@ -38,6 +38,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AppShell } from "@/components/AppShell";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { DataTable, type Column } from "@/components/DataTable";
+import { ErrorState } from "@/components/ui/states";
+import { fetchContacts, type Contact } from "@/lib/contacts";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/opportunities")({
@@ -116,6 +120,16 @@ function OpportunitiesPage() {
 
   const stages = boardQuery.data?.stages ?? [];
   const deals = boardQuery.data?.deals ?? [];
+
+  const contactsQuery = useQuery({
+    queryKey: ["contacts", subId],
+    queryFn: () => fetchContacts(subId!),
+    enabled: !!subId,
+  });
+  const contactsById = useMemo(
+    () => new Map((contactsQuery.data ?? []).map((c: Contact) => [c.id, c])),
+    [contactsQuery.data],
+  );
 
   const filteredDeals = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -352,13 +366,16 @@ function OpportunitiesPage() {
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search opportunities"
-                      className="h-9 w-[240px] pl-8 text-xs"
+                      data-page-search
+                      className="h-9 w-full pl-8 text-xs sm:w-[240px]"
                     />
                   </div>
                   <div className="flex items-center border border-border rounded-md p-0.5 bg-card">
                     <button
                       onClick={() => setView("kanban")}
                       title="Kanban view"
+                      aria-label="Kanban view"
+                      aria-pressed={view === "kanban"}
                       className={`size-7 rounded flex items-center justify-center ${
                         view === "kanban"
                           ? "bg-primary text-primary-foreground"
@@ -369,7 +386,9 @@ function OpportunitiesPage() {
                     </button>
                     <button
                       onClick={() => setView("list")}
-                      title="List view"
+                      title="Table view"
+                      aria-label="Table view"
+                      aria-pressed={view === "list"}
                       className={`size-7 rounded flex items-center justify-center ${
                         view === "list"
                           ? "bg-primary text-primary-foreground"
@@ -397,6 +416,15 @@ function OpportunitiesPage() {
                     <Loader2 className="size-4 animate-spin mr-2" />
                     <span className="text-xs">Loading your pipeline…</span>
                   </div>
+                ) : boardQuery.isError ? (
+                  <div className="surface-card h-full">
+                    <ErrorState
+                      title="Couldn't load opportunities"
+                      error={boardQuery.error}
+                      onRetry={() => boardQuery.refetch()}
+                      retrying={boardQuery.isFetching}
+                    />
+                  </div>
                 ) : view === "kanban" ? (
                   <div className="h-full overflow-x-auto overflow-y-hidden">
                     <KanbanBoard
@@ -409,11 +437,16 @@ function OpportunitiesPage() {
                     />
                   </div>
                 ) : (
-                  <OpportunitiesListView
-                    deals={filteredDeals}
-                    stages={stages}
-                    onOpen={(id) => setOpenDealId(id)}
-                  />
+                  <div className="h-full overflow-auto">
+                    <OpportunitiesTable
+                      deals={filteredDeals}
+                      stages={stages}
+                      contactsById={contactsById}
+                      currentUserId={userId}
+                      onOpen={(id) => setOpenDealId(id)}
+                      onAddDeal={() => setNewDealOpen(true)}
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -490,64 +523,109 @@ function OpportunitiesPage() {
   );
 }
 
-function OpportunitiesListView({
+function OpportunitiesTable({
   deals,
   stages,
+  contactsById,
+  currentUserId,
   onOpen,
+  onAddDeal,
 }: {
   deals: Deal[];
   stages: { id: string; name: string; color: string }[];
+  contactsById: Map<string, Contact>;
+  currentUserId: string | null;
   onOpen: (id: string) => void;
+  onAddDeal: () => void;
 }) {
   const stageById = useMemo(() => new Map(stages.map((s) => [s.id, s])), [stages]);
-  if (deals.length === 0) {
-    return (
-      <div className="border border-border rounded-lg bg-card p-10 text-center text-sm text-muted-foreground">
-        No opportunities yet. Add your first one to get started.
-      </div>
-    );
-  }
+
+  const columns: Column<Deal>[] = [
+    {
+      key: "title",
+      header: "Name",
+      locked: true,
+      sortValue: (d) => d.title.toLowerCase(),
+      cell: (d) => <span className="min-w-0 truncate font-medium">{d.title}</span>,
+    },
+    {
+      key: "contact",
+      header: "Contact",
+      sortValue: (d) => {
+        const c = d.contact_id ? contactsById.get(d.contact_id) : undefined;
+        return c ? [c.first_name, c.last_name].filter(Boolean).join(" ").toLowerCase() : "";
+      },
+      cell: (d) => {
+        const c = d.contact_id ? contactsById.get(d.contact_id) : undefined;
+        const name = c ? [c.first_name, c.last_name].filter(Boolean).join(" ") || c.email : null;
+        return <span className="min-w-0 truncate text-muted-foreground">{name ?? "—"}</span>;
+      },
+    },
+    {
+      key: "stage",
+      header: "Stage",
+      sortValue: (d) => stageById.get(d.stage_id)?.name ?? "",
+      cell: (d) => {
+        const stage = stageById.get(d.stage_id);
+        return (
+          <span className="inline-flex min-w-0 items-center gap-1.5 text-xs">
+            <span
+              aria-hidden
+              className="size-2 shrink-0 rounded-full"
+              style={{ background: stage?.color ?? "#64748b" }}
+            />
+            <span className="truncate">{stage?.name ?? "—"}</span>
+          </span>
+        );
+      },
+    },
+    {
+      key: "value",
+      header: "Value",
+      sortValue: (d) => Number(d.value),
+      cell: (d) => <span className="font-mono">${Number(d.value).toLocaleString()}</span>,
+    },
+    {
+      key: "owner",
+      header: "Owner",
+      sortValue: (d) => (d.owner_id === currentUserId ? "you" : d.owner_id ?? ""),
+      cell: (d) => (
+        <span className="text-muted-foreground">
+          {d.owner_id ? (d.owner_id === currentUserId ? "You" : "Teammate") : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "updated",
+      header: "Updated",
+      sortValue: (d) => new Date(d.updated_at ?? d.created_at ?? 0).getTime(),
+      cell: (d) => {
+        const t = d.updated_at ?? d.created_at;
+        return (
+          <span className="text-xs text-muted-foreground">
+            {t ? new Date(t).toLocaleDateString() : "—"}
+          </span>
+        );
+      },
+    },
+  ];
+
   return (
-    <div className="border border-border rounded-lg bg-card overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="bg-secondary/40 text-muted-foreground uppercase text-[10px] tracking-wider">
-          <tr>
-            <th className="text-left p-3 font-mono">Title</th>
-            <th className="text-left p-3 font-mono">Stage</th>
-            <th className="text-right p-3 font-mono">Value</th>
-            <th className="text-left p-3 font-mono">Expected close</th>
-          </tr>
-        </thead>
-        <tbody>
-          {deals.map((d) => {
-            const stage = stageById.get(d.stage_id);
-            return (
-              <tr
-                key={d.id}
-                onClick={() => onOpen(d.id)}
-                className="border-t border-border hover:bg-secondary/40 cursor-pointer"
-              >
-                <td className="p-3 font-medium">{d.title}</td>
-                <td className="p-3">
-                  <span className="inline-flex items-center gap-1.5 text-xs">
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ background: stage?.color ?? "#64748b" }}
-                    />
-                    {stage?.name ?? "—"}
-                  </span>
-                </td>
-                <td className="p-3 text-right font-mono">
-                  ${Number(d.value).toLocaleString()}
-                </td>
-                <td className="p-3 text-xs text-muted-foreground">
-                  {d.expected_close_date ?? "—"}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <DataTable<Deal>
+      tableKey="opportunities"
+      caption="Opportunities"
+      rows={deals}
+      columns={columns}
+      rowKey={(d) => d.id}
+      onRowClick={(d) => onOpen(d.id)}
+      emptyTitle="No opportunities yet"
+      emptyDescription="Add your first opportunity to start tracking your pipeline."
+      emptyAction={
+        <Button size="sm" onClick={onAddDeal}>
+          <Plus className="size-3.5" />
+          Add opportunity
+        </Button>
+      }
+    />
   );
 }

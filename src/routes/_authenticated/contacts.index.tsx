@@ -4,10 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Plus, Loader2, Pencil, Trash2, Mail, Phone, Building2,
   Bookmark, BookmarkPlus, X, Tag as TagIcon, ChevronDown,
-  Download, Upload, ArrowUpRight, UserPlus, SearchX,
+  Download, Upload, ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EmptyState, ErrorState, TableSkeleton } from "@/components/ui/states";
+import { DataTable } from "@/components/DataTable";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
@@ -315,71 +315,39 @@ function ContactsPage() {
             </button>
           ))}
         </div>
-        <div className="px-6 py-4 border-b border-border flex items-center gap-3 flex-wrap">
-          <input
-            type="text"
-            placeholder="Filter contacts…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-secondary border border-border rounded-md py-1.5 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring w-64"
-          />
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              onClick={() => setActiveTag(null)}
-              className={
-                activeTag === null
-                  ? "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-primary text-primary-foreground"
-                  : "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
-              }
-            >
-              All tags
-            </button>
-            {allTags.map((t) => (
-              <button
-                key={t}
-                onClick={() => setActiveTag(t === activeTag ? null : t)}
-                className={
-                  t === activeTag
-                    ? "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-primary text-primary-foreground"
-                    : "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
-                }
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Saved views */}
-        <div className="px-6 py-2.5 border-b border-border flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mr-1">
-            Views
-          </span>
-          {views.length === 0 && (
-            <span className="text-[10px] text-muted-foreground italic">
-              Save a filter combination to reuse it later.
+        <div className="px-6 py-2.5 border-b border-border grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 sm:flex sm:flex-wrap">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mr-1 shrink-0">
+              Views
             </span>
-          )}
-          {views.map((v) => (
-            <div key={v.id} className="inline-flex items-center rounded bg-secondary text-muted-foreground hover:text-foreground overflow-hidden">
-              <button
-                onClick={() => applyView(v)}
-                className="text-[10px] font-mono uppercase tracking-wider pl-2 pr-1 py-1 flex items-center gap-1"
-              >
-                <Bookmark className="size-2.5" /> {v.name}
-              </button>
-              <button
-                onClick={() => { if (confirm(`Delete view "${v.name}"?`)) deleteViewMut.mutate(v.id); }}
-                className="px-1 py-1 hover:text-destructive"
-                title="Delete view"
-              >
-                <X className="size-2.5" />
-              </button>
-            </div>
-          ))}
+            {views.length === 0 && (
+              <span className="truncate text-[10px] text-muted-foreground italic">
+                Save a filter combination to reuse it later.
+              </span>
+            )}
+            {views.map((v) => (
+              <div key={v.id} className="inline-flex items-center rounded bg-secondary text-muted-foreground hover:text-foreground overflow-hidden">
+                <button
+                  onClick={() => applyView(v)}
+                  className="text-[10px] font-mono uppercase tracking-wider pl-2 pr-1 py-1 flex items-center gap-1"
+                >
+                  <Bookmark className="size-2.5 shrink-0" /> {v.name}
+                </button>
+                <button
+                  onClick={() => { if (confirm(`Delete view "${v.name}"?`)) deleteViewMut.mutate(v.id); }}
+                  aria-label={`Delete view ${v.name}`}
+                  className="px-1 py-1 hover:text-destructive"
+                >
+                  <X className="size-2.5" />
+                </button>
+              </div>
+            ))}
+          </div>
           <button
             onClick={() => setSaveViewOpen(true)}
-            className="ml-auto text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            className="shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
           >
             <BookmarkPlus className="size-2.5" /> Save view
           </button>
@@ -387,272 +355,330 @@ function ContactsPage() {
 
         {/* Bulk actions toolbar */}
         {selectedIds.size > 0 && (
-          <div className="px-6 py-2 border-b border-border bg-primary/5 flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium">
-              {selectedIds.size} selected
-            </span>
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="text-[10px] text-muted-foreground hover:text-foreground uppercase font-mono tracking-wider"
-            >
-              Clear
-            </button>
-            <div className="h-4 w-px bg-border mx-1" />
+          <div className="px-6 py-2 border-b border-border bg-primary/5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:flex-wrap">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="text-xs font-medium shrink-0">
+                {selectedIds.size} selected
+              </span>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="shrink-0 text-[10px] text-muted-foreground hover:text-foreground uppercase font-mono tracking-wider"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <div className="hidden h-4 w-px bg-border mx-1 sm:block" />
 
-            <DropdownMenu>
-              <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
-                Set stage <ChevronDown className="size-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {LIFECYCLE_STAGES.map((s) => (
-                  <DropdownMenuItem
-                    key={s.value}
-                    onClick={() => bulkStageMut.mutate({ ids: selectedArr, stage: s.value })}
-                  >
-                    {s.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
-                <TagIcon className="size-3" /> Add tag <ChevronDown className="size-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuLabel className="text-[10px]">Existing tags</DropdownMenuLabel>
-                {allTags.length === 0 && (
-                  <DropdownMenuItem disabled className="text-xs italic">
-                    No tags yet
-                  </DropdownMenuItem>
-                )}
-                {allTags.map((t) => (
-                  <DropdownMenuItem key={t} onClick={() => bulkTagMut.mutate({ ids: selectedArr, tag: t })}>
-                    {t}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    const tag = prompt("New tag name")?.trim();
-                    if (tag) bulkTagMut.mutate({ ids: selectedArr, tag });
-                  }}
-                >
-                  + New tag…
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {selectedTags.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
-                  Remove tag <ChevronDown className="size-3" />
+                  Set stage <ChevronDown className="size-3" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  {selectedTags.map((t) => (
-                    <DropdownMenuItem key={t} onClick={() => bulkUntagMut.mutate({ ids: selectedArr, tag: t })}>
-                      {t}
+                  {LIFECYCLE_STAGES.map((s) => (
+                    <DropdownMenuItem
+                      key={s.value}
+                      onClick={() => bulkStageMut.mutate({ ids: selectedArr, stage: s.value })}
+                    >
+                      {s.label}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            )}
 
-            <button
-              onClick={() => {
-                if (confirm(`Delete ${selectedIds.size} contacts? This cannot be undone.`))
-                  bulkDeleteMut.mutate(selectedArr);
-              }}
-              className="text-[11px] px-2 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 inline-flex items-center gap-1"
-            >
-              <Trash2 className="size-3" /> Delete
-            </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
+                  <TagIcon className="size-3" /> Add tag <ChevronDown className="size-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuLabel className="text-[10px]">Existing tags</DropdownMenuLabel>
+                  {allTags.length === 0 && (
+                    <DropdownMenuItem disabled className="text-xs italic">
+                      No tags yet
+                    </DropdownMenuItem>
+                  )}
+                  {allTags.map((t) => (
+                    <DropdownMenuItem key={t} onClick={() => bulkTagMut.mutate({ ids: selectedArr, tag: t })}>
+                      {t}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const tag = prompt("New tag name")?.trim();
+                      if (tag) bulkTagMut.mutate({ ids: selectedArr, tag });
+                    }}
+                  >
+                    + New tag…
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {selectedTags.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="text-[11px] px-2 py-1 rounded bg-secondary hover:bg-secondary/70 inline-flex items-center gap-1">
+                    Remove tag <ChevronDown className="size-3" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {selectedTags.map((t) => (
+                      <DropdownMenuItem key={t} onClick={() => bulkUntagMut.mutate({ ids: selectedArr, tag: t })}>
+                        {t}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              <button
+                onClick={() => {
+                  if (confirm(`Delete ${selectedIds.size} contacts? This cannot be undone.`))
+                    bulkDeleteMut.mutate(selectedArr);
+                }}
+                className="text-[11px] px-2 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 inline-flex items-center gap-1"
+              >
+                <Trash2 className="size-3" /> Delete
+              </button>
+            </div>
           </div>
         )}
 
-
-
-        <div className="flex-1 overflow-auto">
-          {contactsQuery.isLoading ? (
-            <div className="p-6">
-              <TableSkeleton rows={10} cols={6} />
-            </div>
-          ) : contactsQuery.isError ? (
-            <ErrorState
-              title="Couldn't load contacts"
-              error={contactsQuery.error}
-              onRetry={() => contactsQuery.refetch()}
-              retrying={contactsQuery.isFetching}
-            />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              icon={contacts.length === 0 ? UserPlus : SearchX}
-              title={contacts.length === 0 ? "No contacts yet" : "No matches for your filters"}
-              description={
-                contacts.length === 0
-                  ? "Contacts are the backbone of your pipeline. Add one manually or import a CSV to get started."
-                  : "Try clearing the stage or tag filter, or search for something else."
-              }
-              action={
-                contacts.length === 0 ? (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setEditing(null);
-                      setDialogOpen(true);
-                    }}
+        <div className="flex-1 overflow-auto p-6">
+          <DataTable<Contact>
+            tableKey="contacts"
+            caption="Contacts"
+            rows={filtered}
+            isLoading={contactsQuery.isLoading}
+            error={contactsQuery.isError ? contactsQuery.error : undefined}
+            onRetry={() => contactsQuery.refetch()}
+            rowKey={(c) => c.id}
+            onRowClick={(c) => setSelectedId(c.id)}
+            emptyTitle={contacts.length === 0 ? "No contacts yet" : "No matches for your filters"}
+            emptyDescription={
+              contacts.length === 0
+                ? "Contacts are the backbone of your pipeline. Add one manually or import a CSV to get started."
+                : "Try clearing the stage or tag filter, or search for something else."
+            }
+            emptyAction={
+              contacts.length === 0 ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setEditing(null);
+                    setDialogOpen(true);
+                  }}
+                >
+                  <Plus className="size-3.5" />
+                  Add your first contact
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSearch("");
+                    setActiveTag(null);
+                    setActiveStage("all");
+                  }}
+                >
+                  Clear filters
+                </Button>
+              )
+            }
+            toolbar={
+              <div className="flex flex-1 flex-wrap items-center gap-3">
+                <input
+                  type="text"
+                  data-page-search
+                  placeholder="Filter contacts…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="bg-secondary border border-border rounded-md py-1.5 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring w-full sm:w-64"
+                />
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    onClick={() => setActiveTag(null)}
+                    className={
+                      activeTag === null
+                        ? "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-primary text-primary-foreground"
+                        : "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
+                    }
                   >
-                    <Plus className="size-3.5" />
-                    Add your first contact
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSearch("");
-                      setActiveTag(null);
-                      setActiveStage("all");
-                    }}
-                  >
-                    Clear filters
-                  </Button>
-                )
-              }
-              secondaryAction={
-                contacts.length === 0 ? (
-                  <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
-                    <Upload className="size-3.5" />
-                    Import CSV
-                  </Button>
-                ) : null
-              }
-            />
-          ) : (
-            <table className="w-full text-xs">
-              <thead className="sticky top-0 z-10 border-b border-border bg-secondary/85 backdrop-blur-sm">
-                <tr className="text-left font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <th className="pl-6 pr-2 py-2 w-8">
-                    <Checkbox
-                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                      onCheckedChange={toggleAll}
-                      aria-label="Select all"
-                    />
-                  </th>
-                  <th className="px-3 py-2 font-bold">Name</th>
-                  <th className="px-3 py-2 font-bold">Stage</th>
-                  <th className="px-3 py-2 font-bold">Email</th>
-                  <th className="px-3 py-2 font-bold">Phone</th>
-                  <th className="px-3 py-2 font-bold">Company</th>
-                  <th className="px-3 py-2 font-bold">Tags</th>
-                  <th className="px-3 py-2 font-bold w-20"></th>
-                </tr>
-              </thead>
-              <tbody>
-
-                {filtered.map((c) => {
-                  const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "—";
-                  return (
-                    <tr
-                      key={c.id}
+                    All tags
+                  </button>
+                  {allTags.map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setActiveTag(t === activeTag ? null : t)}
                       className={
-                        "border-b border-border hover:bg-secondary/40 " +
-                        (selectedIds.has(c.id) ? "bg-primary/5" : "")
+                        t === activeTag
+                          ? "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-primary text-primary-foreground"
+                          : "text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground"
                       }
                     >
-                      <td className="pl-6 pr-2 py-2.5">
-                        <Checkbox
-                          checked={selectedIds.has(c.id)}
-                          onCheckedChange={() => toggleOne(c.id)}
-                          aria-label={`Select ${name}`}
-                        />
-                      </td>
-                      <td className="px-3 py-2.5 font-medium">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedId(c.id)}
-                          className="hover:text-primary hover:underline text-left"
-                        >
-                          {name}
-                        </button>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className="inline-block bg-accent/10 text-accent rounded px-1.5 py-0.5 text-[10px] font-mono uppercase">
-                          {c.lifecycle_stage}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-muted-foreground">
-
-                        {c.email ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Mail className="size-3" />
-                            {c.email}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5 text-muted-foreground">
-                        {c.phone ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Phone className="size-3" />
-                            {c.phone}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5 text-muted-foreground">
-                        {c.company ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Building2 className="size-3" />
-                            {c.company}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex flex-wrap gap-1">
-                          {(c.tags ?? []).map((t) => (
-                            <span
-                              key={t}
-                              className="bg-accent/10 text-accent rounded px-1.5 py-0.5 text-[10px] font-mono"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => {
-                              setEditing(c);
-                              setDialogOpen(true);
-                            }}
-                            title="Edit"
-                            className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <Pencil className="size-3" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Delete contact "${name}"?`)) deleteMut.mutate(c.id);
-                            }}
-                            title="Delete"
-                            className="size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
-                          >
-                            <Trash2 className="size-3" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            }
+            columns={[
+              {
+                key: "select",
+                header: (
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                    onCheckedChange={toggleAll}
+                    aria-label="Select all"
+                  />
+                ),
+                locked: true,
+                className: "w-8",
+                cell: (c) => (
+                  <Checkbox
+                    checked={selectedIds.has(c.id)}
+                    onCheckedChange={() => toggleOne(c.id)}
+                    aria-label={`Select ${[c.first_name, c.last_name].filter(Boolean).join(" ") || "contact"}`}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ),
+              },
+              {
+                key: "name",
+                header: "Name",
+                sortValue: (c) => [c.first_name, c.last_name].filter(Boolean).join(" ").toLowerCase(),
+                locked: true,
+                cell: (c) => {
+                  const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "—";
+                  return (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedId(c.id);
+                      }}
+                      className="min-w-0 truncate font-medium hover:text-primary hover:underline text-left"
+                    >
+                      {name}
+                    </button>
                   );
-                })}
-              </tbody>
-            </table>
-          )}
+                },
+              },
+              {
+                key: "stage",
+                header: "Stage",
+                sortValue: (c) => c.lifecycle_stage,
+                cell: (c) => (
+                  <span className="inline-block bg-accent/10 text-accent rounded px-1.5 py-0.5 text-[10px] font-mono uppercase">
+                    {c.lifecycle_stage}
+                  </span>
+                ),
+              },
+              {
+                key: "email",
+                header: "Email",
+                sortValue: (c) => c.email ?? "",
+                cell: (c) => (
+                  <span className="text-muted-foreground">
+                    {c.email ? (
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <Mail className="size-3 shrink-0" />
+                        <span className="truncate">{c.email}</span>
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </span>
+                ),
+              },
+              {
+                key: "phone",
+                header: "Phone",
+                sortValue: (c) => c.phone ?? "",
+                hidden: true,
+                cell: (c) => (
+                  <span className="text-muted-foreground">
+                    {c.phone ? (
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <Phone className="size-3 shrink-0" />
+                        <span className="truncate">{c.phone}</span>
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </span>
+                ),
+              },
+              {
+                key: "company",
+                header: "Company",
+                sortValue: (c) => c.company ?? "",
+                cell: (c) => (
+                  <span className="text-muted-foreground">
+                    {c.company ? (
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <Building2 className="size-3 shrink-0" />
+                        <span className="truncate">{c.company}</span>
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </span>
+                ),
+              },
+              {
+                key: "tags",
+                header: "Tags",
+                cell: (c) => (
+                  <div className="flex flex-wrap gap-1">
+                    {(c.tags ?? []).map((t) => (
+                      <span
+                        key={t}
+                        className="bg-accent/10 text-accent rounded px-1.5 py-0.5 text-[10px] font-mono"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                key: "actions",
+                header: "",
+                locked: true,
+                className: "w-20",
+                cell: (c) => {
+                  const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "this contact";
+                  return (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditing(c);
+                          setDialogOpen(true);
+                        }}
+                        aria-label={`Edit ${name}`}
+                        title="Edit"
+                        className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Pencil className="size-3" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete contact "${name}"?`)) deleteMut.mutate(c.id);
+                        }}
+                        aria-label={`Delete ${name}`}
+                        title="Delete"
+                        className="size-7 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    </div>
+                  );
+                },
+              },
+            ]}
+          />
         </div>
       </div>
 

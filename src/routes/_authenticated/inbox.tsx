@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Bell, Check, CheckCheck, Loader2, Inbox } from "lucide-react";
+import { Bell, Check, CheckCheck, Inbox } from "lucide-react";
+import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/states";
 import { formatDistanceToNow } from "date-fns";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,6 +75,7 @@ function InboxPage() {
       }
     >
       <div className="h-full flex flex-col">
+        <h1 className="sr-only">Inbox</h1>
         <div className="px-6 py-3 border-b border-border flex items-center gap-1.5">
           {(["all", "unread"] as Filter[]).map((f) => (
             <button
@@ -93,17 +95,23 @@ function InboxPage() {
 
         <div className="flex-1 overflow-auto">
           {q.isLoading ? (
-            <div className="flex items-center justify-center h-64 text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
+            <div className="p-4">
+              <ListSkeleton rows={6} />
             </div>
+          ) : q.isError ? (
+            <ErrorState
+              title="Couldn't load notifications"
+              error={q.error}
+              onRetry={() => q.refetch()}
+              retrying={q.isFetching}
+            />
           ) : visible.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground gap-2">
-              <Inbox className="size-8 opacity-30" />
-              <span className="text-sm">
-                {filter === "unread" ? "You're all caught up." : "No notifications yet."}
-              </span>
-            </div>
-          ) : (
+            <EmptyState
+              icon={Inbox}
+              title={filter === "unread" ? "You're all caught up" : "No notifications yet"}
+              description={filter === "unread" ? "Nothing unread right now." : "Notifications about your workspace will show up here."}
+            />
+          ) : 
             <ul className="divide-y divide-border">
               {visible.map((n) => (
                 <NoteRow key={n.id} note={n} onRead={(id) => readOne.mutate(id)} />
@@ -136,7 +144,8 @@ function NoteRow({ note, onRead }: { note: Notification; onRead: (id: string) =>
       {!note.read_at && (
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRead(note.id); }}
-          className="text-muted-foreground hover:text-foreground shrink-0"
+          aria-label="Mark notification as read"
+          className="min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0"
           title="Mark read"
         >
           <Check className="size-3.5" />

@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader, PageBody } from "@/components/PageHeader";
+import { EmptyState, ListSkeleton } from "@/components/ui/states";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,28 +75,24 @@ function WordPressPage() {
 
   return (
     <AppShell>
-      <div className="h-full overflow-y-auto">
-        <div className="max-w-4xl mx-auto p-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <Webhook className="size-6" /> WordPress
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Receive form submissions from any WordPress site as leads. Works with WPForms,
-            Gravity Forms, Fluent Forms, Contact Form 7, Elementor Forms, and a plain{" "}
+      <PageHeader
+        title="WordPress"
+        description={
+          <>
+            Receive form submissions from any WordPress site as leads. Works with WPForms, Gravity
+            Forms, Fluent Forms, Contact Form 7, Elementor Forms, and a plain{" "}
             <code>functions.php</code> snippet.
-          </p>
-        </div>
-
+          </>
+        }
+        crumbs={[{ label: "Settings" }, { label: "WordPress" }]}
+      />
+      <PageBody width="full">
         {!subId || !userId ? (
-          <div className="rounded-md border border-border p-6 text-sm text-muted-foreground">
-            Select a workspace to configure WordPress webhooks.
-          </div>
+          <EmptyState icon={Webhook} title="Select a workspace" description="Select a workspace to configure WordPress webhooks." />
         ) : (
           <WebhooksPanel subId={subId} userId={userId} />
         )}
-        </div>
-      </div>
+      </PageBody>
     </AppShell>
   );
 }
@@ -154,11 +152,9 @@ function WebhooksPanel({ subId, userId }: { subId: string; userId: string }) {
       </div>
 
       {q.isLoading ? (
-        <div className="text-sm text-muted-foreground">Loading…</div>
+        <ListSkeleton rows={3} />
       ) : rows.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          No webhooks yet. Create one above to get a URL you can paste into WordPress.
-        </div>
+        <EmptyState icon={Webhook} title="No webhooks yet" description="Create one above to get a URL you can paste into WordPress." />
       ) : (
         <div className="space-y-4">
           {rows.map((h) => (
@@ -207,9 +203,9 @@ function WebhookRow({ hook, subId }: { hook: WordPressWebhook; subId: string }) 
 
   return (
     <div className="rounded-md border border-border p-5 space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-medium flex items-center gap-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:justify-between">
+        <div className="min-w-0">
+          <div className="font-medium flex items-center gap-2 truncate">
             {hook.name}
             {hook.enabled ? (
               <Badge variant="secondary" className="gap-1">
@@ -228,8 +224,8 @@ function WebhookRow({ hook, subId }: { hook: WordPressWebhook; subId: string }) 
           </div>
         </div>
         <div className="flex gap-2 items-center">
-          <Switch checked={hook.enabled} onCheckedChange={() => toggle.mutate()} />
-          <Button variant="ghost" size="icon" onClick={() => del.mutate()} title="Delete">
+          <Switch aria-label={`${hook.enabled ? "Disable" : "Enable"} ${hook.name}`} checked={hook.enabled} onCheckedChange={() => toggle.mutate()} />
+          <Button variant="ghost" size="icon" aria-label={`Delete ${hook.name}`} onClick={() => del.mutate()} title="Delete">
             <Trash2 className="size-4" />
           </Button>
         </div>
