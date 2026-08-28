@@ -802,5 +802,9 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
       stageName = (s ?? [])[0]?.name ?? null;
     }
 
-    return { events, page, pipelineName, stageName };
+    const leadFields =
+      (events.find((e) => e.lead_fields && Object.keys(e.lead_fields).length > 0)?.lead_fields ?? {}) as Record<string, string>;
+
+    return { events, page, pipelineName, stageName, leadFields };
   });
+
