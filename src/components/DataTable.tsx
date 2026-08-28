@@ -1,11 +1,14 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  Bookmark,
   ChevronLeft,
   ChevronRight,
   Columns3,
+  RotateCcw,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +19,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/ui/states";
+import {
+  addSavedView,
+  loadSavedViews,
+  loadTableState,
+  removeSavedView,
+  saveTableState,
+  type SavedTableView,
+} from "@/lib/table-views";
 
 export type Column<T> = {
   key: string;
