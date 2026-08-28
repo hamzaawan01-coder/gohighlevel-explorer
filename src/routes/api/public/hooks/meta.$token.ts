@@ -139,7 +139,7 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
               const first = fields["first_name"] ?? (fields["full_name"] ? String(fields["full_name"]).split(" ")[0] : null);
               const last = fields["last_name"] ?? (fields["full_name"] ? String(fields["full_name"]).split(" ").slice(1).join(" ") : null);
 
-              await (supabaseAdmin as any).from("contacts").upsert(
+              const { data: upserted } = await (supabaseAdmin as any).from("contacts").upsert(
                 {
                   sub_account_id: conn.sub_account_id,
                   meta_lead_id: lead.id,
@@ -151,10 +151,19 @@ export const Route = createFileRoute("/api/public/hooks/meta/$token")({
                   lifecycle_stage: "lead",
                 },
                 { onConflict: "sub_account_id,meta_lead_id" },
-              );
+              ).select("id").single();
+
+              const name = [first, last].filter(Boolean).join(" ").trim();
+              await createOpportunityForLead(supabaseAdmin as any, {
+                subAccountId: conn.sub_account_id,
+                contactId: (upserted?.id as string | undefined) ?? null,
+                title: name || email || phone || "Facebook lead",
+                source: "Facebook Lead Ad",
+              });
             } catch (e) {
               console.error("meta leadgen fetch failed", e);
             }
+
           }
         }
 
