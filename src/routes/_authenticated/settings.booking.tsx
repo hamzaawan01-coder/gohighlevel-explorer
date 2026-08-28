@@ -72,6 +72,8 @@ function BookingSettingsPage() {
         reminder_offsets: [1440, 60],
         reminder_channel: "sms",
         confirmation_enabled: true,
+        reminder_in_app: true,
+        allow_reschedule: true,
       });
     },
     onSuccess: (p) => {
@@ -331,6 +333,23 @@ function EditDialog({ page, onClose, subId }: { page: BookingPage; onClose: () =
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={state.reminder_in_app ?? true}
+                  onCheckedChange={(v) => setState({ ...state, reminder_in_app: v })}
+                />
+                <Label className="text-xs">Also notify my team in-app</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={state.allow_reschedule ?? true}
+                  onCheckedChange={(v) => setState({ ...state, allow_reschedule: v })}
+                />
+                <Label className="text-xs">Let attendees reschedule</Label>
+              </div>
+            </div>
+
             <div>
               <Label className="text-xs mb-1 block">Reminder message</Label>
               <Textarea
@@ -347,7 +366,9 @@ function EditDialog({ page, onClose, subId }: { page: BookingPage; onClose: () =
             {(state.reminder_offsets ?? []).length > 0 && (
               <p className="text-[11px] text-muted-foreground">
                 Will send {(state.reminder_offsets ?? []).map(offsetLabel).join(", ")} via{" "}
-                {state.reminder_channel === "both" ? "text and email" : state.reminder_channel === "email" ? "email" : "text"}.
+                {state.reminder_channel === "both" ? "text and email" : state.reminder_channel === "email" ? "email" : "text"}
+                {state.reminder_in_app === false ? "" : " plus an in-app notification"}. Delivery status
+                for each reminder shows on the Calendar page.
               </p>
             )}
           </div>

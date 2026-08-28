@@ -37,6 +37,8 @@ export type BookingPage = {
   reminder_channel: "sms" | "email" | "both";
   reminder_template: string | null;
   confirmation_enabled: boolean;
+  reminder_in_app: boolean;
+  allow_reschedule: boolean;
   created_at: string;
   updated_at: string;
 };
