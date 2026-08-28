@@ -2580,6 +2580,60 @@ export type Database = {
           },
         ]
       }
+      sub_account_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          plan_id: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          sub_account_id: string
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          sub_account_id: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          sub_account_id?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_account_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sub_account_subscriptions_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: true
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sub_accounts: {
         Row: {
           agency_id: string
@@ -2629,6 +2683,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sub_accounts_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          agency_id: string
+          billing_interval: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          id: string
+          is_active: boolean
+          modules: string[]
+          name: string
+          price_cents: number
+          stripe_price_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          billing_interval?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          modules?: string[]
+          name: string
+          price_cents?: number
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          billing_interval?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          modules?: string[]
+          name?: string
+          price_cents?: number
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_agency_id_fkey"
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "agencies"
@@ -3304,6 +3414,7 @@ export type Database = {
         Returns: undefined
       }
       scan_time_workflows: { Args: never; Returns: undefined }
+      subscription_modules: { Args: { _sub: string }; Returns: string[] }
     }
     Enums: {
       ad_campaign_status: "draft" | "active" | "paused" | "completed"
