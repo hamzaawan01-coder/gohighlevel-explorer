@@ -908,6 +908,8 @@ export function MetaLeadSourcePanel({
                 <button
                   key={key}
                   type="button"
+                  aria-pressed={active}
+                  disabled={busy !== null}
                   onClick={() =>
                     setTimelineKinds((k) =>
                       active ? k.filter((x) => x !== key) : [...k, key],
