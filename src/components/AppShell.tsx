@@ -66,6 +66,7 @@ const automationNav: NavItem[] = [
   { label: "Call flows", icon: PhoneCall, to: "/settings/call-flows", module: "calls" },
   { label: "Integrations", icon: Settings, to: "/settings/integrations", module: "integrations" },
   { label: "Quiet hours", icon: Settings, to: "/settings/messaging", module: "integrations" },
+  { label: "App review", icon: ShieldCheck, to: "/settings/app-review", module: "integrations" },
   { label: "Modules", icon: ToggleLeft, to: "/settings/modules" },
 ];
 
