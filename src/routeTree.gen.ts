@@ -9,78 +9,72 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as DataDeletionRouteImport } from './routes/data-deletion'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as InviteTokenRouteImport } from './routes/invite.$token'
-import { Route as FSlugRouteImport } from './routes/f.$slug'
-import { Route as BSlugRouteImport } from './routes/b.$slug'
-import { Route as AuthenticatedWorkflowsRouteImport } from './routes/_authenticated/workflows'
-import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
-import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
-import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
-import { Route as AuthenticatedModulesExplorerRouteImport } from './routes/_authenticated/modules-explorer'
-import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
-import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
-import { Route as AuthenticatedFormsRouteImport } from './routes/_authenticated/forms'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedConversationsRouteImport } from './routes/_authenticated/conversations'
-import { Route as AuthenticatedCallsRouteImport } from './routes/_authenticated/calls'
-import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DataDeletionRouteImport } from './routes/data-deletion'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAppointmentLogRouteImport } from './routes/_authenticated/appointment-log'
-import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
+import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedCallsRouteImport } from './routes/_authenticated/calls'
+import { Route as AuthenticatedConversationsRouteImport } from './routes/_authenticated/conversations'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedFormsRouteImport } from './routes/_authenticated/forms'
+import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
+import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
+import { Route as AuthenticatedModulesExplorerRouteImport } from './routes/_authenticated/modules-explorer'
+import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
+import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
+import { Route as AuthenticatedWorkflowsRouteImport } from './routes/_authenticated/workflows'
+import { Route as BSlugRouteImport } from './routes/b.$slug'
+import { Route as FSlugRouteImport } from './routes/f.$slug'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
-import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
-import { Route as AuthenticatedSettingsWordpressRouteImport } from './routes/_authenticated/settings.wordpress'
-import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
-import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
-import { Route as AuthenticatedSettingsPhoneNumbersRouteImport } from './routes/_authenticated/settings.phone-numbers'
-import { Route as AuthenticatedSettingsModulesRouteImport } from './routes/_authenticated/settings.modules'
-import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_authenticated/settings.messaging'
-import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
-import { Route as AuthenticatedSettingsCallFlowsRouteImport } from './routes/_authenticated/settings.call-flows'
-import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
-import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings.appearance'
-import { Route as AuthenticatedSettingsAppReviewRouteImport } from './routes/_authenticated/settings.app-review'
-import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
-import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta.data-deletion'
-import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
-import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
-import { Route as ApiPublicHooksAppointmentsRouteImport } from './routes/api/public/hooks/appointments'
-import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
+import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
+import { Route as AuthenticatedSettingsAppReviewRouteImport } from './routes/_authenticated/settings.app-review'
+import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings.appearance'
+import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
+import { Route as AuthenticatedSettingsCallFlowsRouteImport } from './routes/_authenticated/settings.call-flows'
+import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
+import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_authenticated/settings.messaging'
+import { Route as AuthenticatedSettingsModulesRouteImport } from './routes/_authenticated/settings.modules'
+import { Route as AuthenticatedSettingsPhoneNumbersRouteImport } from './routes/_authenticated/settings.phone-numbers'
+import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
+import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
+import { Route as AuthenticatedSettingsWordpressRouteImport } from './routes/_authenticated/settings.wordpress'
+import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
-import { Route as ApiPublicTwilioTokenWhatsappRouteImport } from './routes/api/public/twilio.$token.whatsapp'
-import { Route as ApiPublicTwilioTokenVoicemailRouteImport } from './routes/api/public/twilio.$token.voicemail'
-import { Route as ApiPublicTwilioTokenVoiceStatusRouteImport } from './routes/api/public/twilio.$token.voice-status'
-import { Route as ApiPublicTwilioTokenVoiceOutboundRouteImport } from './routes/api/public/twilio.$token.voice-outbound'
-import { Route as ApiPublicTwilioTokenVoiceRouteImport } from './routes/api/public/twilio.$token.voice'
-import { Route as ApiPublicTwilioTokenStatusRouteImport } from './routes/api/public/twilio.$token.status'
-import { Route as ApiPublicTwilioTokenSmsRouteImport } from './routes/api/public/twilio.$token.sms'
-import { Route as ApiPublicTwilioTokenRecordingRouteImport } from './routes/api/public/twilio.$token.recording'
-import { Route as ApiPublicOauthMetaCallbackRouteImport } from './routes/api/public/oauth.meta.callback'
-import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/api/public/oauth.google-ads.callback'
-import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
-import { Route as ApiPublicHooksMetaTokenRouteImport } from './routes/api/public/hooks/meta.$token'
+import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
+import { Route as ApiPublicHooksAppointmentsRouteImport } from './routes/api/public/hooks/appointments'
+import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
+import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
+import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta.data-deletion'
 import { Route as ApiPublicBookingRescheduleTokenRouteImport } from './routes/api/public/booking.reschedule.$token'
+import { Route as ApiPublicHooksMetaTokenRouteImport } from './routes/api/public/hooks/meta.$token'
+import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
+import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/api/public/oauth.google-ads.callback'
+import { Route as ApiPublicOauthMetaCallbackRouteImport } from './routes/api/public/oauth.meta.callback'
+import { Route as ApiPublicTwilioTokenRecordingRouteImport } from './routes/api/public/twilio.$token.recording'
+import { Route as ApiPublicTwilioTokenSmsRouteImport } from './routes/api/public/twilio.$token.sms'
+import { Route as ApiPublicTwilioTokenStatusRouteImport } from './routes/api/public/twilio.$token.status'
+import { Route as ApiPublicTwilioTokenVoiceRouteImport } from './routes/api/public/twilio.$token.voice'
+import { Route as ApiPublicTwilioTokenVoiceOutboundRouteImport } from './routes/api/public/twilio.$token.voice-outbound'
+import { Route as ApiPublicTwilioTokenVoiceStatusRouteImport } from './routes/api/public/twilio.$token.voice-status'
+import { Route as ApiPublicTwilioTokenVoicemailRouteImport } from './routes/api/public/twilio.$token.voicemail'
+import { Route as ApiPublicTwilioTokenWhatsappRouteImport } from './routes/api/public/twilio.$token.whatsapp'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DataDeletionRoute = DataDeletionRouteImport.update({
-  id: '/data-deletion',
-  path: '/data-deletion',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -88,80 +82,35 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const DataDeletionRoute = DataDeletionRouteImport.update({
+  id: '/data-deletion',
+  path: '/data-deletion',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InviteTokenRoute = InviteTokenRouteImport.update({
-  id: '/invite/$token',
-  path: '/invite/$token',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FSlugRoute = FSlugRouteImport.update({
-  id: '/f/$slug',
-  path: '/f/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BSlugRoute = BSlugRouteImport.update({
-  id: '/b/$slug',
-  path: '/b/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedWorkflowsRoute = AuthenticatedWorkflowsRouteImport.update({
-  id: '/workflows',
-  path: '/workflows',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
-  id: '/templates',
-  path: '/templates',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedOpportunitiesRoute =
-  AuthenticatedOpportunitiesRouteImport.update({
-    id: '/opportunities',
-    path: '/opportunities',
+const AuthenticatedAppointmentLogRoute =
+  AuthenticatedAppointmentLogRouteImport.update({
+    id: '/appointment-log',
+    path: '/appointment-log',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedModulesExplorerRoute =
-  AuthenticatedModulesExplorerRouteImport.update({
-    id: '/modules-explorer',
-    path: '/modules-explorer',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMarketingRoute = AuthenticatedMarketingRouteImport.update({
-  id: '/marketing',
-  path: '/marketing',
+const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
-  id: '/inbox',
-  path: '/inbox',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFormsRoute = AuthenticatedFormsRouteImport.update({
-  id: '/forms',
-  path: '/forms',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedCallsRoute = AuthenticatedCallsRouteImport.update({
+  id: '/calls',
+  path: '/calls',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedConversationsRoute =
@@ -170,98 +119,93 @@ const AuthenticatedConversationsRoute =
     path: '/conversations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedCallsRoute = AuthenticatedCallsRouteImport.update({
-  id: '/calls',
-  path: '/calls',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
+const AuthenticatedFormsRoute = AuthenticatedFormsRouteImport.update({
+  id: '/forms',
+  path: '/forms',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAppointmentLogRoute =
-  AuthenticatedAppointmentLogRouteImport.update({
-    id: '/appointment-log',
-    path: '/appointment-log',
+const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMarketingRoute = AuthenticatedMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedModulesExplorerRoute =
+  AuthenticatedModulesExplorerRouteImport.update({
+    id: '/modules-explorer',
+    path: '/modules-explorer',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSettingsIndexRoute =
-  AuthenticatedSettingsIndexRouteImport.update({
-    id: '/settings/',
-    path: '/settings/',
+const AuthenticatedOpportunitiesRoute =
+  AuthenticatedOpportunitiesRouteImport.update({
+    id: '/opportunities',
+    path: '/opportunities',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWorkflowsRoute = AuthenticatedWorkflowsRouteImport.update({
+  id: '/workflows',
+  path: '/workflows',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const BSlugRoute = BSlugRouteImport.update({
+  id: '/b/$slug',
+  path: '/b/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FSlugRoute = FSlugRouteImport.update({
+  id: '/f/$slug',
+  path: '/f/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedContactsIndexRoute =
   AuthenticatedContactsIndexRouteImport.update({
     id: '/contacts/',
     path: '/contacts/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicProcessOutboundRoute =
-  ApiPublicProcessOutboundRouteImport.update({
-    id: '/api/public/process-outbound',
-    path: '/api/public/process-outbound',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedSettingsWordpressRoute =
-  AuthenticatedSettingsWordpressRouteImport.update({
-    id: '/settings/wordpress',
-    path: '/settings/wordpress',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsTeamRoute =
-  AuthenticatedSettingsTeamRouteImport.update({
-    id: '/settings/team',
-    path: '/settings/team',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsSubAccountsRoute =
-  AuthenticatedSettingsSubAccountsRouteImport.update({
-    id: '/settings/sub-accounts',
-    path: '/settings/sub-accounts',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsPhoneNumbersRoute =
-  AuthenticatedSettingsPhoneNumbersRouteImport.update({
-    id: '/settings/phone-numbers',
-    path: '/settings/phone-numbers',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsModulesRoute =
-  AuthenticatedSettingsModulesRouteImport.update({
-    id: '/settings/modules',
-    path: '/settings/modules',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsMessagingRoute =
-  AuthenticatedSettingsMessagingRouteImport.update({
-    id: '/settings/messaging',
-    path: '/settings/messaging',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsIntegrationsRoute =
-  AuthenticatedSettingsIntegrationsRouteImport.update({
-    id: '/settings/integrations',
-    path: '/settings/integrations',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsCallFlowsRoute =
-  AuthenticatedSettingsCallFlowsRouteImport.update({
-    id: '/settings/call-flows',
-    path: '/settings/call-flows',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsBookingRoute =
-  AuthenticatedSettingsBookingRouteImport.update({
-    id: '/settings/booking',
-    path: '/settings/booking',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsAppearanceRoute =
-  AuthenticatedSettingsAppearanceRouteImport.update({
-    id: '/settings/appearance',
-    path: '/settings/appearance',
+const AuthenticatedContactsIdRoute = AuthenticatedContactsIdRouteImport.update({
+  id: '/contacts/$id',
+  path: '/contacts/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDealsIdRoute = AuthenticatedDealsIdRouteImport.update({
+  id: '/deals/$id',
+  path: '/deals/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSettingsAppReviewRoute =
@@ -270,20 +214,92 @@ const AuthenticatedSettingsAppReviewRoute =
     path: '/settings/app-review',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDealsIdRoute = AuthenticatedDealsIdRouteImport.update({
-  id: '/deals/$id',
-  path: '/deals/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AuthenticatedSettingsAppearanceRoute =
+  AuthenticatedSettingsAppearanceRouteImport.update({
+    id: '/settings/appearance',
+    path: '/settings/appearance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsBookingRoute =
+  AuthenticatedSettingsBookingRouteImport.update({
+    id: '/settings/booking',
+    path: '/settings/booking',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsCallFlowsRoute =
+  AuthenticatedSettingsCallFlowsRouteImport.update({
+    id: '/settings/call-flows',
+    path: '/settings/call-flows',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsIntegrationsRoute =
+  AuthenticatedSettingsIntegrationsRouteImport.update({
+    id: '/settings/integrations',
+    path: '/settings/integrations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsMessagingRoute =
+  AuthenticatedSettingsMessagingRouteImport.update({
+    id: '/settings/messaging',
+    path: '/settings/messaging',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsModulesRoute =
+  AuthenticatedSettingsModulesRouteImport.update({
+    id: '/settings/modules',
+    path: '/settings/modules',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsPhoneNumbersRoute =
+  AuthenticatedSettingsPhoneNumbersRouteImport.update({
+    id: '/settings/phone-numbers',
+    path: '/settings/phone-numbers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsSubAccountsRoute =
+  AuthenticatedSettingsSubAccountsRouteImport.update({
+    id: '/settings/sub-accounts',
+    path: '/settings/sub-accounts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsTeamRoute =
+  AuthenticatedSettingsTeamRouteImport.update({
+    id: '/settings/team',
+    path: '/settings/team',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsWordpressRoute =
+  AuthenticatedSettingsWordpressRouteImport.update({
+    id: '/settings/wordpress',
+    path: '/settings/wordpress',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiPublicProcessOutboundRoute =
+  ApiPublicProcessOutboundRouteImport.update({
+    id: '/api/public/process-outbound',
+    path: '/api/public/process-outbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBookingSlugRoute = ApiPublicBookingSlugRouteImport.update({
+  id: '/api/public/booking/$slug',
+  path: '/api/public/booking/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedContactsIdRoute = AuthenticatedContactsIdRouteImport.update({
-  id: '/contacts/$id',
-  path: '/contacts/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const ApiPublicFormsSlugRoute = ApiPublicFormsSlugRouteImport.update({
+  id: '/api/public/forms/$slug',
+  path: '/api/public/forms/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicMetaDataDeletionRoute =
-  ApiPublicMetaDataDeletionRouteImport.update({
-    id: '/api/public/meta/data-deletion',
-    path: '/api/public/meta/data-deletion',
+const ApiPublicHooksAppointmentsRoute =
+  ApiPublicHooksAppointmentsRouteImport.update({
+    id: '/api/public/hooks/appointments',
+    path: '/api/public/hooks/appointments',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSyncGoogleAdsRoute =
+  ApiPublicHooksSyncGoogleAdsRouteImport.update({
+    id: '/api/public/hooks/sync-google-ads',
+    path: '/api/public/hooks/sync-google-ads',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicLSlugRoute = ApiPublicLSlugRouteImport.update({
@@ -291,79 +307,27 @@ const ApiPublicLSlugRoute = ApiPublicLSlugRouteImport.update({
   path: '/api/public/l/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksSyncGoogleAdsRoute =
-  ApiPublicHooksSyncGoogleAdsRouteImport.update({
-    id: '/api/public/hooks/sync-google-ads',
-    path: '/api/public/hooks/sync-google-ads',
+const ApiPublicMetaDataDeletionRoute =
+  ApiPublicMetaDataDeletionRouteImport.update({
+    id: '/api/public/meta/data-deletion',
+    path: '/api/public/meta/data-deletion',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksAppointmentsRoute =
-  ApiPublicHooksAppointmentsRouteImport.update({
-    id: '/api/public/hooks/appointments',
-    path: '/api/public/hooks/appointments',
+const ApiPublicBookingRescheduleTokenRoute =
+  ApiPublicBookingRescheduleTokenRouteImport.update({
+    id: '/api/public/booking/reschedule/$token',
+    path: '/api/public/booking/reschedule/$token',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicFormsSlugRoute = ApiPublicFormsSlugRouteImport.update({
-  id: '/api/public/forms/$slug',
-  path: '/api/public/forms/$slug',
+const ApiPublicHooksMetaTokenRoute = ApiPublicHooksMetaTokenRouteImport.update({
+  id: '/api/public/hooks/meta/$token',
+  path: '/api/public/hooks/meta/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicBookingSlugRoute = ApiPublicBookingSlugRouteImport.update({
-  id: '/api/public/booking/$slug',
-  path: '/api/public/booking/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicTwilioTokenWhatsappRoute =
-  ApiPublicTwilioTokenWhatsappRouteImport.update({
-    id: '/api/public/twilio/$token/whatsapp',
-    path: '/api/public/twilio/$token/whatsapp',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioTokenVoicemailRoute =
-  ApiPublicTwilioTokenVoicemailRouteImport.update({
-    id: '/api/public/twilio/$token/voicemail',
-    path: '/api/public/twilio/$token/voicemail',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioTokenVoiceStatusRoute =
-  ApiPublicTwilioTokenVoiceStatusRouteImport.update({
-    id: '/api/public/twilio/$token/voice-status',
-    path: '/api/public/twilio/$token/voice-status',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioTokenVoiceOutboundRoute =
-  ApiPublicTwilioTokenVoiceOutboundRouteImport.update({
-    id: '/api/public/twilio/$token/voice-outbound',
-    path: '/api/public/twilio/$token/voice-outbound',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioTokenVoiceRoute =
-  ApiPublicTwilioTokenVoiceRouteImport.update({
-    id: '/api/public/twilio/$token/voice',
-    path: '/api/public/twilio/$token/voice',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioTokenStatusRoute =
-  ApiPublicTwilioTokenStatusRouteImport.update({
-    id: '/api/public/twilio/$token/status',
-    path: '/api/public/twilio/$token/status',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTwilioTokenSmsRoute = ApiPublicTwilioTokenSmsRouteImport.update({
-  id: '/api/public/twilio/$token/sms',
-  path: '/api/public/twilio/$token/sms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicTwilioTokenRecordingRoute =
-  ApiPublicTwilioTokenRecordingRouteImport.update({
-    id: '/api/public/twilio/$token/recording',
-    path: '/api/public/twilio/$token/recording',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicOauthMetaCallbackRoute =
-  ApiPublicOauthMetaCallbackRouteImport.update({
-    id: '/api/public/oauth/meta/callback',
-    path: '/api/public/oauth/meta/callback',
+const ApiPublicHooksWordpressTokenRoute =
+  ApiPublicHooksWordpressTokenRouteImport.update({
+    id: '/api/public/hooks/wordpress/$token',
+    path: '/api/public/hooks/wordpress/$token',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicOauthGoogleAdsCallbackRoute =
@@ -372,21 +336,57 @@ const ApiPublicOauthGoogleAdsCallbackRoute =
     path: '/api/public/oauth/google-ads/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksWordpressTokenRoute =
-  ApiPublicHooksWordpressTokenRouteImport.update({
-    id: '/api/public/hooks/wordpress/$token',
-    path: '/api/public/hooks/wordpress/$token',
+const ApiPublicOauthMetaCallbackRoute =
+  ApiPublicOauthMetaCallbackRouteImport.update({
+    id: '/api/public/oauth/meta/callback',
+    path: '/api/public/oauth/meta/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksMetaTokenRoute = ApiPublicHooksMetaTokenRouteImport.update({
-  id: '/api/public/hooks/meta/$token',
-  path: '/api/public/hooks/meta/$token',
+const ApiPublicTwilioTokenRecordingRoute =
+  ApiPublicTwilioTokenRecordingRouteImport.update({
+    id: '/api/public/twilio/$token/recording',
+    path: '/api/public/twilio/$token/recording',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioTokenSmsRoute = ApiPublicTwilioTokenSmsRouteImport.update({
+  id: '/api/public/twilio/$token/sms',
+  path: '/api/public/twilio/$token/sms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicBookingRescheduleTokenRoute =
-  ApiPublicBookingRescheduleTokenRouteImport.update({
-    id: '/api/public/booking/reschedule/$token',
-    path: '/api/public/booking/reschedule/$token',
+const ApiPublicTwilioTokenStatusRoute =
+  ApiPublicTwilioTokenStatusRouteImport.update({
+    id: '/api/public/twilio/$token/status',
+    path: '/api/public/twilio/$token/status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioTokenVoiceRoute =
+  ApiPublicTwilioTokenVoiceRouteImport.update({
+    id: '/api/public/twilio/$token/voice',
+    path: '/api/public/twilio/$token/voice',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioTokenVoiceOutboundRoute =
+  ApiPublicTwilioTokenVoiceOutboundRouteImport.update({
+    id: '/api/public/twilio/$token/voice-outbound',
+    path: '/api/public/twilio/$token/voice-outbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioTokenVoiceStatusRoute =
+  ApiPublicTwilioTokenVoiceStatusRouteImport.update({
+    id: '/api/public/twilio/$token/voice-status',
+    path: '/api/public/twilio/$token/voice-status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioTokenVoicemailRoute =
+  ApiPublicTwilioTokenVoicemailRouteImport.update({
+    id: '/api/public/twilio/$token/voicemail',
+    path: '/api/public/twilio/$token/voicemail',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTwilioTokenWhatsappRoute =
+  ApiPublicTwilioTokenWhatsappRouteImport.update({
+    id: '/api/public/twilio/$token/whatsapp',
+    path: '/api/public/twilio/$token/whatsapp',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -784,32 +784,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/data-deletion': {
-      id: '/data-deletion'
-      path: '/data-deletion'
-      fullPath: '/data-deletion'
-      preLoaderRoute: typeof DataDeletionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -819,116 +798,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/invite/$token': {
-      id: '/invite/$token'
-      path: '/invite/$token'
-      fullPath: '/invite/$token'
-      preLoaderRoute: typeof InviteTokenRouteImport
+    '/data-deletion': {
+      id: '/data-deletion'
+      path: '/data-deletion'
+      fullPath: '/data-deletion'
+      preLoaderRoute: typeof DataDeletionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/f/$slug': {
-      id: '/f/$slug'
-      path: '/f/$slug'
-      fullPath: '/f/$slug'
-      preLoaderRoute: typeof FSlugRouteImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/b/$slug': {
-      id: '/b/$slug'
-      path: '/b/$slug'
-      fullPath: '/b/$slug'
-      preLoaderRoute: typeof BSlugRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/workflows': {
-      id: '/_authenticated/workflows'
-      path: '/workflows'
-      fullPath: '/workflows'
-      preLoaderRoute: typeof AuthenticatedWorkflowsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/templates': {
-      id: '/_authenticated/templates'
-      path: '/templates'
-      fullPath: '/templates'
-      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tasks': {
-      id: '/_authenticated/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof AuthenticatedTasksRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/opportunities': {
-      id: '/_authenticated/opportunities'
-      path: '/opportunities'
-      fullPath: '/opportunities'
-      preLoaderRoute: typeof AuthenticatedOpportunitiesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/modules-explorer': {
-      id: '/_authenticated/modules-explorer'
-      path: '/modules-explorer'
-      fullPath: '/modules-explorer'
-      preLoaderRoute: typeof AuthenticatedModulesExplorerRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/marketing': {
-      id: '/_authenticated/marketing'
-      path: '/marketing'
-      fullPath: '/marketing'
-      preLoaderRoute: typeof AuthenticatedMarketingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/inbox': {
-      id: '/_authenticated/inbox'
-      path: '/inbox'
-      fullPath: '/inbox'
-      preLoaderRoute: typeof AuthenticatedInboxRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/forms': {
-      id: '/_authenticated/forms'
-      path: '/forms'
-      fullPath: '/forms'
-      preLoaderRoute: typeof AuthenticatedFormsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/conversations': {
-      id: '/_authenticated/conversations'
-      path: '/conversations'
-      fullPath: '/conversations'
-      preLoaderRoute: typeof AuthenticatedConversationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/calls': {
-      id: '/_authenticated/calls'
-      path: '/calls'
-      fullPath: '/calls'
-      preLoaderRoute: typeof AuthenticatedCallsRouteImport
+    '/_authenticated/appointment-log': {
+      id: '/_authenticated/appointment-log'
+      path: '/appointment-log'
+      fullPath: '/appointment-log'
+      preLoaderRoute: typeof AuthenticatedAppointmentLogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/calendar': {
@@ -938,116 +840,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCalendarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/appointment-log': {
-      id: '/_authenticated/appointment-log'
-      path: '/appointment-log'
-      fullPath: '/appointment-log'
-      preLoaderRoute: typeof AuthenticatedAppointmentLogRouteImport
+    '/_authenticated/calls': {
+      id: '/_authenticated/calls'
+      path: '/calls'
+      fullPath: '/calls'
+      preLoaderRoute: typeof AuthenticatedCallsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/': {
-      id: '/_authenticated/settings/'
-      path: '/settings'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+    '/_authenticated/conversations': {
+      id: '/_authenticated/conversations'
+      path: '/conversations'
+      fullPath: '/conversations'
+      preLoaderRoute: typeof AuthenticatedConversationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/forms': {
+      id: '/_authenticated/forms'
+      path: '/forms'
+      fullPath: '/forms'
+      preLoaderRoute: typeof AuthenticatedFormsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inbox': {
+      id: '/_authenticated/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AuthenticatedInboxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/marketing': {
+      id: '/_authenticated/marketing'
+      path: '/marketing'
+      fullPath: '/marketing'
+      preLoaderRoute: typeof AuthenticatedMarketingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/modules-explorer': {
+      id: '/_authenticated/modules-explorer'
+      path: '/modules-explorer'
+      fullPath: '/modules-explorer'
+      preLoaderRoute: typeof AuthenticatedModulesExplorerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/opportunities': {
+      id: '/_authenticated/opportunities'
+      path: '/opportunities'
+      fullPath: '/opportunities'
+      preLoaderRoute: typeof AuthenticatedOpportunitiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tasks': {
+      id: '/_authenticated/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedTasksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/templates': {
+      id: '/_authenticated/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/workflows': {
+      id: '/_authenticated/workflows'
+      path: '/workflows'
+      fullPath: '/workflows'
+      preLoaderRoute: typeof AuthenticatedWorkflowsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/b/$slug': {
+      id: '/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof BSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/f/$slug': {
+      id: '/f/$slug'
+      path: '/f/$slug'
+      fullPath: '/f/$slug'
+      preLoaderRoute: typeof FSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/contacts/': {
       id: '/_authenticated/contacts/'
       path: '/contacts'
       fullPath: '/contacts/'
       preLoaderRoute: typeof AuthenticatedContactsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/public/process-outbound': {
-      id: '/api/public/process-outbound'
-      path: '/api/public/process-outbound'
-      fullPath: '/api/public/process-outbound'
-      preLoaderRoute: typeof ApiPublicProcessOutboundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/settings/wordpress': {
-      id: '/_authenticated/settings/wordpress'
-      path: '/settings/wordpress'
-      fullPath: '/settings/wordpress'
-      preLoaderRoute: typeof AuthenticatedSettingsWordpressRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/team': {
-      id: '/_authenticated/settings/team'
-      path: '/settings/team'
-      fullPath: '/settings/team'
-      preLoaderRoute: typeof AuthenticatedSettingsTeamRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/sub-accounts': {
-      id: '/_authenticated/settings/sub-accounts'
-      path: '/settings/sub-accounts'
-      fullPath: '/settings/sub-accounts'
-      preLoaderRoute: typeof AuthenticatedSettingsSubAccountsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/phone-numbers': {
-      id: '/_authenticated/settings/phone-numbers'
-      path: '/settings/phone-numbers'
-      fullPath: '/settings/phone-numbers'
-      preLoaderRoute: typeof AuthenticatedSettingsPhoneNumbersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/modules': {
-      id: '/_authenticated/settings/modules'
-      path: '/settings/modules'
-      fullPath: '/settings/modules'
-      preLoaderRoute: typeof AuthenticatedSettingsModulesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/messaging': {
-      id: '/_authenticated/settings/messaging'
-      path: '/settings/messaging'
-      fullPath: '/settings/messaging'
-      preLoaderRoute: typeof AuthenticatedSettingsMessagingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/integrations': {
-      id: '/_authenticated/settings/integrations'
-      path: '/settings/integrations'
-      fullPath: '/settings/integrations'
-      preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/call-flows': {
-      id: '/_authenticated/settings/call-flows'
-      path: '/settings/call-flows'
-      fullPath: '/settings/call-flows'
-      preLoaderRoute: typeof AuthenticatedSettingsCallFlowsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/booking': {
-      id: '/_authenticated/settings/booking'
-      path: '/settings/booking'
-      fullPath: '/settings/booking'
-      preLoaderRoute: typeof AuthenticatedSettingsBookingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/appearance': {
-      id: '/_authenticated/settings/appearance'
-      path: '/settings/appearance'
-      fullPath: '/settings/appearance'
-      preLoaderRoute: typeof AuthenticatedSettingsAppearanceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/app-review': {
-      id: '/_authenticated/settings/app-review'
-      path: '/settings/app-review'
-      fullPath: '/settings/app-review'
-      preLoaderRoute: typeof AuthenticatedSettingsAppReviewRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/deals/$id': {
-      id: '/_authenticated/deals/$id'
-      path: '/deals/$id'
-      fullPath: '/deals/$id'
-      preLoaderRoute: typeof AuthenticatedDealsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contacts/$id': {
@@ -1057,39 +959,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/meta/data-deletion': {
-      id: '/api/public/meta/data-deletion'
-      path: '/api/public/meta/data-deletion'
-      fullPath: '/api/public/meta/data-deletion'
-      preLoaderRoute: typeof ApiPublicMetaDataDeletionRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/deals/$id': {
+      id: '/_authenticated/deals/$id'
+      path: '/deals/$id'
+      fullPath: '/deals/$id'
+      preLoaderRoute: typeof AuthenticatedDealsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/l/$slug': {
-      id: '/api/public/l/$slug'
-      path: '/api/public/l/$slug'
-      fullPath: '/api/public/l/$slug'
-      preLoaderRoute: typeof ApiPublicLSlugRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/hooks/sync-google-ads': {
-      id: '/api/public/hooks/sync-google-ads'
-      path: '/api/public/hooks/sync-google-ads'
-      fullPath: '/api/public/hooks/sync-google-ads'
-      preLoaderRoute: typeof ApiPublicHooksSyncGoogleAdsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/settings/app-review': {
+      id: '/_authenticated/settings/app-review'
+      path: '/settings/app-review'
+      fullPath: '/settings/app-review'
+      preLoaderRoute: typeof AuthenticatedSettingsAppReviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/hooks/appointments': {
-      id: '/api/public/hooks/appointments'
-      path: '/api/public/hooks/appointments'
-      fullPath: '/api/public/hooks/appointments'
-      preLoaderRoute: typeof ApiPublicHooksAppointmentsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/settings/appearance': {
+      id: '/_authenticated/settings/appearance'
+      path: '/settings/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AuthenticatedSettingsAppearanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/forms/$slug': {
-      id: '/api/public/forms/$slug'
-      path: '/api/public/forms/$slug'
-      fullPath: '/api/public/forms/$slug'
-      preLoaderRoute: typeof ApiPublicFormsSlugRouteImport
+    '/_authenticated/settings/booking': {
+      id: '/_authenticated/settings/booking'
+      path: '/settings/booking'
+      fullPath: '/settings/booking'
+      preLoaderRoute: typeof AuthenticatedSettingsBookingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/call-flows': {
+      id: '/_authenticated/settings/call-flows'
+      path: '/settings/call-flows'
+      fullPath: '/settings/call-flows'
+      preLoaderRoute: typeof AuthenticatedSettingsCallFlowsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/integrations': {
+      id: '/_authenticated/settings/integrations'
+      path: '/settings/integrations'
+      fullPath: '/settings/integrations'
+      preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/messaging': {
+      id: '/_authenticated/settings/messaging'
+      path: '/settings/messaging'
+      fullPath: '/settings/messaging'
+      preLoaderRoute: typeof AuthenticatedSettingsMessagingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/modules': {
+      id: '/_authenticated/settings/modules'
+      path: '/settings/modules'
+      fullPath: '/settings/modules'
+      preLoaderRoute: typeof AuthenticatedSettingsModulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/phone-numbers': {
+      id: '/_authenticated/settings/phone-numbers'
+      path: '/settings/phone-numbers'
+      fullPath: '/settings/phone-numbers'
+      preLoaderRoute: typeof AuthenticatedSettingsPhoneNumbersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/sub-accounts': {
+      id: '/_authenticated/settings/sub-accounts'
+      path: '/settings/sub-accounts'
+      fullPath: '/settings/sub-accounts'
+      preLoaderRoute: typeof AuthenticatedSettingsSubAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/team': {
+      id: '/_authenticated/settings/team'
+      path: '/settings/team'
+      fullPath: '/settings/team'
+      preLoaderRoute: typeof AuthenticatedSettingsTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/wordpress': {
+      id: '/_authenticated/settings/wordpress'
+      path: '/settings/wordpress'
+      fullPath: '/settings/wordpress'
+      preLoaderRoute: typeof AuthenticatedSettingsWordpressRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/process-outbound': {
+      id: '/api/public/process-outbound'
+      path: '/api/public/process-outbound'
+      fullPath: '/api/public/process-outbound'
+      preLoaderRoute: typeof ApiPublicProcessOutboundRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/booking/$slug': {
@@ -1099,81 +1064,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/twilio/$token/whatsapp': {
-      id: '/api/public/twilio/$token/whatsapp'
-      path: '/api/public/twilio/$token/whatsapp'
-      fullPath: '/api/public/twilio/$token/whatsapp'
-      preLoaderRoute: typeof ApiPublicTwilioTokenWhatsappRouteImport
+    '/api/public/forms/$slug': {
+      id: '/api/public/forms/$slug'
+      path: '/api/public/forms/$slug'
+      fullPath: '/api/public/forms/$slug'
+      preLoaderRoute: typeof ApiPublicFormsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/twilio/$token/voicemail': {
-      id: '/api/public/twilio/$token/voicemail'
-      path: '/api/public/twilio/$token/voicemail'
-      fullPath: '/api/public/twilio/$token/voicemail'
-      preLoaderRoute: typeof ApiPublicTwilioTokenVoicemailRouteImport
+    '/api/public/hooks/appointments': {
+      id: '/api/public/hooks/appointments'
+      path: '/api/public/hooks/appointments'
+      fullPath: '/api/public/hooks/appointments'
+      preLoaderRoute: typeof ApiPublicHooksAppointmentsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/twilio/$token/voice-status': {
-      id: '/api/public/twilio/$token/voice-status'
-      path: '/api/public/twilio/$token/voice-status'
-      fullPath: '/api/public/twilio/$token/voice-status'
-      preLoaderRoute: typeof ApiPublicTwilioTokenVoiceStatusRouteImport
+    '/api/public/hooks/sync-google-ads': {
+      id: '/api/public/hooks/sync-google-ads'
+      path: '/api/public/hooks/sync-google-ads'
+      fullPath: '/api/public/hooks/sync-google-ads'
+      preLoaderRoute: typeof ApiPublicHooksSyncGoogleAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/twilio/$token/voice-outbound': {
-      id: '/api/public/twilio/$token/voice-outbound'
-      path: '/api/public/twilio/$token/voice-outbound'
-      fullPath: '/api/public/twilio/$token/voice-outbound'
-      preLoaderRoute: typeof ApiPublicTwilioTokenVoiceOutboundRouteImport
+    '/api/public/l/$slug': {
+      id: '/api/public/l/$slug'
+      path: '/api/public/l/$slug'
+      fullPath: '/api/public/l/$slug'
+      preLoaderRoute: typeof ApiPublicLSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/twilio/$token/voice': {
-      id: '/api/public/twilio/$token/voice'
-      path: '/api/public/twilio/$token/voice'
-      fullPath: '/api/public/twilio/$token/voice'
-      preLoaderRoute: typeof ApiPublicTwilioTokenVoiceRouteImport
+    '/api/public/meta/data-deletion': {
+      id: '/api/public/meta/data-deletion'
+      path: '/api/public/meta/data-deletion'
+      fullPath: '/api/public/meta/data-deletion'
+      preLoaderRoute: typeof ApiPublicMetaDataDeletionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/twilio/$token/status': {
-      id: '/api/public/twilio/$token/status'
-      path: '/api/public/twilio/$token/status'
-      fullPath: '/api/public/twilio/$token/status'
-      preLoaderRoute: typeof ApiPublicTwilioTokenStatusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio/$token/sms': {
-      id: '/api/public/twilio/$token/sms'
-      path: '/api/public/twilio/$token/sms'
-      fullPath: '/api/public/twilio/$token/sms'
-      preLoaderRoute: typeof ApiPublicTwilioTokenSmsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/twilio/$token/recording': {
-      id: '/api/public/twilio/$token/recording'
-      path: '/api/public/twilio/$token/recording'
-      fullPath: '/api/public/twilio/$token/recording'
-      preLoaderRoute: typeof ApiPublicTwilioTokenRecordingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/oauth/meta/callback': {
-      id: '/api/public/oauth/meta/callback'
-      path: '/api/public/oauth/meta/callback'
-      fullPath: '/api/public/oauth/meta/callback'
-      preLoaderRoute: typeof ApiPublicOauthMetaCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/oauth/google-ads/callback': {
-      id: '/api/public/oauth/google-ads/callback'
-      path: '/api/public/oauth/google-ads/callback'
-      fullPath: '/api/public/oauth/google-ads/callback'
-      preLoaderRoute: typeof ApiPublicOauthGoogleAdsCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/wordpress/$token': {
-      id: '/api/public/hooks/wordpress/$token'
-      path: '/api/public/hooks/wordpress/$token'
-      fullPath: '/api/public/hooks/wordpress/$token'
-      preLoaderRoute: typeof ApiPublicHooksWordpressTokenRouteImport
+    '/api/public/booking/reschedule/$token': {
+      id: '/api/public/booking/reschedule/$token'
+      path: '/api/public/booking/reschedule/$token'
+      fullPath: '/api/public/booking/reschedule/$token'
+      preLoaderRoute: typeof ApiPublicBookingRescheduleTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/meta/$token': {
@@ -1183,11 +1113,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksMetaTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/booking/reschedule/$token': {
-      id: '/api/public/booking/reschedule/$token'
-      path: '/api/public/booking/reschedule/$token'
-      fullPath: '/api/public/booking/reschedule/$token'
-      preLoaderRoute: typeof ApiPublicBookingRescheduleTokenRouteImport
+    '/api/public/hooks/wordpress/$token': {
+      id: '/api/public/hooks/wordpress/$token'
+      path: '/api/public/hooks/wordpress/$token'
+      fullPath: '/api/public/hooks/wordpress/$token'
+      preLoaderRoute: typeof ApiPublicHooksWordpressTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/oauth/google-ads/callback': {
+      id: '/api/public/oauth/google-ads/callback'
+      path: '/api/public/oauth/google-ads/callback'
+      fullPath: '/api/public/oauth/google-ads/callback'
+      preLoaderRoute: typeof ApiPublicOauthGoogleAdsCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/oauth/meta/callback': {
+      id: '/api/public/oauth/meta/callback'
+      path: '/api/public/oauth/meta/callback'
+      fullPath: '/api/public/oauth/meta/callback'
+      preLoaderRoute: typeof ApiPublicOauthMetaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/recording': {
+      id: '/api/public/twilio/$token/recording'
+      path: '/api/public/twilio/$token/recording'
+      fullPath: '/api/public/twilio/$token/recording'
+      preLoaderRoute: typeof ApiPublicTwilioTokenRecordingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/sms': {
+      id: '/api/public/twilio/$token/sms'
+      path: '/api/public/twilio/$token/sms'
+      fullPath: '/api/public/twilio/$token/sms'
+      preLoaderRoute: typeof ApiPublicTwilioTokenSmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/status': {
+      id: '/api/public/twilio/$token/status'
+      path: '/api/public/twilio/$token/status'
+      fullPath: '/api/public/twilio/$token/status'
+      preLoaderRoute: typeof ApiPublicTwilioTokenStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/voice': {
+      id: '/api/public/twilio/$token/voice'
+      path: '/api/public/twilio/$token/voice'
+      fullPath: '/api/public/twilio/$token/voice'
+      preLoaderRoute: typeof ApiPublicTwilioTokenVoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/voice-outbound': {
+      id: '/api/public/twilio/$token/voice-outbound'
+      path: '/api/public/twilio/$token/voice-outbound'
+      fullPath: '/api/public/twilio/$token/voice-outbound'
+      preLoaderRoute: typeof ApiPublicTwilioTokenVoiceOutboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/voice-status': {
+      id: '/api/public/twilio/$token/voice-status'
+      path: '/api/public/twilio/$token/voice-status'
+      fullPath: '/api/public/twilio/$token/voice-status'
+      preLoaderRoute: typeof ApiPublicTwilioTokenVoiceStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/voicemail': {
+      id: '/api/public/twilio/$token/voicemail'
+      path: '/api/public/twilio/$token/voicemail'
+      fullPath: '/api/public/twilio/$token/voicemail'
+      preLoaderRoute: typeof ApiPublicTwilioTokenVoicemailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twilio/$token/whatsapp': {
+      id: '/api/public/twilio/$token/whatsapp'
+      path: '/api/public/twilio/$token/whatsapp'
+      fullPath: '/api/public/twilio/$token/whatsapp'
+      preLoaderRoute: typeof ApiPublicTwilioTokenWhatsappRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
