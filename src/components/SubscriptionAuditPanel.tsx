@@ -1,9 +1,13 @@
-import { History } from "lucide-react";
+import { Download, History } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { downloadCsv } from "@/lib/contacts-csv";
 import { ConsoleSection } from "@/components/console";
 import { EmptyState, ListSkeleton } from "@/components/ui/states";
 import {
   auditActorLabel,
   describeAuditEntry,
+  subscriptionAuditToCsv,
   useSubscriptionAudit,
 } from "@/lib/subscription-audit";
 import type { SubscriptionPlan } from "@/lib/subscriptions";
@@ -40,6 +44,29 @@ export function SubscriptionAuditPanel({
       title="Subscription history"
       icon={History}
       hint={workspaceName ?? "Current workspace"}
+      actions={
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!data?.length}
+          onClick={() => {
+            if (!data?.length) return;
+            const slug = (workspaceName ?? "workspace")
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "");
+            downloadCsv(
+              `subscription-audit-${slug || "workspace"}-${new Date().toISOString().slice(0, 10)}.csv`,
+              subscriptionAuditToCsv(data, { workspaceName, planName }),
+            );
+            toast.success(`Exported ${data.length} audit ${data.length === 1 ? "entry" : "entries"}`);
+          }}
+        >
+          <Download className="mr-1.5 h-3.5 w-3.5" />
+          Export CSV
+        </Button>
+      }
     >
       {isLoading ? (
         <ListSkeleton rows={3} />

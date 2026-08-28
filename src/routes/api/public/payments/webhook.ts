@@ -33,6 +33,24 @@ function db(): WebhookDb {
   };
 }
 
+/**
+ * Idempotency: claim the event id before applying it. A replayed delivery hits
+ * the unique index and is skipped, so audit rows and plan changes stay single.
+ */
+async function claimEvent(
+  event: { id?: string; type: string },
+  env: StripeEnv,
+): Promise<boolean> {
+  if (!event.id) return true; // nothing to dedupe on — apply once, best effort
+  const { error } = await getSupabase()
+    .from("stripe_webhook_events")
+    .insert({ event_id: event.id, event_type: event.type, environment: env });
+  if (!error) return true;
+  // 23505 = unique violation → already processed.
+  if ((error as { code?: string }).code === "23505") return false;
+  throw error;
+}
+
 export const Route = createFileRoute("/api/public/payments/webhook")({
   server: {
     handlers: {
@@ -43,9 +61,26 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         }
         const env: StripeEnv = rawEnv;
         try {
-          const event = await verifyWebhook(request, env);
-          const result = await applySubscriptionEvent(event, db());
+          const event = (await verifyWebhook(request, env)) as {
+            id?: string;
+            type: string;
+            data: { object: unknown };
+          };
+          const fresh = await claimEvent(event, env);
+          if (!fresh) {
+            return Response.json({ received: true, duplicate: true });
+          }
+          const result = await applySubscriptionEvent(event as Parameters<typeof applySubscriptionEvent>[0], db());
           if (!result.applied) console.log("Payments webhook skipped:", result.reason);
+          if (event.id) {
+            await getSupabase()
+              .from("stripe_webhook_events")
+              .update({
+                status: result.applied ? "processed" : "skipped",
+                note: result.applied ? result.action : result.reason,
+              })
+              .eq("event_id", event.id);
+          }
           return Response.json({ received: true });
         } catch (e) {
           console.error("Payments webhook error:", e);

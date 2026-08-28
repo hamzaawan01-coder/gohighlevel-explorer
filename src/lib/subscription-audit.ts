@@ -79,3 +79,53 @@ export function auditActorLabel(entry: SubscriptionAuditEntry): string {
   if (entry.source === "billing") return "Billing (automatic)";
   return entry.changed_by ? "Team member" : "System";
 }
+
+/* ------------------------------- CSV export ------------------------------ */
+
+const CSV_HEADERS = [
+  "changed_at",
+  "workspace_id",
+  "workspace",
+  "changed_by_name",
+  "changed_by_id",
+  "source",
+  "status",
+  "old_plan",
+  "new_plan",
+  "modules_unlocked",
+  "note",
+] as const;
+
+function cell(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/** Audit log for one workspace as a CSV document. */
+export function subscriptionAuditToCsv(
+  entries: SubscriptionAuditEntry[],
+  opts: { workspaceName?: string | null; planName: (id: string | null) => string },
+): string {
+  const lines = [CSV_HEADERS.join(",")];
+  for (const e of entries) {
+    lines.push(
+      [
+        e.created_at,
+        e.sub_account_id,
+        opts.workspaceName ?? "",
+        auditActorLabel(e),
+        e.changed_by ?? "",
+        e.source,
+        e.status ?? "",
+        e.old_plan_id ? opts.planName(e.old_plan_id) : "",
+        e.new_plan_id ? opts.planName(e.new_plan_id) : "",
+        e.modules.join("|"),
+        e.note ?? "",
+      ]
+        .map(cell)
+        .join(","),
+    );
+  }
+  return lines.join("\n");
+}
