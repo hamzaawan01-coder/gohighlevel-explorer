@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Mail, MessageSquare, CheckCircle2, AlertCircle, ExternalLink, Facebook } from "lucide-react";
 import { MetaConnectPanel } from "@/components/MetaConnectPanel";
+import { LeadDisplaySettings } from "@/components/LeadDisplaySettings";
 import { useTenancy } from "@/lib/tenancy";
 import {
   fetchIntegrations,
@@ -62,7 +63,10 @@ function IntegrationsPage() {
             </TabsList>
             <TabsContent value="email"><EmailPanel subId={subId} /></TabsContent>
             <TabsContent value="sms"><SmsPanel subId={subId} /></TabsContent>
-            <TabsContent value="meta"><MetaConnectPanel subId={subId} /></TabsContent>
+            <TabsContent value="meta" className="space-y-4">
+              <MetaConnectPanel subId={subId} />
+              <LeadDisplaySettings />
+            </TabsContent>
             <TabsContent value="history"><HistoryPanel subId={subId} /></TabsContent>
           </Tabs>
         )}
