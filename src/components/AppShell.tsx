@@ -133,7 +133,9 @@ export function AppShell({
         <div className="flex-1 overflow-auto min-h-0">
           {blocked ? <ModuleDisabled label={currentModule!.label} /> : children}
         </div>
+        <SiteFooter />
       </main>
+
 
       {rightPane && !blocked ? (
         <aside className="w-80 border-l border-border bg-card flex flex-col shrink-0">{rightPane}</aside>
