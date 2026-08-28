@@ -301,3 +301,95 @@ function FieldCopy({ label, value, secret }: { label: string; value: string; sec
     </div>
   );
 }
+
+type SetupInfo = {
+  appConfigured: boolean;
+  verifyTokenConfigured: boolean;
+  redirectUri: string;
+  webhookBaseUrl: string;
+  scopes: string[];
+};
+
+function MetaSetupGuide({ setup }: { setup: SetupInfo }) {
+  return (
+    <div className="rounded-md border border-border p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-medium text-sm">One-time Meta app setup</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Meta requires this CRM to be registered as an app before anyone can log in with Facebook.
+            You do this once — your customers never see it, they just click “Connect Facebook”.
+          </p>
+        </div>
+        {setup.appConfigured ? (
+          <Badge variant="secondary" className="gap-1"><CheckCircle2 className="size-3" /> Credentials saved</Badge>
+        ) : (
+          <Badge variant="outline" className="gap-1"><AlertCircle className="size-3" /> Credentials missing</Badge>
+        )}
+      </div>
+
+      <ol className="space-y-3 text-xs text-muted-foreground list-decimal pl-4">
+        <li>
+          Go to{" "}
+          <a className="underline text-foreground inline-flex items-center gap-1" href="https://developers.facebook.com/apps" target="_blank" rel="noreferrer">
+            developers.facebook.com/apps <ExternalLink className="size-3" />
+          </a>{" "}
+          → <b>Create app</b> → use case <b>Other</b> → type <b>Business</b>.
+        </li>
+        <li>
+          Add the products: <b>Facebook Login</b>, <b>Webhooks</b>, and (for Lead Ads){" "}
+          <b>Marketing API</b>.
+        </li>
+        <li>
+          In <b>Facebook Login → Settings</b>, paste this into <b>Valid OAuth Redirect URIs</b>:
+          <div className="mt-2"><FieldCopy label="Redirect URI" value={setup.redirectUri} /></div>
+        </li>
+        <li>
+          In <b>App settings → Basic</b>, copy the <b>App ID</b> and <b>App Secret</b> and give them
+          to me — I store them as encrypted server secrets, never in your app’s code.
+        </li>
+        <li>
+          Add yourself under <b>App roles → Testers</b> so you can connect before Meta approves the
+          app for public use.
+        </li>
+        <li>
+          After the first Facebook connect, this panel shows your exact <b>Webhook callback URL</b> +
+          verify token to paste into the Webhooks product. It looks like:
+          <div className="mt-2"><FieldCopy label="Webhook URL pattern" value={setup.webhookBaseUrl} /></div>
+        </li>
+      </ol>
+
+      <div>
+        <p className="text-[11px] font-medium text-muted-foreground mb-1">
+          Permissions this app requests (submit these for App Review to serve customers publicly)
+        </p>
+        <div className="flex flex-wrap gap-1">
+          {setup.scopes.map((s) => (
+            <code key={s} className="text-[10px] bg-muted/40 rounded px-1.5 py-0.5">{s}</code>
+          ))}
+        </div>
+      </div>
+
+      {!setup.appConfigured && (
+        <Alert>
+          <AlertCircle className="size-4" />
+          <AlertTitle className="text-sm">Waiting on your App ID and App Secret</AlertTitle>
+          <AlertDescription className="text-xs">
+            Until those are saved, the Connect Facebook button stays disabled. Send them over in chat
+            and I’ll store them securely.
+          </AlertDescription>
+        </Alert>
+      )}
+      {setup.appConfigured && !setup.verifyTokenConfigured && (
+        <Alert>
+          <AlertCircle className="size-4" />
+          <AlertTitle className="text-sm">Webhook verify token not set</AlertTitle>
+          <AlertDescription className="text-xs">
+            OAuth will work, but inbound DMs and Lead Ads need a verify token before Meta will
+            deliver events. Ask me to generate one.
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+}
