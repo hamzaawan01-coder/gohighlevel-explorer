@@ -14,7 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLeadDisplayPrefs } from "@/lib/lead-display-prefs";
-import { useSavedLeadSearches } from "@/lib/lead-saved-searches";
+import {
+  useSavedLeadSearches,
+  readLeadFilterState,
+  writeLeadFilterState,
+  clearLeadFilterState,
+} from "@/lib/lead-saved-searches";
 import { CopyField } from "@/components/CopyField";
 import {
   dedupeValues,
