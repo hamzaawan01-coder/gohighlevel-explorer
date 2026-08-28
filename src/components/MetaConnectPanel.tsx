@@ -67,7 +67,20 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
 
   const connect = useMutation({
     mutationFn: () => startFn({ data: { subAccountId: subId } }),
-    onSuccess: ({ url }) => { window.location.href = url; },
+    onSuccess: ({ url }) => {
+      // Facebook refuses to render inside an iframe (the Lovable preview),
+      // so always hand off in a top-level tab/window.
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (!w) {
+        try {
+          window.top!.location.href = url;
+        } catch {
+          toast.error("Popup blocked — allow popups, or open the app in a new tab and retry.");
+        }
+      } else {
+        toast.info("Continue in the Facebook tab, then come back and click Refresh accounts.");
+      }
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
