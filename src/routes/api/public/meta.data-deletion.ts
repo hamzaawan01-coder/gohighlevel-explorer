@@ -25,6 +25,18 @@ function parseSignedRequest(signedRequest: string, appSecret: string): { user_id
 export const Route = createFileRoute("/api/public/meta/data-deletion")({
   server: {
     handlers: {
+      GET: async ({ request }) => {
+        const code = new URL(request.url).searchParams.get("code");
+        if (!code) return new Response("Missing code", { status: 400 });
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data } = await supabaseAdmin
+          .from("meta_deletion_requests")
+          .select("confirmation_code, status, created_at")
+          .eq("confirmation_code", code)
+          .maybeSingle();
+        if (!data) return Response.json({ found: false }, { status: 404 });
+        return Response.json({ found: true, ...data });
+      },
       POST: async ({ request }) => {
         const appSecret = process.env.META_APP_SECRET;
         if (!appSecret) return new Response("Not configured", { status: 500 });
