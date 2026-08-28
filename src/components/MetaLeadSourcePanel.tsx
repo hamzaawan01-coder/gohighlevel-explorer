@@ -146,6 +146,13 @@ export function MetaLeadSourcePanel({
     metadata: true,
     raw: false,
   });
+  const [timelineKinds, setTimelineKinds] = useState<TimelineKind[]>(
+    TIMELINE_KINDS.map((k) => k.key),
+  );
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkIds, setBulkIds] = useState<string[]>([]);
+  const [searchName, setSearchName] = useState("");
+  const { searches, save: saveSearch, remove: removeSearch } = useSavedLeadSearches();
 
   const selected = useMemo(
     () => events.find((e) => e.id === selectedId) ?? events[0] ?? null,
