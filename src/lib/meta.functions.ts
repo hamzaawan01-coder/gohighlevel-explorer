@@ -298,3 +298,21 @@ export const disconnectMeta = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Register the app-level webhook callback URL + fields with Meta automatically. */
+export const configureMetaWebhooks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string }) => z.object({ subAccountId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: conns } = await (supabaseAdmin as any)
+      .from("meta_connections").select("id").eq("sub_account_id", data.subAccountId)
+      .order("created_at", { ascending: false }).limit(1);
+    const conn = (conns ?? [])[0] as { id: string } | undefined;
+    if (!conn) throw new Error("Connect Facebook first, then configure webhooks.");
+    const callbackUrl = metaWebhookUrl(conn.id);
+    const { configureAppWebhooks } = await import("./meta.server");
+    const results = await configureAppWebhooks(callbackUrl);
+    return { callbackUrl, results };
+  });
