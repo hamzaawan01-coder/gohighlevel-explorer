@@ -758,7 +758,8 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
     if (!data.contactId && !data.dealId) return { events: [], page: null, pipelineName: null, stageName: null };
 
     const sel =
-      "id, page_id, form_id, form_name, leadgen_id, contact_id, deal_id, pipeline_id, stage_id, routing_source, status, error, is_test, created_at";
+      "id, page_id, form_id, form_name, leadgen_id, contact_id, deal_id, pipeline_id, stage_id, routing_source, status, error, is_test, lead_fields, created_at";
+
     let q = (context.supabase as any)
       .from("meta_lead_ad_events")
       .select(sel)
@@ -774,8 +775,10 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
       leadgen_id: string | null; contact_id: string | null; deal_id: string | null;
       pipeline_id: string | null; stage_id: string | null; routing_source: string;
       status: string; error: string | null; is_test: boolean; created_at: string;
+      lead_fields: Record<string, string> | null;
     }>;
-    if (events.length === 0) return { events: [], page: null, pipelineName: null, stageName: null };
+    if (events.length === 0) return { events: [], page: null, pipelineName: null, stageName: null, leadFields: {} as Record<string, string> };
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const pageId = events.find((e) => e.page_id)?.page_id ?? null;
@@ -799,5 +802,9 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
       stageName = (s ?? [])[0]?.name ?? null;
     }
 
-    return { events, page, pipelineName, stageName };
+    const leadFields =
+      (events.find((e) => e.lead_fields && Object.keys(e.lead_fields).length > 0)?.lead_fields ?? {}) as Record<string, string>;
+
+    return { events, page, pipelineName, stageName, leadFields };
   });
+
