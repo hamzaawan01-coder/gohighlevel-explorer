@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, Trash2, CheckCircle2, Circle, Clock, AlertCircle, XCircle } from "lucide-react";
+import { Plus, Loader2, Trash2, CheckCircle2, Circle, Clock, AlertCircle, XCircle, CheckSquare } from "lucide-react";
+import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/states";
+
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { useTenancy } from "@/lib/tenancy";
@@ -148,20 +150,50 @@ function TasksPage() {
 
         <div className="flex-1 overflow-auto">
           {tasksQ.isLoading ? (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              <Loader2 className="size-4 animate-spin mr-2" />
-              <span className="text-xs">Loading tasks…</span>
+            <div className="p-6">
+              <ListSkeleton rows={7} />
             </div>
+          ) : tasksQ.isError ? (
+            <ErrorState
+              title="Couldn't load tasks"
+              error={tasksQ.error}
+              onRetry={() => tasksQ.refetch()}
+              retrying={tasksQ.isFetching}
+            />
           ) : filtered.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
-              <p className="text-xs">No tasks {statusFilter === "all" ? "yet" : `with status "${statusFilter}"`}.</p>
-              {tasks.length === 0 && (
-                <button onClick={() => setDialogOpen(true)} className="text-xs text-primary hover:underline">
-                  Create your first task
-                </button>
-              )}
-            </div>
+            <EmptyState
+              icon={CheckSquare}
+              title={
+                tasks.length === 0
+                  ? "No tasks yet"
+                  : `Nothing with status “${statusFilter}”`
+              }
+              description={
+                tasks.length === 0
+                  ? "Tasks keep follow-ups from slipping. Create one and assign it a due date."
+                  : "Switch the status filter to see other tasks."
+              }
+              action={
+                tasks.length === 0 ? (
+                  <button
+                    onClick={() => setDialogOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    <Plus className="size-3.5" />
+                    Create your first task
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setStatusFilter("all")}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                  >
+                    Show all tasks
+                  </button>
+                )
+              }
+            />
           ) : (
+
             <ul className="divide-y divide-border">
               {filtered.map((t) => (
                 <TaskRow

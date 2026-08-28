@@ -7,6 +7,8 @@ import {
   Target,
   DollarSign,
 } from "lucide-react";
+import { PageBody, PageHeader } from "@/components/PageHeader";
+import { CardGridSkeleton, KpiSkeleton } from "@/components/ui/states";
 import {
   BarChart,
   Bar,
@@ -42,22 +44,21 @@ function ReportsPage() {
 
   return (
     <AppShell>
-      <div className="h-full overflow-y-auto p-8">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold">Reports</h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              Sales performance across your pipeline, sources, and team.
-            </p>
-          </div>
-
+      <PageHeader
+        title="Reports"
+        description="Sales performance across your pipeline, sources, and team."
+        crumbs={[{ label: "Sales" }, { label: "Reports" }]}
+      />
+      <PageBody>
+        <div className="space-y-6">
           {isLoading || !data ? (
-            <div className="h-64 flex items-center justify-center text-muted-foreground">
-              <Loader2 className="size-4 animate-spin mr-2" />
-              <span className="text-xs">Crunching numbers…</span>
-            </div>
+            <>
+              <KpiSkeleton />
+              <CardGridSkeleton count={2} />
+            </>
           ) : (
             <>
+
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Kpi label="Win rate" value={`${data.winRate}%`} sub={`${data.wonCount} won · ${data.lostCount} lost`} icon={Target} tint="text-emerald-500" />
                 <Kpi label="Won value" value={`$${data.totalWonValue.toLocaleString()}`} sub={`${data.wonCount} deals`} icon={Trophy} tint="text-amber-500" />
@@ -132,7 +133,8 @@ function ReportsPage() {
             </>
           )}
         </div>
-      </div>
+      </PageBody>
+
     </AppShell>
   );
 }

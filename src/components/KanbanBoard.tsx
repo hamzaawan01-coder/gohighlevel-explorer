@@ -168,21 +168,31 @@ function Column({
   children: React.ReactNode;
 }) {
   return (
-    <div className="w-72 flex flex-col">
-      <div className="flex items-center justify-between mb-4 px-1">
-        <div className="flex items-center gap-2">
-          <span className="size-2 rounded-full" style={{ background: stage.color }} />
-          <h3 className="text-xs font-bold uppercase tracking-widest">{stage.name}</h3>
-          <span className="font-mono text-[10px] bg-secondary px-1.5 rounded">
-            {String(count).padStart(2, "0")}
-          </span>
+    <div className="flex w-72 flex-col">
+      <div
+        className="sticky top-0 z-10 mb-3 rounded-lg border border-border bg-card/85 px-2.5 py-2 backdrop-blur-sm"
+        style={{ borderTopColor: stage.color, borderTopWidth: 2 }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="size-2 shrink-0 rounded-full" style={{ background: stage.color }} />
+            <h3 className="truncate font-display text-[11px] font-bold uppercase tracking-widest">
+              {stage.name}
+            </h3>
+            <span className="rounded bg-secondary px-1.5 font-mono text-[10px] tabular-nums">
+              {String(count).padStart(2, "0")}
+            </span>
+          </div>
+          <div className="font-mono text-[10px] tabular-nums text-muted-foreground">
+            {formatMoney(total)}
+          </div>
         </div>
-        <div className="font-mono text-[10px] text-muted-foreground">{formatMoney(total)}</div>
       </div>
       {children}
     </div>
   );
 }
+
 
 function EmptyDropzone({ stageId }: { stageId: string }) {
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
@@ -268,9 +278,10 @@ function DealCardView({
 
   return (
     <div
-      className={`bg-card p-3.5 rounded-xl ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] cursor-grab active:cursor-grabbing ${
-        dragging ? "shadow-lg ring-accent/40" : "hover:ring-accent/40"
-      } transition-all`}
+      className={`surface-card cursor-grab p-3.5 active:cursor-grabbing ${
+        dragging ? "elevation-overlay ring-1 ring-primary/40" : "hover:elevation-raised hover:-translate-y-0.5"
+      } transition-all duration-150`}
+
     >
       <div className="flex items-start justify-between gap-2 mb-3">
         <h4 className="text-sm font-semibold leading-snug flex-1">{deal.title}</h4>

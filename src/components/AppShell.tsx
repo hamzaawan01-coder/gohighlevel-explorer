@@ -22,6 +22,15 @@ import {
   ToggleLeft,
   Ban,
   ShieldCheck,
+  Palette,
+  Sun,
+  Moon,
+  Rows3,
+  Rows4,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Users2,
+  Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,6 +40,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { Softphone } from "@/components/Softphone";
 import { isModuleEnabled, moduleForPath, useModules } from "@/lib/modules";
 import { SiteFooter } from "@/components/SiteFooter";
+import { useAppearance } from "@/lib/appearance";
 
 function openPalette() {
   (window as unknown as { __openPalette?: () => void }).__openPalette?.();
@@ -44,31 +54,52 @@ type NavItem = {
   module?: string;
 };
 
-const salesNav: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard", module: "dashboard" },
-  { label: "Opportunities", icon: LayoutGrid, to: "/opportunities", module: "opportunities" },
-  { label: "Contacts", icon: Users, to: "/contacts", module: "contacts" },
-  { label: "Tasks", icon: CheckSquare, to: "/tasks", module: "tasks" },
-  { label: "Calendar", icon: Calendar, to: "/calendar", module: "calendar" },
-  { label: "Conversations", icon: MessageSquare, to: "/conversations", module: "conversations" },
-  { label: "Calls", icon: PhoneCall, to: "/calls", module: "calls" },
-  { label: "Reports", icon: BarChart3, to: "/reports", module: "reports" },
-  { label: "Inbox", icon: Inbox, to: "/inbox", module: "conversations" },
-];
+type NavSection = { label: string; items: NavItem[] };
 
-const automationNav: NavItem[] = [
-  { label: "Marketing", icon: Megaphone, to: "/marketing", module: "marketing" },
-  { label: "Workflows", icon: Workflow, to: "/workflows", module: "workflows" },
-  { label: "Templates", icon: FileText, to: "/templates", module: "templates" },
-  { label: "Forms", icon: FileText, to: "/forms", module: "forms" },
-  { label: "WordPress", icon: Webhook, to: "/settings/wordpress", module: "integrations" },
-  { label: "Booking pages", icon: CalendarClock, to: "/settings/booking", module: "calendar" },
-  { label: "Phone numbers", icon: Phone, to: "/settings/phone-numbers", module: "calls" },
-  { label: "Call flows", icon: PhoneCall, to: "/settings/call-flows", module: "calls" },
-  { label: "Integrations", icon: Settings, to: "/settings/integrations", module: "integrations" },
-  { label: "Quiet hours", icon: Settings, to: "/settings/messaging", module: "integrations" },
-  { label: "App review", icon: ShieldCheck, to: "/settings/app-review", module: "integrations" },
-  { label: "Modules", icon: ToggleLeft, to: "/settings/modules" },
+const NAV_SECTIONS: NavSection[] = [
+  {
+    label: "Sales",
+    items: [
+      { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard", module: "dashboard" },
+      { label: "Opportunities", icon: LayoutGrid, to: "/opportunities", module: "opportunities" },
+      { label: "Contacts", icon: Users, to: "/contacts", module: "contacts" },
+      { label: "Tasks", icon: CheckSquare, to: "/tasks", module: "tasks" },
+      { label: "Reports", icon: BarChart3, to: "/reports", module: "reports" },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [
+      { label: "Inbox", icon: Inbox, to: "/inbox", module: "conversations" },
+      { label: "Conversations", icon: MessageSquare, to: "/conversations", module: "conversations" },
+      { label: "Calls", icon: PhoneCall, to: "/calls", module: "calls" },
+      { label: "Calendar", icon: Calendar, to: "/calendar", module: "calendar" },
+    ],
+  },
+  {
+    label: "Marketing",
+    items: [
+      { label: "Campaigns", icon: Megaphone, to: "/marketing", module: "marketing" },
+      { label: "Workflows", icon: Workflow, to: "/workflows", module: "workflows" },
+      { label: "Templates", icon: FileText, to: "/templates", module: "templates" },
+      { label: "Forms", icon: FileText, to: "/forms", module: "forms" },
+      { label: "Booking pages", icon: CalendarClock, to: "/settings/booking", module: "calendar" },
+    ],
+  },
+  {
+    label: "Settings",
+    items: [
+      { label: "Appearance", icon: Palette, to: "/settings/appearance" },
+      { label: "Phone numbers", icon: Phone, to: "/settings/phone-numbers", module: "calls" },
+      { label: "Call flows", icon: PhoneCall, to: "/settings/call-flows", module: "calls" },
+      { label: "Integrations", icon: Settings, to: "/settings/integrations", module: "integrations" },
+      { label: "WordPress", icon: Webhook, to: "/settings/wordpress", module: "integrations" },
+      { label: "Quiet hours", icon: Clock, to: "/settings/messaging", module: "integrations" },
+      { label: "Team", icon: Users2, to: "/settings/team" },
+      { label: "App review", icon: ShieldCheck, to: "/settings/app-review", module: "integrations" },
+      { label: "Modules", icon: ToggleLeft, to: "/settings/modules" },
+    ],
+  },
 ];
 
 export function AppShell({
@@ -84,6 +115,8 @@ export function AppShell({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { state, isLoading: modulesLoading } = useModules();
+  const [collapsed, setCollapsed] = useState(false);
+
   const visible = (items: NavItem[]) =>
     items.filter((i) => !i.module || isModuleEnabled(state, i.module));
 
@@ -95,53 +128,82 @@ export function AppShell({
     !pathname.startsWith("/settings/modules");
 
   return (
-    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
-      <aside className="w-64 border-r border-border bg-sidebar flex flex-col shrink-0">
-        <div className="p-4 border-b border-border">
-          <SubAccountSwitcher />
+    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+      <aside
+        className={`flex shrink-0 flex-col border-r border-border bg-sidebar transition-[width] duration-200 ${
+          collapsed ? "w-[4.25rem]" : "w-64"
+        }`}
+      >
+        <div className={`border-b border-border ${collapsed ? "p-2" : "p-4"}`}>
+          {collapsed ? (
+            <div className="flex justify-center">
+              <span className="gradient-primary flex size-9 items-center justify-center rounded-lg text-[11px] font-bold text-primary-foreground">
+                AE
+              </span>
+            </div>
+          ) : (
+            <SubAccountSwitcher />
+          )}
         </div>
-        <nav className="flex-1 py-4 overflow-y-auto">
-          <NavGroup label="Sales" items={visible(salesNav)} />
-          <NavGroup label="Automations" items={visible(automationNav)} />
+
+        <nav className="flex-1 overflow-y-auto py-3">
+          {NAV_SECTIONS.map((section) => {
+            const items = visible(section.items);
+            if (items.length === 0) return null;
+            return <NavGroup key={section.label} label={section.label} items={items} collapsed={collapsed} />;
+          })}
         </nav>
-        <div className="p-4 border-t border-border">
-          <UserMenu />
+
+        <div className={`border-t border-border ${collapsed ? "p-2" : "p-3"}`}>
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            className="mb-2 flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="size-3.5" />
+            ) : (
+              <>
+                <PanelLeftClose className="size-3.5" />
+                Collapse
+              </>
+            )}
+          </button>
+          <UserMenu collapsed={collapsed} />
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
-          <div className="flex items-center gap-4 flex-1">
-            <button
-              type="button"
-              onClick={openPalette}
-              className="w-full max-w-md relative text-left"
-            >
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-              <span className="block w-full bg-secondary border border-border rounded-md py-1.5 pl-9 pr-3 text-xs text-muted-foreground hover:bg-secondary/70 transition-colors">
+      <main className="flex min-w-0 flex-1 flex-col">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-card px-4 md:px-6">
+          <div className="flex flex-1 items-center gap-4">
+            <button type="button" onClick={openPalette} className="relative w-full max-w-md text-left">
+              <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <span className="block w-full rounded-md border border-border bg-secondary py-1.5 pl-9 pr-3 text-xs text-muted-foreground transition-colors hover:bg-secondary/70">
                 Search contacts, deals, tasks…
               </span>
-              <kbd className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[10px] text-muted-foreground bg-card border border-border rounded px-1.5 py-0.5">
+              <kbd className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                 ⌘K
               </kbd>
             </button>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             {headerStatus}
+            <AppearanceQuickToggles />
             <div className="h-4 w-px bg-border" />
             <NotificationBell />
             {headerActions}
           </div>
         </header>
-        <div className="flex-1 overflow-auto min-h-0">
+
+        <div className="min-h-0 flex-1 overflow-auto">
           {blocked ? <ModuleDisabled label={currentModule!.label} /> : children}
         </div>
         <SiteFooter />
       </main>
 
-
       {rightPane && !blocked ? (
-        <aside className="w-80 border-l border-border bg-card flex flex-col shrink-0">{rightPane}</aside>
+        <aside className="flex w-80 shrink-0 flex-col border-l border-border bg-card">{rightPane}</aside>
       ) : null}
       <CommandPalette />
       <Softphone />
@@ -149,21 +211,48 @@ export function AppShell({
   );
 }
 
+function AppearanceQuickToggles() {
+  const { isDark, density, toggleMode, setDensity } = useAppearance();
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={toggleMode}
+        title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+      >
+        {isDark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+      </button>
+      <button
+        type="button"
+        onClick={() => setDensity(density === "compact" ? "comfortable" : "compact")}
+        title={density === "compact" ? "Comfortable density" : "Compact density"}
+        aria-label="Toggle data density"
+        aria-pressed={density === "compact"}
+        className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+      >
+        {density === "compact" ? <Rows3 className="size-3.5" /> : <Rows4 className="size-3.5" />}
+      </button>
+    </div>
+  );
+}
+
 function ModuleDisabled({ label }: { label: string }) {
   return (
-    <div className="h-full flex items-center justify-center p-10">
-      <div className="max-w-sm text-center space-y-3">
-        <div className="mx-auto size-10 rounded-full bg-secondary flex items-center justify-center">
+    <div className="flex h-full items-center justify-center p-10">
+      <div className="max-w-sm space-y-3 text-center">
+        <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-secondary">
           <Ban className="size-4 text-muted-foreground" />
         </div>
-        <h2 className="text-sm font-bold">{label} is turned off</h2>
+        <h2 className="font-display text-sm font-bold">{label} is turned off</h2>
         <p className="text-xs text-muted-foreground">
           This module is disabled for the current workspace. Nothing has been deleted — a workspace
           admin can switch it back on at any time.
         </p>
         <Link
           to="/settings/modules"
-          className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-md bg-primary text-primary-foreground"
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
         >
           <ToggleLeft className="size-3.5" />
           Manage modules
@@ -173,13 +262,23 @@ function ModuleDisabled({ label }: { label: string }) {
   );
 }
 
-function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
+function NavGroup({
+  label,
+  items,
+  collapsed,
+}: {
+  label: string;
+  items: NavItem[];
+  collapsed: boolean;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <div className="px-3 mb-4">
-      <p className="px-3 mb-2 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
+    <div className={`mb-4 ${collapsed ? "px-2" : "px-3"}`}>
+      {collapsed ? (
+        <div className="mx-auto mb-2 h-px w-6 bg-sidebar-border" />
+      ) : (
+        <p className="mb-1.5 px-3 eyebrow">{label}</p>
+      )}
       <div className="space-y-0.5">
         {items.map((item) => {
           const Icon = item.icon;
@@ -188,14 +287,17 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
             <Link
               key={item.label}
               to={item.to}
-              className={
+              title={collapsed ? item.label : undefined}
+              className={[
+                "flex items-center gap-3 rounded-md text-sm transition-colors",
+                collapsed ? "justify-center px-2 py-2" : "px-3 py-1.5",
                 active
-                  ? "flex items-center gap-3 px-3 py-1.5 text-sm font-medium rounded-md bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "flex items-center gap-3 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-black/5 rounded-md transition-colors"
-              }
+                  ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                  : "text-muted-foreground hover:bg-sidebar-accent/40 hover:text-foreground",
+              ].join(" ")}
             >
-              <Icon className="size-3.5" />
-              {item.label}
+              <Icon className="size-3.5 shrink-0" />
+              {collapsed ? null : <span className="truncate">{item.label}</span>}
             </Link>
           );
         })}
@@ -204,7 +306,7 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
   );
 }
 
-function UserMenu() {
+function UserMenu({ collapsed = false }: { collapsed?: boolean }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState<string>("");
@@ -234,19 +336,31 @@ function UserMenu() {
     .join("")
     .toUpperCase();
 
+  if (collapsed) {
+    return (
+      <button
+        onClick={signOut}
+        title={`Sign out ${email}`}
+        className="gradient-primary mx-auto flex size-8 items-center justify-center rounded-full text-[10px] font-semibold text-primary-foreground"
+      >
+        {initials}
+      </button>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-3 px-2">
-      <div className="size-8 rounded-full bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center text-[10px] font-semibold text-accent-foreground">
+    <div className="flex items-center gap-3 px-1">
+      <div className="gradient-primary flex size-8 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-primary-foreground">
         {initials}
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold truncate">{name || "Operator"}</p>
-        <p className="text-[10px] text-muted-foreground truncate">{email}</p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-semibold">{name || "Operator"}</p>
+        <p className="truncate text-[10px] text-muted-foreground">{email}</p>
       </div>
       <button
         onClick={signOut}
         title="Sign out"
-        className="size-7 rounded hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+        className="flex size-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
       >
         <LogOut className="size-3.5" />
       </button>
