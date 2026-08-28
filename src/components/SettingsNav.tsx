@@ -36,6 +36,7 @@ export const SETTINGS_NAV_ITEMS: Item[] = [
   { label: "Team", to: "/settings/team", icon: Users2 },
   { label: "Sub-accounts", to: "/settings/sub-accounts", icon: Building2 },
   { label: "Modules", to: "/settings/modules", icon: ToggleLeft },
+  { label: "Subscriptions", to: "/settings/subscriptions", icon: CreditCard },
   { label: "Appearance", to: "/settings/appearance", icon: Palette },
   { label: "App review", to: "/settings/app-review", icon: ShieldCheck, module: "integrations" },
 ];
