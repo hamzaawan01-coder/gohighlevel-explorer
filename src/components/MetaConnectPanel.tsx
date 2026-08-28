@@ -45,6 +45,20 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   const updatePageFn = useServerFn(updateMetaPage);
   const updateAdFn = useServerFn(updateMetaAdAccount);
   const disconnectFn = useServerFn(disconnectMeta);
+  const configureWebhooksFn = useServerFn(configureMetaWebhooks);
+
+  const configureWebhooks = useMutation({
+    mutationFn: () => configureWebhooksFn({ data: { subAccountId: subId } }),
+    onSuccess: (res: { results: { object: string; ok: boolean; error?: string }[] }) => {
+      const failed = (res.results ?? []).filter((r) => !r.ok);
+      if (failed.length === 0) toast.success("Webhooks registered with Meta (Page + Instagram)");
+      else
+        toast.warning(
+          `Partially configured: ${failed.map((f) => `${f.object} — ${f.error}`).join("; ")}`,
+        );
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const q = useQuery({
     queryKey: ["meta-connection", subId],
