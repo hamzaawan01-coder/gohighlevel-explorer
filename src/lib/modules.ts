@@ -154,3 +154,95 @@ export function useModules() {
     enabled: (key: string) => isModuleEnabled(state, key),
   };
 }
+
+/* ----------------------------- Audit trail ----------------------------- */
+
+export type ModuleAuditEntry = {
+  id: string;
+  module_key: string;
+  enabled: boolean;
+  changed_by: string | null;
+  source: string;
+  created_at: string;
+  actor_name: string | null;
+};
+
+export async function fetchModuleAudit(subAccountId: string): Promise<ModuleAuditEntry[]> {
+  const { data, error } = await supabase
+    .from("sub_account_module_audit")
+    .select("id, module_key, enabled, changed_by, source, created_at")
+    .eq("sub_account_id", subAccountId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  const rows = data ?? [];
+  const ids = [...new Set(rows.map((r) => r.changed_by).filter(Boolean))] as string[];
+  const names = new Map<string, string | null>();
+  if (ids.length) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", ids);
+    for (const p of profiles ?? []) names.set(p.id, p.full_name);
+  }
+  return rows.map((r) => ({
+    ...r,
+    actor_name: r.changed_by ? names.get(r.changed_by) ?? null : null,
+  }));
+}
+
+export function useModuleAudit(subAccountId: string | null) {
+  return useQuery({
+    queryKey: ["sub-account-module-audit", subAccountId],
+    enabled: !!subAccountId,
+    queryFn: () => fetchModuleAudit(subAccountId!),
+  });
+}
+
+/* ------------------------------- Presets ------------------------------- */
+
+export async function fetchAgencyPresets(agencyId: string): Promise<ModuleState> {
+  const { data, error } = await supabase
+    .from("agency_module_presets")
+    .select("module_key, enabled")
+    .eq("agency_id", agencyId);
+  if (error) throw error;
+  const state: ModuleState = {};
+  for (const row of data ?? []) state[row.module_key] = row.enabled;
+  return state;
+}
+
+export async function setAgencyPreset(
+  agencyId: string,
+  moduleKey: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("agency_module_presets")
+    .upsert(
+      { agency_id: agencyId, module_key: moduleKey, enabled },
+      { onConflict: "agency_id,module_key" },
+    );
+  if (error) throw error;
+}
+
+/** Copy the current workspace's module configuration into the agency preset. */
+export async function saveStateAsPreset(agencyId: string, state: ModuleState): Promise<void> {
+  const rows = MODULES.filter((m) => !m.locked).map((m) => ({
+    agency_id: agencyId,
+    module_key: m.key,
+    enabled: isModuleEnabled(state, m.key),
+  }));
+  const { error } = await supabase
+    .from("agency_module_presets")
+    .upsert(rows, { onConflict: "agency_id,module_key" });
+  if (error) throw error;
+}
+
+export function useAgencyPresets(agencyId: string | null) {
+  return useQuery({
+    queryKey: ["agency-module-presets", agencyId],
+    enabled: !!agencyId,
+    queryFn: () => fetchAgencyPresets(agencyId!),
+  });
+}
