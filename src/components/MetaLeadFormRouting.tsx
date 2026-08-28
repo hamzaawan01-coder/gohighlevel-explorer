@@ -149,6 +149,19 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
                     <PlayCircle className="size-3.5 mr-1" />
                     Replay last test webhook
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    disabled={importing === f.formId}
+                    onClick={() => {
+                      setImporting(f.formId);
+                      importLeads.mutate({ formId: f.formId, formName: f.formName, pageId: f.pageId });
+                    }}
+                  >
+                    <DownloadCloud className={`size-3.5 mr-1 ${importing === f.formId ? "animate-pulse" : ""}`} />
+                    {importing === f.formId ? "Importing…" : "Import past leads"}
+                  </Button>
                 </div>
               </div>
 
