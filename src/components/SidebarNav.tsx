@@ -12,6 +12,7 @@ import {
   CheckSquare,
   BarChart3,
   FileText,
+  Receipt,
   Inbox,
   CalendarClock,
   Megaphone,
