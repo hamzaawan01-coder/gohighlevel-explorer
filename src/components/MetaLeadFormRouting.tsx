@@ -432,9 +432,22 @@ export function MetaLeadFormRouting({ subId }: { subId: string }) {
               </p>
             </div>
           </div>
-          <Button size="sm" variant="ghost" onClick={() => events.refetch()}>
-            <RefreshCw className={`size-4 ${events.isFetching ? "animate-spin" : ""}`} />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs"
+              disabled={retryFailed.isPending}
+              onClick={() => retryFailed.mutate({ formId: null })}
+            >
+              <RotateCcw className={`size-3.5 mr-1 ${retryFailed.isPending ? "animate-spin" : ""}`} />
+              Retry failed leads
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => events.refetch()}>
+              <RefreshCw className={`size-4 ${events.isFetching ? "animate-spin" : ""}`} />
+            </Button>
+          </div>
+
         </div>
 
         {(events.data?.events ?? []).length === 0 ? (
