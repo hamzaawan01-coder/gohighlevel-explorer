@@ -9,12 +9,24 @@ import { applyInvoicePaymentEvent, type InvoicePaymentDb } from "@/lib/invoice-p
 function invoiceDb(): InvoicePaymentDb {
   return {
     async markPaid({ invoiceId, amountPaid, paymentIntentId, checkoutSessionId, paidAt }) {
+      // Only flip to "paid" when the settled amount actually covers the invoice
+      // total — an underpayment (e.g. via a link created before the invoice was
+      // edited) must stay outstanding.
+      const { data: current } = await getSupabase()
+        .from("invoices")
+        .select("total,amount_paid,status")
+        .eq("id", invoiceId)
+        .maybeSingle();
+      const total = Number((current as { total?: number } | null)?.total ?? 0);
+      const previouslyPaid = Number((current as { amount_paid?: number } | null)?.amount_paid ?? 0);
+      const paidTotal = previouslyPaid + amountPaid;
+      const covered = total <= 0 || paidTotal + 0.005 >= total;
+
       const { data, error } = await getSupabase()
         .from("invoices")
         .update({
-          status: "paid",
-          paid_at: paidAt,
-          amount_paid: amountPaid,
+          ...(covered ? { status: "paid", paid_at: paidAt } : {}),
+          amount_paid: paidTotal,
           ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
           ...(checkoutSessionId ? { stripe_checkout_session_id: checkoutSessionId } : {}),
         } as never)
@@ -25,6 +37,7 @@ function invoiceDb(): InvoicePaymentDb {
       if (!data) return null;
       return { subAccountId: (data as { sub_account_id: string }).sub_account_id };
     },
+
     async logEvent({ invoiceId, subAccountId, type, detail }) {
       await getSupabase()
         .from("invoice_events")
