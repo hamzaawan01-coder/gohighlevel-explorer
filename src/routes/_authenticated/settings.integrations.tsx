@@ -42,12 +42,17 @@ import { LeadDisplaySettings } from "@/components/LeadDisplaySettings";
 import { useTenancy } from "@/lib/tenancy";
 import {
   fetchIntegrations,
-  saveEmailIntegration,
-  saveSmsIntegration,
   fetchOutbound,
   type EmailProvider,
 } from "@/lib/integrations";
-import { sendTestEmail, sendTestSms, retryOutboundMessage } from "@/lib/integrations.functions";
+import {
+  sendTestEmail,
+  sendTestSms,
+  retryOutboundMessage,
+  getIntegrationSafeConfig,
+  saveEmailIntegrationSecure,
+  saveSmsIntegrationSecure,
+} from "@/lib/integrations.functions";
 import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/settings/integrations")({
