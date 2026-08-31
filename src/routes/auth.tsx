@@ -43,8 +43,15 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        toast.success("Check your email for the password reset link.");
+        setMode("signin");
+      } else if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -53,7 +60,10 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Account created. Signing you in…");
+        if (!data.session) {
+          toast.success("Account created. Check your email to confirm before signing in.");
+          setMode("signin");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -64,6 +74,7 @@ function AuthPage() {
       setLoading(false);
     }
   }
+
 
   async function handleGoogle() {
     setLoading(true);
