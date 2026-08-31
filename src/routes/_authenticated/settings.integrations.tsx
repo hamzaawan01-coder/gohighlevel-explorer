@@ -273,6 +273,12 @@ function EmailPanel({ subId }: { subId: string }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["integrations", subId], queryFn: () => fetchIntegrations(subId) });
   const testFn = useServerFn(sendTestEmail);
+  const safeConfigFn = useServerFn(getIntegrationSafeConfig);
+  const saveFn = useServerFn(saveEmailIntegrationSecure);
+  const safeCfg = useQuery({
+    queryKey: ["integration-config", subId],
+    queryFn: () => safeConfigFn({ data: { sub_account_id: subId } }),
+  });
 
   const [provider, setProvider] = useState<EmailProvider>("resend");
   const [fromAddr, setFromAddr] = useState("");
@@ -292,40 +298,43 @@ function EmailPanel({ subId }: { subId: string }) {
     if (row.email_provider) setProvider(row.email_provider as EmailProvider);
     setFromAddr(row.email_from_address ?? "");
     setFromName(row.email_from_name ?? "");
-    const cfg = (row.email_config ?? {}) as Record<string, unknown>;
-    if (row.email_provider === "smtp") {
-      setSmtpHost(String(cfg.host ?? ""));
-      setSmtpPort(String(cfg.port ?? 587));
-      setSmtpSecure(Boolean(cfg.secure));
-      setSmtpUser(String(cfg.user ?? ""));
-      setSmtpPass(String(cfg.password ?? ""));
-    } else {
-      setApiKey(String(cfg.api_key ?? ""));
-    }
   }, [q.data]);
+
+  useEffect(() => {
+    const cfg = safeCfg.data?.email;
+    if (!cfg) return;
+    setSmtpHost(cfg.host);
+    setSmtpPort(String(cfg.port));
+    setSmtpSecure(cfg.secure);
+    setSmtpUser(cfg.user);
+    // Secrets are never sent to the browser — left blank means "keep existing".
+    setSmtpPass("");
+    setApiKey("");
+  }, [safeCfg.data]);
+
+  const secretSet =
+    provider === "smtp"
+      ? Boolean(safeCfg.data?.email.has_password)
+      : Boolean(safeCfg.data?.email.has_api_key);
 
   const save = useMutation({
     mutationFn: async () => {
-      let config: Record<string, unknown>;
-      if (provider === "smtp") {
-        config = {
+      await saveFn({
+        data: {
+          sub_account_id: subId,
+          provider,
+          from_address: fromAddr,
+          from_name: fromName || null,
           host: smtpHost,
           port: parseInt(smtpPort, 10) || 587,
           secure: smtpSecure,
           user: smtpUser,
-          password: smtpPass,
-        };
-      } else {
-        config = { api_key: apiKey };
-      }
-      await saveEmailIntegration({
-        sub_account_id: subId,
-        provider,
-        config: config as never,
-        from_address: fromAddr,
-        from_name: fromName || undefined,
+          password: smtpPass || undefined,
+          api_key: apiKey || undefined,
+        },
       });
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["integrations", subId] });
       toast.success("Email settings saved");
