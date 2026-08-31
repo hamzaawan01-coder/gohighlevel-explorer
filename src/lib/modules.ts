@@ -71,6 +71,12 @@ export const MODULES: ModuleDef[] = [
     paths: ["/reports"],
   },
   {
+    key: "attribution",
+    label: "Attribution",
+    description: "Source-to-revenue attribution, ad spend ROI and call analytics.",
+    paths: ["/attribution"],
+  },
+  {
     key: "marketing",
     label: "Marketing",
     description: "Campaigns, broadcasts and trackable links.",
