@@ -796,7 +796,7 @@ function ConversationsPage() {
                     </Button>
                     <Button
                       onClick={() => sendMut.mutate()}
-                      disabled={!body.trim() || sendMut.isPending}
+                      disabled={!body.trim() || sendMut.isPending || metaWindowClosed}
                     >
                       <Send className="size-3.5 mr-1" />
                       {composeChannel === "note" ? "Post" : "Send"}
