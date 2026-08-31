@@ -602,3 +602,55 @@ export async function ingestLeadAdLead(
 
   return { ...result, contactId: contactId ?? null };
 }
+
+/**
+ * Health-check a stored user access token by asking Meta who it belongs to.
+ * User tokens die quietly (password change, permission removal, 60-day
+ * inactivity, expiry) — when that happens leads and DMs simply stop arriving,
+ * so we surface it as a "reconnect" prompt instead of silence.
+ */
+export type MetaTokenHealth = {
+  status: "ok" | "expired" | "revoked" | "error";
+  message?: string;
+  metaUserName?: string;
+  expiresAt?: string | null;
+  daysUntilExpiry?: number | null;
+  expiringSoon: boolean;
+  needsReconnect: boolean;
+};
+
+export async function checkTokenHealth(
+  token: string,
+  expiresAt?: string | null,
+): Promise<MetaTokenHealth> {
+  const days =
+    expiresAt ? Math.floor((new Date(expiresAt).getTime() - Date.now()) / 86_400_000) : null;
+  const expiringSoon = days !== null && days <= 7;
+  try {
+    const me = await fetchMe(token);
+    return {
+      status: "ok",
+      metaUserName: me.name,
+      expiresAt: expiresAt ?? null,
+      daysUntilExpiry: days,
+      expiringSoon,
+      needsReconnect: expiringSoon || (days !== null && days <= 0),
+    };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    const lowered = msg.toLowerCase();
+    const status: MetaTokenHealth["status"] = lowered.includes("expired")
+      ? "expired"
+      : lowered.includes("session") || lowered.includes("oauth") || lowered.includes("190")
+        ? "revoked"
+        : "error";
+    return {
+      status,
+      message: msg,
+      expiresAt: expiresAt ?? null,
+      daysUntilExpiry: days,
+      expiringSoon,
+      needsReconnect: true,
+    };
+  }
+}
