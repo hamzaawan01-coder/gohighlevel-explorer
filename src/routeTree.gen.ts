@@ -19,6 +19,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAppointmentLogRouteImport } from './routes/_authenticated/appointment-log'
+import { Route as AuthenticatedAttributionRouteImport } from './routes/_authenticated/attribution'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedCallsRouteImport } from './routes/_authenticated/calls'
 import { Route as AuthenticatedConversationsRouteImport } from './routes/_authenticated/conversations'
@@ -128,6 +129,12 @@ const AuthenticatedAppointmentLogRoute =
   AuthenticatedAppointmentLogRouteImport.update({
     id: '/appointment-log',
     path: '/appointment-log',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAttributionRoute =
+  AuthenticatedAttributionRouteImport.update({
+    id: '/attribution',
+    path: '/attribution',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
@@ -480,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/appointment-log': typeof AuthenticatedAppointmentLogRoute
+  '/attribution': typeof AuthenticatedAttributionRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
@@ -551,6 +559,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/appointment-log': typeof AuthenticatedAppointmentLogRoute
+  '/attribution': typeof AuthenticatedAttributionRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/calls': typeof AuthenticatedCallsRoute
   '/conversations': typeof AuthenticatedConversationsRoute
@@ -624,6 +633,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_authenticated/appointment-log': typeof AuthenticatedAppointmentLogRoute
+  '/_authenticated/attribution': typeof AuthenticatedAttributionRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/calls': typeof AuthenticatedCallsRoute
   '/_authenticated/conversations': typeof AuthenticatedConversationsRoute
@@ -697,6 +707,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/appointment-log'
+    | '/attribution'
     | '/calendar'
     | '/calls'
     | '/conversations'
@@ -768,6 +779,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/appointment-log'
+    | '/attribution'
     | '/calendar'
     | '/calls'
     | '/conversations'
@@ -840,6 +852,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/_authenticated/appointment-log'
+    | '/_authenticated/attribution'
     | '/_authenticated/calendar'
     | '/_authenticated/calls'
     | '/_authenticated/conversations'
@@ -1010,6 +1023,13 @@ declare module '@tanstack/react-router' {
       path: '/appointment-log'
       fullPath: '/appointment-log'
       preLoaderRoute: typeof AuthenticatedAppointmentLogRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/attribution': {
+      id: '/_authenticated/attribution'
+      path: '/attribution'
+      fullPath: '/attribution'
+      preLoaderRoute: typeof AuthenticatedAttributionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/calendar': {
@@ -1437,6 +1457,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppointmentLogRoute: typeof AuthenticatedAppointmentLogRoute
+  AuthenticatedAttributionRoute: typeof AuthenticatedAttributionRoute
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedCallsRoute: typeof AuthenticatedCallsRoute
   AuthenticatedConversationsRoute: typeof AuthenticatedConversationsRoute
@@ -1475,6 +1496,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppointmentLogRoute: AuthenticatedAppointmentLogRoute,
+  AuthenticatedAttributionRoute: AuthenticatedAttributionRoute,
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedCallsRoute: AuthenticatedCallsRoute,
   AuthenticatedConversationsRoute: AuthenticatedConversationsRoute,

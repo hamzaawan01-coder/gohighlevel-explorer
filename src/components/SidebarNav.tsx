@@ -58,6 +58,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Tasks", icon: CheckSquare, to: "/tasks", module: "tasks", badge: "tasks", keywords: "todo follow up" },
       { label: "Invoices", icon: Receipt, to: "/invoices", module: "invoices", keywords: "billing invoice payments quote" },
       { label: "Reports", icon: BarChart3, to: "/reports", module: "reports", keywords: "analytics metrics" },
+      { label: "Attribution", icon: Compass, to: "/attribution", module: "attribution", keywords: "roi roas ad spend source revenue call analytics" },
     ],
   },
   {
