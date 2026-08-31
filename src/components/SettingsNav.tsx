@@ -29,6 +29,7 @@ type Item = {
 
 export const SETTINGS_NAV_ITEMS: Item[] = [
   { label: "Overview", to: "/settings", icon: LayoutGrid },
+  { label: "Profile & company", to: "/settings/profile", icon: UserCircle },
   { label: "Integrations", to: "/settings/integrations", icon: SettingsIcon, module: "integrations" },
   { label: "Phone numbers", to: "/settings/phone-numbers", icon: Phone, module: "calls" },
   { label: "Call flows", to: "/settings/call-flows", icon: PhoneCall, module: "calls" },
