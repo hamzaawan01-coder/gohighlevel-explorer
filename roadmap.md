@@ -21,9 +21,10 @@
 - [ ] App directory (Zapier-grade: inbound/outbound webhooks + API keys)
 
 ## 4. Attribution reporting
-- [ ] Source-to-revenue attribution (first/last touch on contacts -> deals -> invoices)
-- [ ] Ad spend ROI dashboard (spend from Meta/Google/TikTok vs revenue)
-- [ ] Call analytics (volume, duration, answer rate, outcome tagging)
+- [x] Source-to-revenue attribution (first/last touch on contacts -> deals -> invoices)
+- [x] Ad spend ROI dashboard (manual + logged spend vs revenue, per platform)
+- [x] Call analytics (volume, duration, answer rate, outcome tagging)
+- [ ] Auto-pull ad spend from Meta/Google/TikTok APIs (currently manual entry)
 
 ## Notes
 - Existing: invoices, subscription plans + module gating, Twilio (SMS/voice/WhatsApp), Meta ads + messaging, Google Ads sync.
