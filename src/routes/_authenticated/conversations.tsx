@@ -211,6 +211,7 @@ function ConversationsPage() {
 
   const sendSmsFn = useServerFn(sendTwilioSms);
   const sendWaFn = useServerFn(sendTwilioWhatsapp);
+  const sendMetaFn = useServerFn(sendMetaReply);
 
   const sendMut = useMutation({
     mutationFn: async () => {
@@ -226,6 +227,15 @@ function ConversationsPage() {
       }
       if (composeChannel === "whatsapp") {
         return sendWaFn({
+          data: {
+            subAccountId: subId,
+            conversationId: selectedConvo.id,
+            body: body.trim(),
+          },
+        });
+      }
+      if (composeChannel === "messenger" || composeChannel === "instagram") {
+        return sendMetaFn({
           data: {
             subAccountId: subId,
             conversationId: selectedConvo.id,
