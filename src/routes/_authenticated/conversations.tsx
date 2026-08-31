@@ -36,6 +36,7 @@ import {
   type MessageChannel,
 } from "@/lib/conversations";
 import { sendTwilioSms, sendTwilioWhatsapp } from "@/lib/twilio.functions";
+import { sendMetaReply } from "@/lib/meta.functions";
 import { suggestReply } from "@/lib/ai-assistant.functions";
 import { submitDraftFeedback } from "@/lib/ai-knowledge";
 import { CHANNELS, CHANNEL_BY_KEY } from "@/lib/channels";
