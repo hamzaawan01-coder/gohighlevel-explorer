@@ -53,6 +53,7 @@ import { Route as AuthenticatedSettingsInvoicesRouteImport } from './routes/_aut
 import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_authenticated/settings.messaging'
 import { Route as AuthenticatedSettingsModulesRouteImport } from './routes/_authenticated/settings.modules'
 import { Route as AuthenticatedSettingsPhoneNumbersRouteImport } from './routes/_authenticated/settings.phone-numbers'
+import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings.profile'
 import { Route as AuthenticatedSettingsSignupsRouteImport } from './routes/_authenticated/settings.signups'
 import { Route as AuthenticatedSettingsSubAccountsRouteImport } from './routes/_authenticated/settings.sub-accounts'
 import { Route as AuthenticatedSettingsSubscriptionsRouteImport } from './routes/_authenticated/settings.subscriptions'
@@ -319,6 +320,12 @@ const AuthenticatedSettingsPhoneNumbersRoute =
     path: '/settings/phone-numbers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsProfileRoute =
+  AuthenticatedSettingsProfileRouteImport.update({
+    id: '/settings/profile',
+    path: '/settings/profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsSignupsRoute =
   AuthenticatedSettingsSignupsRouteImport.update({
     id: '/settings/signups',
@@ -524,6 +531,7 @@ export interface FileRoutesByFullPath {
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
+  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/settings/signups': typeof AuthenticatedSettingsSignupsRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/subscriptions': typeof AuthenticatedSettingsSubscriptionsRoute
@@ -597,6 +605,7 @@ export interface FileRoutesByTo {
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
+  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/settings/signups': typeof AuthenticatedSettingsSignupsRoute
   '/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/settings/subscriptions': typeof AuthenticatedSettingsSubscriptionsRoute
@@ -672,6 +681,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
   '/_authenticated/settings/modules': typeof AuthenticatedSettingsModulesRoute
   '/_authenticated/settings/phone-numbers': typeof AuthenticatedSettingsPhoneNumbersRoute
+  '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/_authenticated/settings/signups': typeof AuthenticatedSettingsSignupsRoute
   '/_authenticated/settings/sub-accounts': typeof AuthenticatedSettingsSubAccountsRoute
   '/_authenticated/settings/subscriptions': typeof AuthenticatedSettingsSubscriptionsRoute
@@ -747,6 +757,7 @@ export interface FileRouteTypes {
     | '/settings/messaging'
     | '/settings/modules'
     | '/settings/phone-numbers'
+    | '/settings/profile'
     | '/settings/signups'
     | '/settings/sub-accounts'
     | '/settings/subscriptions'
@@ -820,6 +831,7 @@ export interface FileRouteTypes {
     | '/settings/messaging'
     | '/settings/modules'
     | '/settings/phone-numbers'
+    | '/settings/profile'
     | '/settings/signups'
     | '/settings/sub-accounts'
     | '/settings/subscriptions'
@@ -894,6 +906,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/messaging'
     | '/_authenticated/settings/modules'
     | '/_authenticated/settings/phone-numbers'
+    | '/_authenticated/settings/profile'
     | '/_authenticated/settings/signups'
     | '/_authenticated/settings/sub-accounts'
     | '/_authenticated/settings/subscriptions'
@@ -1276,6 +1289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsPhoneNumbersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/profile': {
+      id: '/_authenticated/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/signups': {
       id: '/_authenticated/settings/signups'
       path: '/settings/signups'
@@ -1504,6 +1524,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsMessagingRoute: typeof AuthenticatedSettingsMessagingRoute
   AuthenticatedSettingsModulesRoute: typeof AuthenticatedSettingsModulesRoute
   AuthenticatedSettingsPhoneNumbersRoute: typeof AuthenticatedSettingsPhoneNumbersRoute
+  AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
   AuthenticatedSettingsSignupsRoute: typeof AuthenticatedSettingsSignupsRoute
   AuthenticatedSettingsSubAccountsRoute: typeof AuthenticatedSettingsSubAccountsRoute
   AuthenticatedSettingsSubscriptionsRoute: typeof AuthenticatedSettingsSubscriptionsRoute
@@ -1545,6 +1566,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsModulesRoute: AuthenticatedSettingsModulesRoute,
   AuthenticatedSettingsPhoneNumbersRoute:
     AuthenticatedSettingsPhoneNumbersRoute,
+  AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
   AuthenticatedSettingsSignupsRoute: AuthenticatedSettingsSignupsRoute,
   AuthenticatedSettingsSubAccountsRoute: AuthenticatedSettingsSubAccountsRoute,
   AuthenticatedSettingsSubscriptionsRoute:
