@@ -23,6 +23,8 @@ import {
   configureMetaWebhooks,
 } from "@/lib/meta.functions";
 import { MetaLeadFormRouting } from "@/components/MetaLeadFormRouting";
+import { MetaReconnectBanner } from "@/components/MetaReconnectBanner";
+import { MetaConnectWizard } from "@/components/MetaConnectWizard";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -319,6 +321,10 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
 
   return (
     <div className="space-y-4">
+      {/* Self-serve onboarding for clients connecting their own Facebook. */}
+      <MetaConnectWizard subId={subId} />
+      {/* Dead / expiring user tokens surface here instead of silently stopping. */}
+      {conn && <MetaReconnectBanner subId={subId} />}
       {/* ── Connection header ─────────────────────────────── */}
       <div className="surface-card overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 p-5">
