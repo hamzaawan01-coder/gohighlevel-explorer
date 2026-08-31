@@ -20,73 +20,36 @@ export type TwilioConfig = {
 
 export type SmsProvider = "twilio" | "twilio_connector";
 
+/**
+ * Non-secret integration settings. Provider credentials (email_config /
+ * sms_config) are intentionally NOT part of this row — they are write-only from
+ * the client and only readable server-side.
+ */
 export type IntegrationRow = {
   sub_account_id: string;
   email_provider: EmailProvider | null;
-  email_config: Record<string, unknown>;
   email_from_address: string | null;
   email_from_name: string | null;
   email_verified_at: string | null;
   sms_provider: SmsProvider | null;
-  sms_config: Record<string, unknown>;
   sms_from_number: string | null;
   sms_verified_at: string | null;
   updated_at: string;
 };
 
+const SAFE_COLUMNS =
+  "sub_account_id, email_provider, email_from_address, email_from_name, email_verified_at, sms_provider, sms_from_number, sms_verified_at, updated_at";
+
 export async function fetchIntegrations(subAccountId: string): Promise<IntegrationRow | null> {
   const { data, error } = await supabase
     .from("sub_account_integrations")
-    .select("*")
+    .select(SAFE_COLUMNS)
     .eq("sub_account_id", subAccountId)
     .maybeSingle();
   if (error) throw error;
   return (data ?? null) as IntegrationRow | null;
 }
 
-export async function saveEmailIntegration(input: {
-  sub_account_id: string;
-  provider: EmailProvider;
-  config: SmtpConfig | ResendConfig | SendGridConfig;
-  from_address: string;
-  from_name?: string;
-}) {
-  const { error } = await supabase
-    .from("sub_account_integrations")
-    .upsert(
-      {
-        sub_account_id: input.sub_account_id,
-        email_provider: input.provider,
-        email_config: input.config as never,
-        email_from_address: input.from_address,
-        email_from_name: input.from_name ?? null,
-      },
-      { onConflict: "sub_account_id" },
-    );
-  if (error) throw error;
-}
-
-export async function saveSmsIntegration(input: {
-  sub_account_id: string;
-  provider?: SmsProvider;
-  config?: TwilioConfig | Record<string, never>;
-  from_number: string;
-}) {
-  const provider: SmsProvider = input.provider ?? "twilio";
-  const config = input.config ?? (provider === "twilio_connector" ? {} : { account_sid: "", auth_token: "" });
-  const { error } = await supabase
-    .from("sub_account_integrations")
-    .upsert(
-      {
-        sub_account_id: input.sub_account_id,
-        sms_provider: provider,
-        sms_config: config as never,
-        sms_from_number: input.from_number,
-      },
-      { onConflict: "sub_account_id" },
-    );
-  if (error) throw error;
-}
 
 export type OutboundMessage = {
   id: string;
