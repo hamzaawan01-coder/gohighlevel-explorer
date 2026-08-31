@@ -3049,6 +3049,10 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          job_title: string | null
+          phone: string | null
+          signature: string | null
+          timezone: string | null
           updated_at: string
         }
         Insert: {
@@ -3056,6 +3060,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          job_title?: string | null
+          phone?: string | null
+          signature?: string | null
+          timezone?: string | null
           updated_at?: string
         }
         Update: {
@@ -3063,6 +3071,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          job_title?: string | null
+          phone?: string | null
+          signature?: string | null
+          timezone?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -3443,49 +3455,82 @@ export type Database = {
       }
       sub_accounts: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
           agency_id: string
           archived_at: string | null
+          city: string | null
+          company_number: string | null
+          country: string | null
           created_at: string
           id: string
           industry: string | null
+          logo_url: string | null
           name: string
+          phone: string | null
+          postcode: string | null
           quiet_hours_enabled: boolean
           quiet_hours_end: number
           quiet_hours_start: number
           quiet_hours_timezone: string
           slug: string | null
+          support_email: string | null
           timezone: string
           updated_at: string
+          vat_number: string | null
+          website: string | null
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
           agency_id: string
           archived_at?: string | null
+          city?: string | null
+          company_number?: string | null
+          country?: string | null
           created_at?: string
           id?: string
           industry?: string | null
+          logo_url?: string | null
           name: string
+          phone?: string | null
+          postcode?: string | null
           quiet_hours_enabled?: boolean
           quiet_hours_end?: number
           quiet_hours_start?: number
           quiet_hours_timezone?: string
           slug?: string | null
+          support_email?: string | null
           timezone?: string
           updated_at?: string
+          vat_number?: string | null
+          website?: string | null
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
           agency_id?: string
           archived_at?: string | null
+          city?: string | null
+          company_number?: string | null
+          country?: string | null
           created_at?: string
           id?: string
           industry?: string | null
+          logo_url?: string | null
           name?: string
+          phone?: string | null
+          postcode?: string | null
           quiet_hours_enabled?: boolean
           quiet_hours_end?: number
           quiet_hours_start?: number
           quiet_hours_timezone?: string
           slug?: string | null
+          support_email?: string | null
           timezone?: string
           updated_at?: string
+          vat_number?: string | null
+          website?: string | null
         }
         Relationships: [
           {
