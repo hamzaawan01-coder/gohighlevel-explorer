@@ -449,7 +449,7 @@ function EmailPanel({ subId }: { subId: string }) {
                     value={smtpPass}
                     onChange={(e) => setSmtpPass(e.target.value)}
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={secretSet ? "Saved — leave blank to keep" : "••••••••"}
                   />
                 </div>
               </>
@@ -463,9 +463,10 @@ function EmailPanel({ subId }: { subId: string }) {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   type="password"
-                  placeholder="••••••••"
+                  placeholder={secretSet ? "Saved — leave blank to keep" : "••••••••"}
                   className="tracking-widest"
                 />
+
                 <p className="text-[11px] text-muted-foreground">
                   {provider === "resend" ? (
                     <>
