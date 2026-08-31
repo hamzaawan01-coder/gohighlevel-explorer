@@ -36,6 +36,7 @@ import {
   type MessageChannel,
 } from "@/lib/conversations";
 import { sendTwilioSms, sendTwilioWhatsapp } from "@/lib/twilio.functions";
+import { sendMetaReply } from "@/lib/meta.functions";
 import { suggestReply } from "@/lib/ai-assistant.functions";
 import { submitDraftFeedback } from "@/lib/ai-knowledge";
 import { CHANNELS, CHANNEL_BY_KEY } from "@/lib/channels";
@@ -211,6 +212,7 @@ function ConversationsPage() {
 
   const sendSmsFn = useServerFn(sendTwilioSms);
   const sendWaFn = useServerFn(sendTwilioWhatsapp);
+  const sendMetaFn = useServerFn(sendMetaReply);
 
   const sendMut = useMutation({
     mutationFn: async () => {
@@ -226,6 +228,15 @@ function ConversationsPage() {
       }
       if (composeChannel === "whatsapp") {
         return sendWaFn({
+          data: {
+            subAccountId: subId,
+            conversationId: selectedConvo.id,
+            body: body.trim(),
+          },
+        });
+      }
+      if (composeChannel === "messenger" || composeChannel === "instagram") {
+        return sendMetaFn({
           data: {
             subAccountId: subId,
             conversationId: selectedConvo.id,
@@ -341,11 +352,26 @@ function ConversationsPage() {
   });
 
   const isRealChannel = composeChannel !== "note";
+  const isMetaChannel = composeChannel === "messenger" || composeChannel === "instagram";
+  // Meta only allows a free-form reply within 24h of the customer's last message.
+  const metaWindowClosed = useMemo(() => {
+    if (!isMetaChannel) return false;
+    const lastInbound = (msgsQ.data ?? [])
+      .filter((m) => m.direction === "inbound")
+      .map((m) => new Date(m.created_at).getTime())
+      .sort((a, b) => b - a)[0];
+    return !lastInbound || Date.now() - lastInbound > 24 * 60 * 60 * 1000;
+  }, [isMetaChannel, msgsQ.data]);
+
   const placeholder =
     composeChannel === "sms"
       ? "Type SMS message (sent via your Twilio number)…"
       : composeChannel === "whatsapp"
       ? "Type WhatsApp message (sent via your Twilio WhatsApp sender)…"
+      : isMetaChannel
+      ? metaWindowClosed
+        ? "Meta's 24-hour reply window has closed — wait for the customer to message again…"
+        : `Reply on ${CHANNEL_BY_KEY[composeChannel].label} (sent from your connected Page)…`
       : isRealChannel
       ? `Send via ${CHANNEL_BY_KEY[composeChannel].label} (logged only until integration is connected)…`
       : "Add an internal note…";
@@ -770,7 +796,7 @@ function ConversationsPage() {
                     </Button>
                     <Button
                       onClick={() => sendMut.mutate()}
-                      disabled={!body.trim() || sendMut.isPending}
+                      disabled={!body.trim() || sendMut.isPending || metaWindowClosed}
                     >
                       <Send className="size-3.5 mr-1" />
                       {composeChannel === "note" ? "Post" : "Send"}
