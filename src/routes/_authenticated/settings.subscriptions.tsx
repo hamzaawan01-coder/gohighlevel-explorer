@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, Layers, Package, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -322,6 +322,16 @@ function SubscriptionsSettingsPage() {
                               {sub && isSubscriptionActive(sub) ? sub.status : "no subscription"}
                             </span>
                           </div>
+                          {sub?.plan_id && sub.approval_status !== "approved" && (
+                            <Link
+                              to="/settings/signups"
+                              className="block rounded-md bg-secondary px-2 py-1 text-[11px] text-muted-foreground underline-offset-2 hover:underline"
+                            >
+                              {sub.approval_status === "rejected"
+                                ? `Access revoked${sub.rejection_reason ? ` — ${sub.rejection_reason}` : ""}`
+                                : "Awaiting approval — plan modules stay locked"}
+                            </Link>
+                          )}
                           <Select
                             value={sub?.plan_id ?? "none"}
                             onValueChange={(v) =>
