@@ -3237,10 +3237,14 @@ export type Database = {
       }
       sub_account_subscriptions: {
         Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           current_period_end: string | null
           id: string
           plan_id: string | null
+          rejection_reason: string | null
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -3249,10 +3253,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           current_period_end?: string | null
           id?: string
           plan_id?: string | null
+          rejection_reason?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -3261,10 +3269,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           current_period_end?: string | null
           id?: string
           plan_id?: string | null
+          rejection_reason?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -4048,6 +4060,27 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_subscription_signups: {
+        Args: never
+        Returns: {
+          agency_id: string
+          agency_name: string
+          approval_status: string
+          approved_at: string
+          approver_name: string
+          billing_interval: string
+          created_at: string
+          currency: string
+          plan_id: string
+          plan_name: string
+          price_cents: number
+          rejection_reason: string
+          status: string
+          sub_account_id: string
+          sub_account_name: string
+          subscription_id: string
+        }[]
+      }
       next_send_time: { Args: { _at: string; _sub: string }; Returns: string }
       pause_billing_reconcile: {
         Args: { _minutes: number; _reason: string }
@@ -4083,6 +4116,10 @@ export type Database = {
         Returns: undefined
       }
       scan_time_workflows: { Args: never; Returns: undefined }
+      set_subscription_approval: {
+        Args: { _reason?: string; _status: string; _sub: string }
+        Returns: undefined
+      }
       subscription_modules: { Args: { _sub: string }; Returns: string[] }
     }
     Enums: {
