@@ -14,6 +14,7 @@ import {
   Settings as SettingsIcon,
   ShieldCheck,
   ToggleLeft,
+  UserCheck,
   Users2,
   Webhook,
 } from "lucide-react";
@@ -40,6 +41,7 @@ export const SETTINGS_NAV_ITEMS: Item[] = [
   { label: "Sub-accounts", to: "/settings/sub-accounts", icon: Building2 },
   { label: "Modules", to: "/settings/modules", icon: ToggleLeft },
   { label: "Subscriptions", to: "/settings/subscriptions", icon: CreditCard },
+  { label: "Signups & approvals", to: "/settings/signups", icon: UserCheck },
   { label: "Appearance", to: "/settings/appearance", icon: Palette },
   { label: "App review", to: "/settings/app-review", icon: ShieldCheck, module: "integrations" },
 ];
