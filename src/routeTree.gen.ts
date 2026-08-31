@@ -17,6 +17,7 @@ import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAppointmentLogRouteImport } from './routes/_authenticated/appointment-log'
 import { Route as AuthenticatedAttributionRouteImport } from './routes/_authenticated/attribution'
@@ -118,6 +119,11 @@ const PricingRoute = PricingRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -485,6 +491,7 @@ export interface FileRoutesByFullPath {
   '/features': typeof FeaturesRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/appointment-log': typeof AuthenticatedAppointmentLogRoute
   '/attribution': typeof AuthenticatedAttributionRoute
@@ -557,6 +564,7 @@ export interface FileRoutesByTo {
   '/features': typeof FeaturesRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/appointment-log': typeof AuthenticatedAppointmentLogRoute
   '/attribution': typeof AuthenticatedAttributionRoute
@@ -631,6 +639,7 @@ export interface FileRoutesById {
   '/features': typeof FeaturesRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/_authenticated/appointment-log': typeof AuthenticatedAppointmentLogRoute
   '/_authenticated/attribution': typeof AuthenticatedAttributionRoute
@@ -705,6 +714,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/pricing'
     | '/privacy'
+    | '/reset-password'
     | '/terms'
     | '/appointment-log'
     | '/attribution'
@@ -777,6 +787,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/pricing'
     | '/privacy'
+    | '/reset-password'
     | '/terms'
     | '/appointment-log'
     | '/attribution'
@@ -850,6 +861,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/pricing'
     | '/privacy'
+    | '/reset-password'
     | '/terms'
     | '/_authenticated/appointment-log'
     | '/_authenticated/attribution'
@@ -924,6 +936,7 @@ export interface RootRouteChildren {
   FeaturesRoute: typeof FeaturesRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
   BSlugRoute: typeof BSlugRoute
   FSlugRoute: typeof FSlugRoute
@@ -1009,6 +1022,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -1548,6 +1568,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeaturesRoute: FeaturesRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
   BSlugRoute: BSlugRoute,
   FSlugRoute: FSlugRoute,
