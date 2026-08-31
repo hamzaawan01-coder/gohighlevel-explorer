@@ -47,18 +47,21 @@ export async function setSignupApproval(
   const { error } = await supabase.rpc("set_subscription_approval", {
     _sub: subAccountId,
     _status: status,
-    _reason: reason ?? null,
+    ...(reason ? { _reason: reason } : {}),
   });
   if (error) throw error;
 }
 
 /** True when the signed-in user holds the platform-wide admin role. */
 export async function fetchIsGlobalAdmin(): Promise<boolean> {
-  const session = await requireSession();
+  await requireSession();
+  const { data: userData } = await supabase.auth.getUser();
+  const uid = userData.user?.id;
+  if (!uid) return false;
   const { data, error } = await supabase
     .from("user_roles")
     .select("role")
-    .eq("user_id", session.user.id)
+    .eq("user_id", uid)
     .eq("role", "admin")
     .maybeSingle();
   if (error) return false;
