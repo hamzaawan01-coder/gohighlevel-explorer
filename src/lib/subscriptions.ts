@@ -27,6 +27,8 @@ export type WorkspaceSubscription = {
   current_period_end: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  approval_status: string;
+  rejection_reason: string | null;
 };
 
 export const ACTIVE_STATUSES = ["active", "trialing", "past_due"];
@@ -107,7 +109,7 @@ export async function deletePlan(planId: string): Promise<void> {
 /* ----------------------------- Subscriptions ----------------------------- */
 
 const SUB_COLS =
-  "id, sub_account_id, plan_id, status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id";
+  "id, sub_account_id, plan_id, status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id, approval_status, rejection_reason";
 
 export async function fetchWorkspaceSubscription(
   subAccountId: string,
@@ -140,7 +142,7 @@ export async function assignPlan(
   status = "active",
 ): Promise<void> {
   const { error } = await supabase.from("sub_account_subscriptions").upsert(
-    { sub_account_id: subAccountId, plan_id: planId, status },
+    { sub_account_id: subAccountId, plan_id: planId, status, approval_status: "approved" },
     { onConflict: "sub_account_id" },
   );
   if (error) throw error;
@@ -164,6 +166,8 @@ export function useWorkspaceSubscription(subAccountId?: string | null) {
 export async function fetchPlanModules(subAccountId: string): Promise<string[] | null> {
   const sub = await fetchWorkspaceSubscription(subAccountId);
   if (!sub || !sub.plan_id || !isSubscriptionActive(sub)) return null;
+  // Approval gate: a paid signup unlocks nothing until it is approved.
+  if (sub.approval_status !== "approved") return [];
   const { data, error } = await supabase
     .from("subscription_plans")
     .select("modules")
