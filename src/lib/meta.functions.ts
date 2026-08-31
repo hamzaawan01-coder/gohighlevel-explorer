@@ -840,3 +840,39 @@ export const getMetaLeadSource = createServerFn({ method: "GET" })
 
   });
 
+
+/**
+ * Token health for the workspace's Meta connection. Drives the "Reconnect
+ * Facebook" banner: a dead token is otherwise invisible until leads stop.
+ */
+export const getMetaTokenHealth = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string }) =>
+    z.object({ subAccountId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: conns } = await (supabaseAdmin as any)
+      .from("meta_connections")
+      .select("id, access_token, token_expires_at, meta_user_name")
+      .eq("sub_account_id", data.subAccountId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const conn = (conns ?? [])[0] as
+      | { access_token: string; token_expires_at: string | null; meta_user_name: string | null }
+      | undefined;
+    if (!conn) {
+      return {
+        connected: false as const,
+        status: "error" as const,
+        expiringSoon: false,
+        needsReconnect: false,
+        message: "No Meta connection in this workspace.",
+        expiresAt: null,
+        daysUntilExpiry: null,
+      };
+    }
+    const health = await checkTokenHealth(conn.access_token, conn.token_expires_at);
+    return { connected: true as const, ...health, metaUserName: health.metaUserName ?? conn.meta_user_name ?? undefined };
+  });
