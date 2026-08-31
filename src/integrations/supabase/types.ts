@@ -135,6 +135,68 @@ export type Database = {
           },
         ]
       }
+      ad_spend_daily: {
+        Row: {
+          campaign_name: string | null
+          clicks: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          entry_source: string
+          external_campaign_id: string | null
+          id: string
+          impressions: number
+          leads: number
+          platform: Database["public"]["Enums"]["ad_platform"]
+          spend: number
+          spend_date: string
+          sub_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_name?: string | null
+          clicks?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          entry_source?: string
+          external_campaign_id?: string | null
+          id?: string
+          impressions?: number
+          leads?: number
+          platform: Database["public"]["Enums"]["ad_platform"]
+          spend?: number
+          spend_date: string
+          sub_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_name?: string | null
+          clicks?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          entry_source?: string
+          external_campaign_id?: string | null
+          id?: string
+          impressions?: number
+          leads?: number
+          platform?: Database["public"]["Enums"]["ad_platform"]
+          spend?: number
+          spend_date?: string
+          sub_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_spend_daily_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agencies: {
         Row: {
           created_at: string
@@ -947,6 +1009,78 @@ export type Database = {
           },
           {
             foreignKeyName: "contact_files_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_touches: {
+        Row: {
+          campaign: string | null
+          click_id: string | null
+          contact_id: string
+          content: string | null
+          created_at: string
+          external_campaign_id: string | null
+          id: string
+          kind: string
+          landing_page: string | null
+          medium: string | null
+          occurred_at: string
+          platform: string | null
+          referrer: string | null
+          source: string
+          sub_account_id: string
+          term: string | null
+        }
+        Insert: {
+          campaign?: string | null
+          click_id?: string | null
+          contact_id: string
+          content?: string | null
+          created_at?: string
+          external_campaign_id?: string | null
+          id?: string
+          kind?: string
+          landing_page?: string | null
+          medium?: string | null
+          occurred_at?: string
+          platform?: string | null
+          referrer?: string | null
+          source?: string
+          sub_account_id: string
+          term?: string | null
+        }
+        Update: {
+          campaign?: string | null
+          click_id?: string | null
+          contact_id?: string
+          content?: string | null
+          created_at?: string
+          external_campaign_id?: string | null
+          id?: string
+          kind?: string
+          landing_page?: string | null
+          medium?: string | null
+          occurred_at?: string
+          platform?: string | null
+          referrer?: string | null
+          source?: string
+          sub_account_id?: string
+          term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_touches_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_touches_sub_account_id_fkey"
             columns: ["sub_account_id"]
             isOneToOne: false
             referencedRelation: "sub_accounts"
@@ -2728,6 +2862,8 @@ export type Database = {
           ended_at: string | null
           from_number: string | null
           id: string
+          outcome: string | null
+          outcome_note: string | null
           parent_call_sid: string | null
           price: number | null
           price_currency: string | null
@@ -2753,6 +2889,8 @@ export type Database = {
           ended_at?: string | null
           from_number?: string | null
           id?: string
+          outcome?: string | null
+          outcome_note?: string | null
           parent_call_sid?: string | null
           price?: number | null
           price_currency?: string | null
@@ -2778,6 +2916,8 @@ export type Database = {
           ended_at?: string | null
           from_number?: string | null
           id?: string
+          outcome?: string | null
+          outcome_note?: string | null
           parent_call_sid?: string | null
           price?: number | null
           price_currency?: string | null
