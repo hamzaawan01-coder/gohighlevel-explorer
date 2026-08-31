@@ -4,20 +4,22 @@ import { ArrowRight, LayoutGrid, Users, Calendar, MessageSquare } from "lucide-r
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Agency Engine — CRM, Pipelines, Conversations" },
+      { title: "Lead Convert | AI CRM for Your Business" },
       {
         name: "description",
         content:
-          "A dense operator dashboard for agencies. CRM, sales pipelines, email/SMS conversations and calendar bookings in one fast surface.",
+          "Lead Convert is an AI CRM for your business: capture leads from Meta and web forms, run pipelines, reply over SMS, WhatsApp and email, and book appointments automatically.",
       },
-      { property: "og:title", content: "Agency Engine — Operator OS for agencies" },
+      { property: "og:title", content: "Lead Convert | AI CRM for Your Business" },
       {
         property: "og:description",
         content:
-          "Run your agency on a single operator surface: contacts, deals, inbox, calendar.",
+          "Capture leads, run pipelines, reply across SMS, WhatsApp and email, and book appointments automatically.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://leadsconvert.co.uk/" },
     ],
+    links: [{ rel: "canonical", href: "https://leadsconvert.co.uk/" }],
   }),
   component: Landing,
 });

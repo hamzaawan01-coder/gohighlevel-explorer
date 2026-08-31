@@ -80,15 +80,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Click Away Finance — Agency Operating System" },
-      { name: "description", content: "CRM, pipelines, conversations, calendar, invoices and automation in one operator surface." },
-      { name: "author", content: "Click Away Finance" },
-      { property: "og:title", content: "Click Away Finance — Agency Operating System" },
-      { property: "og:description", content: "CRM, pipelines, conversations, calendar, invoices and automation in one operator surface." },
+      { title: "Lead Convert | AI CRM for Your Business" },
+      { name: "description", content: "Lead Convert is an AI CRM for your business: capture leads, run pipelines, reply across SMS, WhatsApp and email, and book appointments automatically." },
+      { name: "author", content: "Lead Convert" },
+      { property: "og:site_name", content: "Lead Convert" },
+      { property: "og:title", content: "Lead Convert | AI CRM for Your Business" },
+      { property: "og:description", content: "Capture leads, run pipelines, reply across SMS, WhatsApp and email, and book appointments automatically." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Click Away Finance — Agency Operating System" },
-      { name: "twitter:description", content: "CRM, pipelines, conversations, calendar, invoices and automation in one operator surface." },
+      { name: "twitter:title", content: "Lead Convert | AI CRM for Your Business" },
+      { name: "twitter:description", content: "Capture leads, run pipelines, reply across SMS, WhatsApp and email, and book appointments automatically." },
     ],
     links: [
       {
