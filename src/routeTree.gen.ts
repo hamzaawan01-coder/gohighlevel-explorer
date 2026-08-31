@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DataDeletionRouteImport } from './routes/data-deletion'
+import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAppointmentLogRouteImport } from './routes/_authenticated/appointment-log'
@@ -94,6 +95,11 @@ const AuthRoute = AuthRouteImport.update({
 const DataDeletionRoute = DataDeletionRouteImport.update({
   id: '/data-deletion',
   path: '/data-deletion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeaturesRoute = FeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -456,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/data-deletion': typeof DataDeletionRoute
+  '/features': typeof FeaturesRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/appointment-log': typeof AuthenticatedAppointmentLogRoute
@@ -524,6 +531,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/data-deletion': typeof DataDeletionRoute
+  '/features': typeof FeaturesRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/appointment-log': typeof AuthenticatedAppointmentLogRoute
@@ -594,6 +602,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/data-deletion': typeof DataDeletionRoute
+  '/features': typeof FeaturesRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_authenticated/appointment-log': typeof AuthenticatedAppointmentLogRoute
@@ -664,6 +673,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/data-deletion'
+    | '/features'
     | '/privacy'
     | '/terms'
     | '/appointment-log'
@@ -732,6 +742,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/data-deletion'
+    | '/features'
     | '/privacy'
     | '/terms'
     | '/appointment-log'
@@ -801,6 +812,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/data-deletion'
+    | '/features'
     | '/privacy'
     | '/terms'
     | '/_authenticated/appointment-log'
@@ -871,6 +883,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   DataDeletionRoute: typeof DataDeletionRoute
+  FeaturesRoute: typeof FeaturesRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
   BSlugRoute: typeof BSlugRoute
@@ -929,6 +942,13 @@ declare module '@tanstack/react-router' {
       path: '/data-deletion'
       fullPath: '/data-deletion'
       preLoaderRoute: typeof DataDeletionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -1462,6 +1482,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   DataDeletionRoute: DataDeletionRoute,
+  FeaturesRoute: FeaturesRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
   BSlugRoute: BSlugRoute,
