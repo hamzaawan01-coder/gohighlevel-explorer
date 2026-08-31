@@ -12,6 +12,7 @@ import {
   metaWebhookUrl,
   metaRedirectUri,
   metaScopes,
+  checkTokenHealth,
 } from "./meta.server";
 
 type MetaConnectionRow = {
