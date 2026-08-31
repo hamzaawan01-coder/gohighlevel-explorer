@@ -352,11 +352,26 @@ function ConversationsPage() {
   });
 
   const isRealChannel = composeChannel !== "note";
+  const isMetaChannel = composeChannel === "messenger" || composeChannel === "instagram";
+  // Meta only allows a free-form reply within 24h of the customer's last message.
+  const metaWindowClosed = useMemo(() => {
+    if (!isMetaChannel) return false;
+    const lastInbound = (msgsQ.data ?? [])
+      .filter((m) => m.direction === "inbound")
+      .map((m) => new Date(m.created_at).getTime())
+      .sort((a, b) => b - a)[0];
+    return !lastInbound || Date.now() - lastInbound > 24 * 60 * 60 * 1000;
+  }, [isMetaChannel, msgsQ.data]);
+
   const placeholder =
     composeChannel === "sms"
       ? "Type SMS message (sent via your Twilio number)…"
       : composeChannel === "whatsapp"
       ? "Type WhatsApp message (sent via your Twilio WhatsApp sender)…"
+      : isMetaChannel
+      ? metaWindowClosed
+        ? "Meta's 24-hour reply window has closed — wait for the customer to message again…"
+        : `Reply on ${CHANNEL_BY_KEY[composeChannel].label} (sent from your connected Page)…`
       : isRealChannel
       ? `Send via ${CHANNEL_BY_KEY[composeChannel].label} (logged only until integration is connected)…`
       : "Add an internal note…";
