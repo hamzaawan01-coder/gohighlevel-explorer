@@ -90,6 +90,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Lead Convert | AI CRM for Your Business" },
       { name: "twitter:description", content: "Capture leads, run pipelines, reply across SMS, WhatsApp and email, and book appointments automatically." },
+      { name: "theme-color", content: "#10b981" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Lead Convert" },
+      { name: "mobile-web-app-capable", content: "yes" },
+
     ],
     links: [
       {
