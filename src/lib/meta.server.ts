@@ -3,6 +3,7 @@
  * Never import from route/component code — call via createServerFn wrappers.
  */
 import { createHmac, timingSafeEqual } from "crypto";
+import { getRequest } from "@tanstack/react-start/server";
 
 export const GRAPH_VERSION = "v21.0";
 export const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
@@ -49,11 +50,7 @@ const FALLBACK_ORIGIN = "https://gohighlevel-explorer.lovable.app";
 export function publicOrigin(): string {
   if (process.env.PUBLIC_SITE_URL) return process.env.PUBLIC_SITE_URL.replace(/\/+$/, "");
   try {
-    // Lazily required so this module stays usable outside a request scope.
-    const { getRequest } = require("@tanstack/react-start/server") as {
-      getRequest: () => Request | undefined;
-    };
-    const req = getRequest();
+    const req = getRequest() as Request | undefined;
     if (req) {
       const headers = req.headers;
       const forwardedHost = headers.get("x-forwarded-host");
