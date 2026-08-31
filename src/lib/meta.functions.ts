@@ -300,6 +300,92 @@ export const disconnectMeta = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Reply on Messenger / Instagram from an inbox conversation.
+ * Resolves the page + recipient from conversations.external_thread_id
+ * ("messenger:{pageId}:{senderId}"), enforces Meta's 24-hour messaging
+ * window, sends via the Page token and logs the outbound message.
+ */
+export const sendMetaReply = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string; conversationId: string; body: string }) =>
+    z.object({
+      subAccountId: z.string().uuid(),
+      conversationId: z.string().uuid(),
+      body: z.string().min(1).max(2000),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+
+    const { data: convRows } = await db
+      .from("conversations")
+      .select("id, sub_account_id, channel, external_thread_id")
+      .eq("id", data.conversationId)
+      .eq("sub_account_id", data.subAccountId)
+      .limit(1);
+    const conv = (convRows ?? [])[0] as
+      | { id: string; channel: string; external_thread_id: string | null }
+      | undefined;
+    if (!conv) throw new Error("Conversation not found in this workspace");
+    if (conv.channel !== "messenger" && conv.channel !== "instagram") {
+      throw new Error("This conversation is not a Messenger or Instagram thread");
+    }
+    const parts = (conv.external_thread_id ?? "").split(":");
+    const pageId = parts[1];
+    const recipientId = parts[2];
+    if (!pageId || !recipientId) {
+      throw new Error("This thread has no Meta sender attached, so it cannot be replied to");
+    }
+
+    // Meta only allows a free-form reply within 24h of the customer's last message.
+    const { data: lastInbound } = await db
+      .from("messages")
+      .select("created_at")
+      .eq("conversation_id", conv.id)
+      .eq("direction", "inbound")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const lastAt = (lastInbound ?? [])[0]?.created_at as string | undefined;
+    if (!lastAt || Date.now() - new Date(lastAt).getTime() > 24 * 60 * 60 * 1000) {
+      throw new Error(
+        "Meta's 24-hour reply window has closed for this thread — the customer needs to message again before you can reply.",
+      );
+    }
+
+    const { data: pageRows } = await db
+      .from("meta_pages")
+      .select("*")
+      .eq("sub_account_id", data.subAccountId)
+      .eq("page_id", pageId)
+      .order("webhook_subscribed", { ascending: false })
+      .limit(1);
+    const page = (pageRows ?? [])[0] as MetaPageRow | undefined;
+    if (!page) throw new Error("The Facebook Page for this thread is no longer connected");
+
+    const sent = await sendPageMessage(page.page_id, page.page_access_token, recipientId, data.body);
+
+    await db.from("messages").insert({
+      conversation_id: conv.id,
+      sub_account_id: data.subAccountId,
+      author_user_id: context.userId,
+      direction: "outbound",
+      channel: conv.channel,
+      kind: conv.channel === "instagram" ? "instagram_log" : "messenger_log",
+      body: data.body,
+      external_id: sent.message_id ?? null,
+      sender_handle: page.page_id,
+    });
+    await db
+      .from("conversations")
+      .update({ last_message_at: new Date().toISOString() })
+      .eq("id", conv.id);
+
+    return { ok: true, messageId: sent.message_id ?? null };
+  });
+
 /** Register the app-level webhook callback URL + fields with Meta automatically. */
 export const configureMetaWebhooks = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
