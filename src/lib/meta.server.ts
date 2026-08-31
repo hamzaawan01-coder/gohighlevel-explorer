@@ -3,6 +3,7 @@
  * Never import from route/component code — call via createServerFn wrappers.
  */
 import { createHmac, timingSafeEqual } from "crypto";
+import { getRequest } from "@tanstack/react-start/server";
 
 export const GRAPH_VERSION = "v21.0";
 export const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
@@ -39,9 +40,32 @@ export function metaScopes(): string[] {
 export const META_SCOPES = META_BASE_SCOPES;
 
 
+const FALLBACK_ORIGIN = "https://gohighlevel-explorer.lovable.app";
+
+/**
+ * Origin used for OAuth redirect URIs and webhook URLs.
+ * Prefers the domain of the incoming request so custom domains
+ * (e.g. leadsconvert.co.uk) work without redirect_uri mismatches.
+ */
 export function publicOrigin(): string {
-  return process.env.PUBLIC_SITE_URL || "https://gohighlevel-explorer.lovable.app";
+  if (process.env.PUBLIC_SITE_URL) return process.env.PUBLIC_SITE_URL.replace(/\/+$/, "");
+  try {
+    const req = getRequest() as Request | undefined;
+    if (req) {
+      const headers = req.headers;
+      const forwardedHost = headers.get("x-forwarded-host");
+      const proto = headers.get("x-forwarded-proto") || "https";
+      const host = forwardedHost || headers.get("host") || new URL(req.url).host;
+      if (host && !/^localhost|^127\.0\.0\.1/.test(host)) {
+        return `${proto}://${host.split(",")[0]!.trim()}`;
+      }
+    }
+  } catch {
+    // no request scope — fall through
+  }
+  return FALLBACK_ORIGIN;
 }
+
 
 export function metaRedirectUri(): string {
   return `${publicOrigin()}/api/public/oauth/meta/callback`;
