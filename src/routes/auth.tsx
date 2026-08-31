@@ -118,25 +118,33 @@ function AuthPage() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold mb-1">
-            {mode === "signin" ? "Sign in" : "Create account"}
+            {mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Reset password"}
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            {mode === "signin" ? "Welcome back." : "Get started in seconds."}
+            {mode === "signin"
+              ? "Welcome back."
+              : mode === "signup"
+                ? "Get started in seconds."
+                : "We'll email you a secure link to set a new password."}
           </p>
 
-          <button
-            onClick={handleGoogle}
-            disabled={loading}
-            className="w-full border border-border bg-card hover:bg-secondary rounded-md py-2 text-sm font-medium mb-4 disabled:opacity-50 transition-colors"
-          >
-            Continue with Google
-          </button>
+          {mode !== "forgot" && (
+            <>
+              <button
+                onClick={handleGoogle}
+                disabled={loading}
+                className="w-full border border-border bg-card hover:bg-secondary rounded-md py-2 text-sm font-medium mb-4 disabled:opacity-50 transition-colors"
+              >
+                Continue with Google
+              </button>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-border" />
-            <span className="font-mono text-[10px] uppercase text-muted-foreground">or</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px bg-border" />
+                <span className="font-mono text-[10px] uppercase text-muted-foreground">or</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+            </>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-3">
             {mode === "signup" && (
@@ -156,23 +164,39 @@ function AuthPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-secondary border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
-            <input
-              type="password"
-              required
-              minLength={6}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-secondary border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
+            {mode !== "forgot" && (
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-secondary border border-border rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            )}
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-primary text-primary-foreground rounded-md py-2 text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
-              {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+              {loading
+                ? "Please wait…"
+                : mode === "signin"
+                  ? "Sign in"
+                  : mode === "signup"
+                    ? "Create account"
+                    : "Send reset link"}
             </button>
           </form>
+
+          {mode === "signin" && (
+            <p className="text-xs text-muted-foreground mt-3 text-center">
+              <button onClick={() => setMode("forgot")} className="hover:underline">
+                Forgot your password?
+              </button>
+            </p>
+          )}
 
           <p className="text-xs text-muted-foreground mt-4 text-center">
             {mode === "signin" ? "No account?" : "Already have one?"}{" "}
@@ -183,6 +207,7 @@ function AuthPage() {
               {mode === "signin" ? "Create one" : "Sign in"}
             </button>
           </p>
+
         </div>
       </div>
     </div>
