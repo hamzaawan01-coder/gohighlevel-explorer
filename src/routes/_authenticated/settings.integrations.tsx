@@ -576,6 +576,12 @@ function SmsPanel({ subId }: { subId: string }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["integrations", subId], queryFn: () => fetchIntegrations(subId) });
   const testFn = useServerFn(sendTestSms);
+  const safeConfigFn = useServerFn(getIntegrationSafeConfig);
+  const saveFn = useServerFn(saveSmsIntegrationSecure);
+  const safeCfg = useQuery({
+    queryKey: ["integration-config", subId],
+    queryFn: () => safeConfigFn({ data: { sub_account_id: subId } }),
+  });
 
   const [provider, setProvider] = useState<"twilio" | "twilio_connector">("twilio_connector");
   const [sid, setSid] = useState("");
@@ -590,21 +596,32 @@ function SmsPanel({ subId }: { subId: string }) {
     if (row.sms_provider === "twilio" || row.sms_provider === "twilio_connector") {
       setProvider(row.sms_provider);
     }
-    const cfg = (row.sms_config ?? {}) as Record<string, unknown>;
-    setSid(String(cfg.account_sid ?? ""));
-    setToken(String(cfg.auth_token ?? ""));
     setFromNumber(row.sms_from_number ?? "");
   }, [q.data]);
 
+  useEffect(() => {
+    const cfg = safeCfg.data?.sms;
+    if (!cfg) return;
+    setSid(cfg.account_sid);
+    // Auth token is never sent to the browser — blank means "keep existing".
+    setToken("");
+  }, [safeCfg.data]);
+
+  const tokenSet = Boolean(safeCfg.data?.sms.has_auth_token);
+
   const save = useMutation({
     mutationFn: async () => {
-      await saveSmsIntegration({
-        sub_account_id: subId,
-        provider,
-        config: provider === "twilio_connector" ? {} : { account_sid: sid, auth_token: token },
-        from_number: fromNumber,
+      await saveFn({
+        data: {
+          sub_account_id: subId,
+          provider,
+          from_number: fromNumber,
+          account_sid: sid,
+          auth_token: token || undefined,
+        },
       });
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["integrations", subId] });
       toast.success("SMS settings saved");
