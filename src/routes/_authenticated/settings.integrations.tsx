@@ -703,7 +703,7 @@ function SmsPanel({ subId }: { subId: string }) {
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={tokenSet ? "Saved — leave blank to keep" : "••••••••"}
                     className="tracking-widest"
                   />
                 </div>
