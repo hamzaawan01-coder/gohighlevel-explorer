@@ -2,31 +2,162 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig } from "./integrations";
 
-async function assertAdminAccess(supabase: ReturnType<typeof getSupabase>, subAccountId: string) {
-  const { data, error } = await supabase
-    .from("sub_account_integrations")
-    .select("sub_account_id")
-    .eq("sub_account_id", subAccountId)
-    .maybeSingle();
-  // RLS blocks non-admins from reading; if the query errored on permission we still
-  // fall through to the send call which will also be permission-guarded on the FK.
-  if (error) throw new Error("Not authorized for this workspace");
-  return data;
+/**
+ * Verify the caller is an owner/admin of the workspace, then return a
+ * service-role client. Provider credentials (sms_config / email_config) are not
+ * readable by any signed-in role directly — they are only reachable server-side
+ * after this check passes.
+ */
+async function adminClientFor(
+  supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> },
+  userId: string,
+  subAccountId: string,
+) {
+  const { data, error } = await supabase.rpc("is_subaccount_admin", {
+    _user: userId,
+    _sub: subAccountId,
+  });
+  if (error || data !== true) throw new Error("Not authorized for this workspace");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
 }
 
-// helper type so the file typechecks without importing the concrete supabase-js client here
-type SupabaseLike = ReturnType<typeof getSupabase>;
-function getSupabase() {
-  return null as unknown as {
-    from: (t: string) => {
-      select: (c: string) => {
-        eq: (col: string, v: string) => {
-          maybeSingle: () => Promise<{ data: unknown; error: unknown }>;
-        };
-      };
-    };
-  };
+type ConfigRecord = Record<string, unknown>;
+
+function str(v: unknown) {
+  return typeof v === "string" ? v : v == null ? "" : String(v);
 }
+
+/**
+ * Masked view of the provider configuration for the settings UI.
+ * Secrets are never returned — only whether they are set.
+ */
+export const getIntegrationSafeConfig = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { sub_account_id: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const sb = await adminClientFor(supabase as never, userId, data.sub_account_id);
+    const { data: row, error } = await sb
+      .from("sub_account_integrations")
+      .select("email_config, sms_config")
+      .eq("sub_account_id", data.sub_account_id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    const email = (row?.email_config ?? {}) as ConfigRecord;
+    const sms = (row?.sms_config ?? {}) as ConfigRecord;
+    return {
+      email: {
+        host: str(email.host),
+        port: Number(email.port ?? 587) || 587,
+        secure: Boolean(email.secure),
+        user: str(email.user),
+        has_password: Boolean(email.password),
+        has_api_key: Boolean(email.api_key),
+      },
+      sms: {
+        account_sid: str(sms.account_sid),
+        has_auth_token: Boolean(sms.auth_token),
+      },
+    };
+  });
+
+/** Save email provider settings. Blank secret fields keep the stored value. */
+export const saveEmailIntegrationSecure = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      sub_account_id: string;
+      provider: "smtp" | "resend" | "sendgrid";
+      from_address: string;
+      from_name?: string | null;
+      host?: string;
+      port?: number;
+      secure?: boolean;
+      user?: string;
+      password?: string;
+      api_key?: string;
+    }) => data,
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const sb = await adminClientFor(supabase as never, userId, data.sub_account_id);
+    const { data: existing } = await sb
+      .from("sub_account_integrations")
+      .select("email_config")
+      .eq("sub_account_id", data.sub_account_id)
+      .maybeSingle();
+    const prev = (existing?.email_config ?? {}) as ConfigRecord;
+
+    let config: ConfigRecord;
+    if (data.provider === "smtp") {
+      config = {
+        host: data.host ?? "",
+        port: data.port ?? 587,
+        secure: Boolean(data.secure),
+        user: data.user ?? "",
+        password: data.password ? data.password : str(prev.password),
+      };
+    } else {
+      config = { api_key: data.api_key ? data.api_key : str(prev.api_key) };
+    }
+
+    const { error } = await sb.from("sub_account_integrations").upsert(
+      {
+        sub_account_id: data.sub_account_id,
+        email_provider: data.provider,
+        email_config: config as never,
+        email_from_address: data.from_address,
+        email_from_name: data.from_name ?? null,
+      },
+      { onConflict: "sub_account_id" },
+    );
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/** Save SMS provider settings. Blank auth token keeps the stored value. */
+export const saveSmsIntegrationSecure = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      sub_account_id: string;
+      provider: "twilio" | "twilio_connector";
+      from_number: string;
+      account_sid?: string;
+      auth_token?: string;
+    }) => data,
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const sb = await adminClientFor(supabase as never, userId, data.sub_account_id);
+    const { data: existing } = await sb
+      .from("sub_account_integrations")
+      .select("sms_config")
+      .eq("sub_account_id", data.sub_account_id)
+      .maybeSingle();
+    const prev = (existing?.sms_config ?? {}) as ConfigRecord;
+
+    const config: ConfigRecord =
+      data.provider === "twilio_connector"
+        ? {}
+        : {
+            account_sid: data.account_sid ?? str(prev.account_sid),
+            auth_token: data.auth_token ? data.auth_token : str(prev.auth_token),
+          };
+
+    const { error } = await sb.from("sub_account_integrations").upsert(
+      {
+        sub_account_id: data.sub_account_id,
+        sms_provider: data.provider,
+        sms_config: config as never,
+        sms_from_number: data.from_number,
+      },
+      { onConflict: "sub_account_id" },
+    );
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
 
 // ============ Test send: email ============
 export const sendTestEmail = createServerFn({ method: "POST" })
@@ -38,8 +169,9 @@ export const sendTestEmail = createServerFn({ method: "POST" })
     }) => data,
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: row, error } = await supabase
+    const { supabase, userId } = context;
+    const sb = await adminClientFor(supabase as never, userId, data.sub_account_id);
+    const { data: row, error } = await sb
       .from("sub_account_integrations")
       .select("*")
       .eq("sub_account_id", data.sub_account_id)
@@ -61,7 +193,7 @@ export const sendTestEmail = createServerFn({ method: "POST" })
     });
 
     // mark verified
-    await supabase
+    await sb
       .from("sub_account_integrations")
       .update({ email_verified_at: new Date().toISOString() })
       .eq("sub_account_id", data.sub_account_id);
@@ -79,8 +211,9 @@ export const sendTestSms = createServerFn({ method: "POST" })
     }) => data,
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: row, error } = await supabase
+    const { supabase, userId } = context;
+    const sb = await adminClientFor(supabase as never, userId, data.sub_account_id);
+    const { data: row, error } = await sb
       .from("sub_account_integrations")
       .select("*")
       .eq("sub_account_id", data.sub_account_id)
@@ -103,7 +236,7 @@ export const sendTestSms = createServerFn({ method: "POST" })
           body: "Test SMS from your CRM. Integration works.",
         });
 
-    await supabase
+    await sb
       .from("sub_account_integrations")
       .update({ sms_verified_at: new Date().toISOString() })
       .eq("sub_account_id", data.sub_account_id);
@@ -162,9 +295,9 @@ export const drainOutboundQueue = createServerFn({ method: "POST" })
   });
 
 // Retry a single failed outbound message from the UI.
-// RLS check: we look the row up as the caller first (so users can only retry
-// their own workspace's messages), then use the service-role processor to
-// actually resend.
+// The row is looked up as the caller first (so users can only retry their own
+// workspace's messages); the status reset and resend then run with the
+// service-role processor, so the queue table needs no client UPDATE policy.
 export const retryOutboundMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { id: string }) => data)
@@ -178,9 +311,11 @@ export const retryOutboundMessage = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Message not found or not accessible");
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     // Reset failed → queued so processOne will pick it up
     if (row.status === "failed") {
-      const { error: uErr } = await supabase
+      const { error: uErr } = await supabaseAdmin
         .from("outbound_messages")
         .update({ status: "queued", next_attempt_at: null, error: null } as never)
         .eq("id", row.id);
@@ -191,8 +326,3 @@ export const retryOutboundMessage = createServerFn({ method: "POST" })
     await processOne(row.id);
     return { ok: true as const };
   });
-
-// keep helper referenced so the file compiles cleanly
-void assertAdminAccess;
-void ({} as SupabaseLike);
-

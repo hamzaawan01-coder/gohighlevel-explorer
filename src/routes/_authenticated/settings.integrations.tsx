@@ -42,12 +42,17 @@ import { LeadDisplaySettings } from "@/components/LeadDisplaySettings";
 import { useTenancy } from "@/lib/tenancy";
 import {
   fetchIntegrations,
-  saveEmailIntegration,
-  saveSmsIntegration,
   fetchOutbound,
   type EmailProvider,
 } from "@/lib/integrations";
-import { sendTestEmail, sendTestSms, retryOutboundMessage } from "@/lib/integrations.functions";
+import {
+  sendTestEmail,
+  sendTestSms,
+  retryOutboundMessage,
+  getIntegrationSafeConfig,
+  saveEmailIntegrationSecure,
+  saveSmsIntegrationSecure,
+} from "@/lib/integrations.functions";
 import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/settings/integrations")({
@@ -268,6 +273,12 @@ function EmailPanel({ subId }: { subId: string }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["integrations", subId], queryFn: () => fetchIntegrations(subId) });
   const testFn = useServerFn(sendTestEmail);
+  const safeConfigFn = useServerFn(getIntegrationSafeConfig);
+  const saveFn = useServerFn(saveEmailIntegrationSecure);
+  const safeCfg = useQuery({
+    queryKey: ["integration-config", subId],
+    queryFn: () => safeConfigFn({ data: { sub_account_id: subId } }),
+  });
 
   const [provider, setProvider] = useState<EmailProvider>("resend");
   const [fromAddr, setFromAddr] = useState("");
@@ -287,40 +298,43 @@ function EmailPanel({ subId }: { subId: string }) {
     if (row.email_provider) setProvider(row.email_provider as EmailProvider);
     setFromAddr(row.email_from_address ?? "");
     setFromName(row.email_from_name ?? "");
-    const cfg = (row.email_config ?? {}) as Record<string, unknown>;
-    if (row.email_provider === "smtp") {
-      setSmtpHost(String(cfg.host ?? ""));
-      setSmtpPort(String(cfg.port ?? 587));
-      setSmtpSecure(Boolean(cfg.secure));
-      setSmtpUser(String(cfg.user ?? ""));
-      setSmtpPass(String(cfg.password ?? ""));
-    } else {
-      setApiKey(String(cfg.api_key ?? ""));
-    }
   }, [q.data]);
+
+  useEffect(() => {
+    const cfg = safeCfg.data?.email;
+    if (!cfg) return;
+    setSmtpHost(cfg.host);
+    setSmtpPort(String(cfg.port));
+    setSmtpSecure(cfg.secure);
+    setSmtpUser(cfg.user);
+    // Secrets are never sent to the browser — left blank means "keep existing".
+    setSmtpPass("");
+    setApiKey("");
+  }, [safeCfg.data]);
+
+  const secretSet =
+    provider === "smtp"
+      ? Boolean(safeCfg.data?.email.has_password)
+      : Boolean(safeCfg.data?.email.has_api_key);
 
   const save = useMutation({
     mutationFn: async () => {
-      let config: Record<string, unknown>;
-      if (provider === "smtp") {
-        config = {
+      await saveFn({
+        data: {
+          sub_account_id: subId,
+          provider,
+          from_address: fromAddr,
+          from_name: fromName || null,
           host: smtpHost,
           port: parseInt(smtpPort, 10) || 587,
           secure: smtpSecure,
           user: smtpUser,
-          password: smtpPass,
-        };
-      } else {
-        config = { api_key: apiKey };
-      }
-      await saveEmailIntegration({
-        sub_account_id: subId,
-        provider,
-        config: config as never,
-        from_address: fromAddr,
-        from_name: fromName || undefined,
+          password: smtpPass || undefined,
+          api_key: apiKey || undefined,
+        },
       });
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["integrations", subId] });
       toast.success("Email settings saved");
@@ -435,7 +449,7 @@ function EmailPanel({ subId }: { subId: string }) {
                     value={smtpPass}
                     onChange={(e) => setSmtpPass(e.target.value)}
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={secretSet ? "Saved — leave blank to keep" : "••••••••"}
                   />
                 </div>
               </>
@@ -449,9 +463,10 @@ function EmailPanel({ subId }: { subId: string }) {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   type="password"
-                  placeholder="••••••••"
+                  placeholder={secretSet ? "Saved — leave blank to keep" : "••••••••"}
                   className="tracking-widest"
                 />
+
                 <p className="text-[11px] text-muted-foreground">
                   {provider === "resend" ? (
                     <>
@@ -562,6 +577,12 @@ function SmsPanel({ subId }: { subId: string }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["integrations", subId], queryFn: () => fetchIntegrations(subId) });
   const testFn = useServerFn(sendTestSms);
+  const safeConfigFn = useServerFn(getIntegrationSafeConfig);
+  const saveFn = useServerFn(saveSmsIntegrationSecure);
+  const safeCfg = useQuery({
+    queryKey: ["integration-config", subId],
+    queryFn: () => safeConfigFn({ data: { sub_account_id: subId } }),
+  });
 
   const [provider, setProvider] = useState<"twilio" | "twilio_connector">("twilio_connector");
   const [sid, setSid] = useState("");
@@ -576,21 +597,32 @@ function SmsPanel({ subId }: { subId: string }) {
     if (row.sms_provider === "twilio" || row.sms_provider === "twilio_connector") {
       setProvider(row.sms_provider);
     }
-    const cfg = (row.sms_config ?? {}) as Record<string, unknown>;
-    setSid(String(cfg.account_sid ?? ""));
-    setToken(String(cfg.auth_token ?? ""));
     setFromNumber(row.sms_from_number ?? "");
   }, [q.data]);
 
+  useEffect(() => {
+    const cfg = safeCfg.data?.sms;
+    if (!cfg) return;
+    setSid(cfg.account_sid);
+    // Auth token is never sent to the browser — blank means "keep existing".
+    setToken("");
+  }, [safeCfg.data]);
+
+  const tokenSet = Boolean(safeCfg.data?.sms.has_auth_token);
+
   const save = useMutation({
     mutationFn: async () => {
-      await saveSmsIntegration({
-        sub_account_id: subId,
-        provider,
-        config: provider === "twilio_connector" ? {} : { account_sid: sid, auth_token: token },
-        from_number: fromNumber,
+      await saveFn({
+        data: {
+          sub_account_id: subId,
+          provider,
+          from_number: fromNumber,
+          account_sid: sid,
+          auth_token: token || undefined,
+        },
       });
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["integrations", subId] });
       toast.success("SMS settings saved");
@@ -671,7 +703,7 @@ function SmsPanel({ subId }: { subId: string }) {
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={tokenSet ? "Saved — leave blank to keep" : "••••••••"}
                     className="tracking-widest"
                   />
                 </div>
