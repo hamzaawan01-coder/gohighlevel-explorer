@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMetaTokenHealth, startMetaOAuth } from "@/lib/meta.functions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { beginOAuthHandoff } from "@/lib/oauth-handoff";
 import { toast } from "sonner";
 import { AlertTriangle, Link2, ShieldCheck } from "lucide-react";
 

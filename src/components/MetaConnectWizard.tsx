@@ -11,6 +11,7 @@ import { MetaLeadFormRouting } from "@/components/MetaLeadFormRouting";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { beginOAuthHandoff } from "@/lib/oauth-handoff";
 import { toast } from "sonner";
 import {
   Facebook,
