@@ -9,24 +9,20 @@ export const GRAPH_VERSION = "v21.0";
 export const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
 
 /**
- * Base scopes valid for any app with Facebook Login + Pages/Ads products.
- * Instagram scopes (instagram_basic, instagram_manage_messages,
- * instagram_manage_comments) are only valid once the Instagram product is
- * added to the Meta app, so they are opt-in via META_EXTRA_SCOPES.
- * `email` is also opt-in because it is invalid for apps without it configured.
+ * Lead-only base scopes: the minimum needed to read Lead Ads forms and
+ * receive new leads via the Page `leadgen` webhook.
+ * Everything else (messaging, ads insights, ads management, business
+ * management, Instagram, email) is opt-in via META_EXTRA_SCOPES so that one
+ * unapproved permission cannot block the whole connection.
  */
 export const META_BASE_SCOPES = [
   "public_profile",
   "pages_show_list",
   "pages_read_engagement",
   "pages_manage_metadata",
-  "pages_messaging",
-  "pages_manage_ads",
   "leads_retrieval",
-  "ads_read",
-  "ads_management",
-  "business_management",
 ] as const;
+
 
 export function metaScopes(): string[] {
   const extra = (process.env.META_EXTRA_SCOPES || "")
