@@ -3,6 +3,7 @@ import {
   exchangeCodeForToken,
   exchangeForLongLivedToken,
   fetchMe,
+  fetchGrantedPermissions,
   fetchUserPages,
   fetchUserAdAccounts,
   publicOrigin,
@@ -90,6 +91,14 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
           return redirectBack("error", `me:${(e as Error).message.slice(0, 120)}`);
         }
 
+        let grantedScopes: string[] = [];
+        try {
+          grantedScopes = await fetchGrantedPermissions(longTok.access_token);
+        } catch (e) {
+          console.error("Meta OAuth permission lookup failed", e);
+          return redirectBack("error", "Facebook connected, but its granted permissions could not be verified. Please try again.");
+        }
+
         const expiresAt = longTok.expires_in
           ? new Date(Date.now() + longTok.expires_in * 1000).toISOString()
           : null;
@@ -103,7 +112,7 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
               meta_user_name: me.name,
               access_token: longTok.access_token,
               token_expires_at: expiresAt,
-              granted_scopes: metaScopes(),
+              granted_scopes: grantedScopes,
               created_by: stateRow.user_id,
             },
             { onConflict: "sub_account_id,meta_user_id" },
@@ -160,6 +169,8 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
 
         const dest = new URL(stateRow.redirect_after || "/settings/integrations?tab=meta", publicOrigin());
         dest.searchParams.set("meta", "connected");
+        const missingScopes = metaScopes().filter((scope) => !grantedScopes.includes(scope));
+        if (missingScopes.length > 0) dest.searchParams.set("missing_scopes", missingScopes.join(","));
         return new Response(null, { status: 302, headers: { Location: dest.toString() } });
       },
     },

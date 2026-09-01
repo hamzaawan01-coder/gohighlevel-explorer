@@ -128,6 +128,16 @@ export async function fetchMe(token: string): Promise<{ id: string; name: string
   return graph("/me", { fields: "id,name,email" }, token);
 }
 
+/** Read the permissions Meta actually granted; users may decline individual scopes. */
+export async function fetchGrantedPermissions(token: string): Promise<string[]> {
+  const result = await graph<{
+    data?: Array<{ permission?: string; status?: string }>;
+  }>("/me/permissions", {}, token);
+  return (result.data ?? [])
+    .filter((entry) => entry.status === "granted" && entry.permission)
+    .map((entry) => entry.permission as string);
+}
+
 export type MetaPageDTO = {
   id: string;
   name: string;
