@@ -331,7 +331,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
               This account did not grant: {missingScopes.join(", ")}. Leads, messages, or reporting
               may not work until these permissions are approved and the account is reconnected.
             </p>
-            <Button size="sm" variant="outline" onClick={() => connect.mutate()} disabled={connect.isPending}>
+            <Button size="sm" variant="outline" onClick={() => connect.mutate("leads")} disabled={connect.isPending}>
               <Link2 className="size-3.5" />
               Reconnect and approve access
             </Button>
@@ -377,7 +377,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
           <div className="flex items-center gap-2">
             {!conn ? (
               <Button
-                onClick={() => connect.mutate()}
+                onClick={() => connect.mutate("leads")}
                 disabled={connect.isPending || data?.setup?.appConfigured === false}
               >
                 <Facebook className="size-4" />
@@ -398,7 +398,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    if (confirm("Disconnect Meta from this workspace?")) disconnect.mutate();
+                    if (confirm("Disconnect Meta from this workspace?")) disconnect.mutate("leads");
                   }}
                 >
                   Disconnect
@@ -442,7 +442,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 size="sm"
                 variant="outline"
                 className="flex-1 sm:flex-none"
-                onClick={() => connect.mutate()}
+                onClick={() => connect.mutate("leads")}
                 disabled={connect.isPending}
               >
                 <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
