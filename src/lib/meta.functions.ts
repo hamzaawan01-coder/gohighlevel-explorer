@@ -103,6 +103,7 @@ export const getMetaConnection = createServerFn({ method: "GET" })
       connection: conn,
       pages: pagesRes.data ?? [],
       adAccounts: adAccountsRes.data ?? [],
+      setup,
       webhookUrl: metaWebhookUrl(conn.id),
       webhookVerifyToken: process.env.META_WEBHOOK_VERIFY_TOKEN ?? "",
     };
