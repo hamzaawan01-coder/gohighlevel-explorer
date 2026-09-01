@@ -448,6 +448,18 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
                 {connect.isPending ? "Opening…" : "Reconnect"}
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => connect.mutate("messaging")}
+                disabled={connect.isPending}
+                title="Adds Messenger + Instagram DM replies. Requires those permissions to be approved on your Meta app."
+              >
+                <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
+                Enable DM replies
+              </Button>
+
               {pages.length > 0 && (
                 <Button
                   size="sm"
