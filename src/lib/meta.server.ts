@@ -9,11 +9,11 @@ export const GRAPH_VERSION = "v21.0";
 export const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
 
 /**
- * Base scopes: Lead Ads retrieval + two-way messaging on Facebook Messenger
- * and Instagram DMs. WhatsApp replies run through Twilio, so no Meta WhatsApp
- * permission is requested here.
- * Ads insights / ads management / business management stay opt-in via
- * META_EXTRA_SCOPES so an unapproved ads permission cannot block a connection.
+ * Lead-only base scopes: the minimum needed to read Lead Ads forms and
+ * receive new leads via the Page `leadgen` webhook.
+ * Everything else (messaging, ads insights, ads management, business
+ * management, Instagram, email) is opt-in via META_EXTRA_SCOPES so that one
+ * unapproved permission cannot block the whole connection.
  */
 export const META_BASE_SCOPES = [
   "public_profile",
@@ -21,11 +21,7 @@ export const META_BASE_SCOPES = [
   "pages_read_engagement",
   "pages_manage_metadata",
   "leads_retrieval",
-  "pages_messaging",
-  "instagram_basic",
-  "instagram_manage_messages",
 ] as const;
-
 
 
 export function metaScopes(): string[] {
