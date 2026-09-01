@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMetaTokenHealth, startMetaOAuth } from "@/lib/meta.functions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { beginOAuthHandoff } from "@/lib/oauth-handoff";
 import { toast } from "sonner";
 import { AlertTriangle, Link2, ShieldCheck } from "lucide-react";
 
@@ -23,12 +24,16 @@ export function MetaReconnectBanner({ subId }: { subId: string }) {
   });
 
   const reconnect = useMutation({
-    mutationFn: () => startFn({ data: { subAccountId: subId } }),
-    onSuccess: (res: { url: string }) => {
-      window.location.assign(res.url);
+    mutationFn: () => {
+      const handoff = beginOAuthHandoff();
+      return startFn({ data: { subAccountId: subId } }).then((res) => ({ ...res, handoff }));
+    },
+    onSuccess: (res: { url: string; handoff: (url: string) => void }) => {
+      res.handoff(res.url);
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const h = q.data;
   if (!h || !h.connected) return null;

@@ -11,6 +11,7 @@ import { MetaLeadFormRouting } from "@/components/MetaLeadFormRouting";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { beginOAuthHandoff } from "@/lib/oauth-handoff";
 import { toast } from "sonner";
 import {
   Facebook,
@@ -79,14 +80,17 @@ export function MetaConnectWizard({ subId }: { subId: string }) {
   }, [conn, readyPages.length]);
 
   const connect = useMutation({
-    mutationFn: () => startFn({ data: { subAccountId: subId } }),
-    onSuccess: (res: { url: string }) => {
-      // Use the current tab. Opening a popup after the server call resolves is
-      // commonly blocked because the original click gesture has already ended.
-      window.location.assign(res.url);
+    mutationFn: () => {
+      const handoff = beginOAuthHandoff();
+      return startFn({ data: { subAccountId: subId } }).then((res) => ({ ...res, handoff }));
+    },
+    onSuccess: (res: { url: string; handoff: (url: string) => void }) => {
+      // Facebook blocks iframe rendering, so open it in a top-level tab.
+      res.handoff(res.url);
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const refresh = useMutation({
     mutationFn: () => refreshFn({ data: { subAccountId: subId } }),
