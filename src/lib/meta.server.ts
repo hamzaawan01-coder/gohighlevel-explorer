@@ -23,17 +23,32 @@ export const META_BASE_SCOPES = [
   "leads_retrieval",
 ] as const;
 
+/**
+ * Messaging scopes, requested only when the user explicitly connects
+ * Messenger/Instagram replies. Kept out of the lead-only flow so an
+ * unapproved messaging permission cannot block lead capture.
+ * (WhatsApp replies run through Twilio, not Meta OAuth.)
+ */
+export const META_MESSAGING_SCOPES = [
+  "pages_messaging",
+  "instagram_basic",
+  "instagram_manage_messages",
+] as const;
 
-export function metaScopes(): string[] {
+export type MetaOAuthMode = "leads" | "messaging";
+
+export function metaScopes(mode: MetaOAuthMode = "leads"): string[] {
   const extra = (process.env.META_EXTRA_SCOPES || "")
     .split(/[,\s]+/)
     .map((s) => s.trim())
     .filter(Boolean);
-  return [...new Set([...META_BASE_SCOPES, ...extra])];
+  const messaging = mode === "messaging" ? [...META_MESSAGING_SCOPES] : [];
+  return [...new Set([...META_BASE_SCOPES, ...messaging, ...extra])];
 }
 
 /** Backwards-compatible export used by UI/setup panels. */
 export const META_SCOPES = META_BASE_SCOPES;
+
 
 
 const FALLBACK_ORIGIN = "https://gohighlevel-explorer.lovable.app";
@@ -71,7 +86,7 @@ export function metaWebhookUrl(token: string): string {
   return `${publicOrigin()}/api/public/hooks/meta/${encodeURIComponent(token)}`;
 }
 
-export function buildAuthorizeUrl(state: string): string {
+export function buildAuthorizeUrl(state: string, mode: MetaOAuthMode = "leads"): string {
   const appId = process.env.META_APP_ID;
   if (!appId) throw new Error("META_APP_ID is not configured");
   const u = new URL("https://www.facebook.com/v21.0/dialog/oauth");
@@ -79,7 +94,7 @@ export function buildAuthorizeUrl(state: string): string {
   u.searchParams.set("redirect_uri", metaRedirectUri());
   u.searchParams.set("state", state);
   u.searchParams.set("response_type", "code");
-  u.searchParams.set("scope", metaScopes().join(","));
+  u.searchParams.set("scope", metaScopes(mode).join(","));
   return u.toString();
 }
 

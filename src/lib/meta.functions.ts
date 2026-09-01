@@ -48,8 +48,14 @@ async function ensureSubAccess(supabase: any, userId: string, subId: string) {
 /** Start OAuth: create signed state, return Facebook authorize URL. */
 export const startMetaOAuth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { subAccountId: string; redirectAfter?: string }) =>
-    z.object({ subAccountId: z.string().uuid(), redirectAfter: z.string().optional() }).parse(d),
+  .inputValidator((d: { subAccountId: string; redirectAfter?: string; mode?: "leads" | "messaging" }) =>
+    z
+      .object({
+        subAccountId: z.string().uuid(),
+        redirectAfter: z.string().optional(),
+        mode: z.enum(["leads", "messaging"]).optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
@@ -66,7 +72,7 @@ export const startMetaOAuth = createServerFn({ method: "POST" })
         redirect_after: data.redirectAfter ?? "/settings/integrations?tab=meta",
       });
     if (error) throw new Error(`Could not persist OAuth state: ${error.message}`);
-    return { url: buildAuthorizeUrl(state) };
+    return { url: buildAuthorizeUrl(state, data.mode ?? "leads") };
   });
 
 /** Fetch the currently-linked Meta connection for a sub-account. */

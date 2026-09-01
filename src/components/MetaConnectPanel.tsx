@@ -138,9 +138,9 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   }, [qc, subId]);
 
   const connect = useMutation({
-    mutationFn: () => {
+    mutationFn: (mode: "leads" | "messaging" = "leads") => {
       const id = toast.loading("Opening Facebook…");
-      return startFn({ data: { subAccountId: subId } }).finally(() => toast.dismiss(id));
+      return startFn({ data: { subAccountId: subId, mode } }).finally(() => toast.dismiss(id));
     },
     onSuccess: ({ url }) => {
       // A same-tab handoff cannot be blocked by popup protection and Meta sends
@@ -149,6 +149,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
     },
     onError: (e: Error) => toast.error(`Could not start Facebook login — ${e.message}`),
   });
+
 
   const refresh = useMutation({
     mutationFn: () => {
@@ -330,7 +331,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
               This account did not grant: {missingScopes.join(", ")}. Leads, messages, or reporting
               may not work until these permissions are approved and the account is reconnected.
             </p>
-            <Button size="sm" variant="outline" onClick={() => connect.mutate()} disabled={connect.isPending}>
+            <Button size="sm" variant="outline" onClick={() => connect.mutate("leads")} disabled={connect.isPending}>
               <Link2 className="size-3.5" />
               Reconnect and approve access
             </Button>
@@ -376,7 +377,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
           <div className="flex items-center gap-2">
             {!conn ? (
               <Button
-                onClick={() => connect.mutate()}
+                onClick={() => connect.mutate("leads")}
                 disabled={connect.isPending || data?.setup?.appConfigured === false}
               >
                 <Facebook className="size-4" />
@@ -441,12 +442,24 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 size="sm"
                 variant="outline"
                 className="flex-1 sm:flex-none"
-                onClick={() => connect.mutate()}
+                onClick={() => connect.mutate("leads")}
                 disabled={connect.isPending}
               >
                 <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
                 {connect.isPending ? "Opening…" : "Reconnect"}
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => connect.mutate("messaging")}
+                disabled={connect.isPending}
+                title="Adds Messenger + Instagram DM replies. Requires those permissions to be approved on your Meta app."
+              >
+                <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
+                Enable DM replies
+              </Button>
+
               {pages.length > 0 && (
                 <Button
                   size="sm"
