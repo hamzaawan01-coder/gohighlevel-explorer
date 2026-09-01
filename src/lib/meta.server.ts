@@ -86,7 +86,7 @@ export function metaWebhookUrl(token: string): string {
   return `${publicOrigin()}/api/public/hooks/meta/${encodeURIComponent(token)}`;
 }
 
-export function buildAuthorizeUrl(state: string): string {
+export function buildAuthorizeUrl(state: string, mode: MetaOAuthMode = "leads"): string {
   const appId = process.env.META_APP_ID;
   if (!appId) throw new Error("META_APP_ID is not configured");
   const u = new URL("https://www.facebook.com/v21.0/dialog/oauth");
