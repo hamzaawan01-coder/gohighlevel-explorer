@@ -139,16 +139,20 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
 
   const connect = useMutation({
     mutationFn: (mode: "leads" | "messaging" = "leads") => {
+      // Capture the click gesture before awaiting the server call.
+      const handoff = beginOAuthHandoff();
       const id = toast.loading("Opening Facebook…");
-      return startFn({ data: { subAccountId: subId, mode } }).finally(() => toast.dismiss(id));
+      return startFn({ data: { subAccountId: subId, mode } })
+        .then((res) => ({ ...res, handoff }))
+        .finally(() => toast.dismiss(id));
     },
-    onSuccess: ({ url }) => {
-      // A same-tab handoff cannot be blocked by popup protection and Meta sends
-      // the user straight back to this settings page after consent.
-      window.location.assign(url);
+    onSuccess: ({ url, handoff }) => {
+      // Facebook refuses to render in an iframe, so hand off to a top-level tab.
+      handoff(url);
     },
     onError: (e: Error) => toast.error(`Could not start Facebook login — ${e.message}`),
   });
+
 
 
   const refresh = useMutation({
