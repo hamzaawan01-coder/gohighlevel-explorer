@@ -398,7 +398,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    if (confirm("Disconnect Meta from this workspace?")) disconnect.mutate("leads");
+                    if (confirm("Disconnect Meta from this workspace?")) disconnect.mutate();
                   }}
                 >
                   Disconnect
