@@ -23,17 +23,32 @@ export const META_BASE_SCOPES = [
   "leads_retrieval",
 ] as const;
 
+/**
+ * Messaging scopes, requested only when the user explicitly connects
+ * Messenger/Instagram replies. Kept out of the lead-only flow so an
+ * unapproved messaging permission cannot block lead capture.
+ * (WhatsApp replies run through Twilio, not Meta OAuth.)
+ */
+export const META_MESSAGING_SCOPES = [
+  "pages_messaging",
+  "instagram_basic",
+  "instagram_manage_messages",
+] as const;
 
-export function metaScopes(): string[] {
+export type MetaOAuthMode = "leads" | "messaging";
+
+export function metaScopes(mode: MetaOAuthMode = "leads"): string[] {
   const extra = (process.env.META_EXTRA_SCOPES || "")
     .split(/[,\s]+/)
     .map((s) => s.trim())
     .filter(Boolean);
-  return [...new Set([...META_BASE_SCOPES, ...extra])];
+  const messaging = mode === "messaging" ? [...META_MESSAGING_SCOPES] : [];
+  return [...new Set([...META_BASE_SCOPES, ...messaging, ...extra])];
 }
 
 /** Backwards-compatible export used by UI/setup panels. */
 export const META_SCOPES = META_BASE_SCOPES;
+
 
 
 const FALLBACK_ORIGIN = "https://gohighlevel-explorer.lovable.app";
