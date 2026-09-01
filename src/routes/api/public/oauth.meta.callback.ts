@@ -25,8 +25,22 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
         const code = url.searchParams.get("code");
         const state = url.searchParams.get("state");
         const err = url.searchParams.get("error");
-        if (err) return redirectBack("error", err);
-        if (!code || !state) return redirectBack("error", "missing_code_or_state");
+        const errorDescription = url.searchParams.get("error_description");
+        if (err) {
+          console.warn("Meta OAuth was not completed", {
+            error: err,
+            description: errorDescription,
+            statePresent: Boolean(state),
+          });
+          return redirectBack("error", errorDescription || err);
+        }
+        if (!code || !state) {
+          console.warn("Meta OAuth callback missing required values", {
+            codePresent: Boolean(code),
+            statePresent: Boolean(state),
+          });
+          return redirectBack("error", "Facebook did not return the required login details. Please try again.");
+        }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -36,12 +50,19 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
           .select("*")
           .eq("state", state)
           .limit(1);
-        if (stateErr) return redirectBack("error", `state_${stateErr.code ?? "fail"}`);
+        if (stateErr) {
+          console.error("Meta OAuth state lookup failed", { code: stateErr.code });
+          return redirectBack("error", `state_${stateErr.code ?? "fail"}`);
+        }
         const stateRow = (stateRows ?? [])[0];
-        if (!stateRow) return redirectBack("error", "invalid_state");
+        if (!stateRow) {
+          console.warn("Meta OAuth state was not found");
+          return redirectBack("error", "This Facebook login attempt is no longer valid. Please connect again.");
+        }
         if (new Date(stateRow.expires_at).getTime() < Date.now()) {
           await (supabaseAdmin as any).from("meta_oauth_states").delete().eq("state", state);
-          return redirectBack("error", "state_expired");
+          console.warn("Meta OAuth state expired", { subAccountId: stateRow.sub_account_id });
+          return redirectBack("error", "Facebook login took too long. Please connect again.");
         }
         await (supabaseAdmin as any).from("meta_oauth_states").delete().eq("state", state);
 
@@ -49,6 +70,7 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
         try {
           shortTok = await exchangeCodeForToken(code);
         } catch (e) {
+          console.error("Meta OAuth token exchange failed", e);
           return redirectBack("error", `token_exchange:${(e as Error).message.slice(0, 120)}`);
         }
 
@@ -56,6 +78,7 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
         try {
           longTok = await exchangeForLongLivedToken(shortTok.access_token);
         } catch (e) {
+          console.error("Meta OAuth long-lived token exchange failed", e);
           return redirectBack("error", `long_token:${(e as Error).message.slice(0, 120)}`);
         }
 
@@ -63,6 +86,7 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
         try {
           me = await fetchMe(longTok.access_token);
         } catch (e) {
+          console.error("Meta OAuth profile lookup failed", e);
           return redirectBack("error", `me:${(e as Error).message.slice(0, 120)}`);
         }
 
@@ -86,7 +110,15 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
           )
           .select("id")
           .single();
-        if (upErr) return redirectBack("error", `save_${upErr.code ?? "fail"}`);
+        if (upErr) {
+          console.error("Meta OAuth connection save failed", { code: upErr.code });
+          return redirectBack("error", `save_${upErr.code ?? "fail"}`);
+        }
+
+        console.info("Meta OAuth connection completed", {
+          subAccountId: stateRow.sub_account_id,
+          metaUserId: me.id,
+        });
 
         const connectionId = connUpsert.id as string;
 

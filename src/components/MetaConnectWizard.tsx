@@ -81,11 +81,9 @@ export function MetaConnectWizard({ subId }: { subId: string }) {
   const connect = useMutation({
     mutationFn: () => startFn({ data: { subAccountId: subId } }),
     onSuccess: (res: { url: string }) => {
-      const w = window.open(res.url, "_blank", "noopener,noreferrer");
-      if (!w)
-        toast.error("Popup blocked — allow popups for this site", {
-          action: { label: "Open", onClick: () => (window.location.href = res.url) },
-        });
+      // Use the current tab. Opening a popup after the server call resolves is
+      // commonly blocked because the original click gesture has already ended.
+      window.location.assign(res.url);
     },
     onError: (e: Error) => toast.error(e.message),
   });

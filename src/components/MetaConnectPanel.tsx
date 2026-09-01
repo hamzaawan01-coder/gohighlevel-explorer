@@ -143,18 +143,9 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
       return startFn({ data: { subAccountId: subId } }).finally(() => toast.dismiss(id));
     },
     onSuccess: ({ url }) => {
-      // Facebook refuses to render inside an iframe (the Lovable preview),
-      // so always hand off in a top-level tab/window.
-      const w = window.open(url, "_blank", "noopener,noreferrer");
-      if (!w) {
-        try {
-          window.top!.location.href = url;
-        } catch {
-          toast.error("Popup blocked — allow popups, or open the app in a new tab and retry.");
-        }
-      } else {
-        toast.info("Continue in the Facebook tab, then come back and click Refresh accounts.");
-      }
+      // A same-tab handoff cannot be blocked by popup protection and Meta sends
+      // the user straight back to this settings page after consent.
+      window.location.assign(url);
     },
     onError: (e: Error) => toast.error(`Could not start Facebook login — ${e.message}`),
   });
