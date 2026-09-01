@@ -81,3 +81,30 @@ Read the reviewer note verbatim — the three usual causes are:
 3. Test credentials didn't work, or the reviewer couldn't reach the Meta screen without extra setup.
 
 Fix only what the note names and resubmit that single permission.
+
+## 6. Marketing API Access Tier rejection ("not enough Ads API calls")
+
+Meta's note: *"Our records do not show a sufficient number of Ads API calls in the
+last 15 days by this application."* This is not a wording problem — it is a usage
+requirement. Meta wants to see the app actually calling the Marketing API before it
+grants the standard access tier.
+
+What we now do about it:
+- A scheduled job `sync-meta-ads` runs every 12 hours and calls
+  `POST /api/public/hooks/sync-meta-ads`, which reads daily campaign-level insights
+  (`/{ad_account_id}/insights`, `level=campaign`, `time_increment=1`) for every
+  connected ad account flagged "use for reports", and stores them in `ad_spend_daily`.
+- Opening **Attribution → Ad ROI** also issues live insights calls.
+
+Steps to get approved:
+1. Publish the site so the endpoint is live at https://leadsconvert.co.uk.
+2. Connect at least one real Facebook ad account (Settings → Integrations → Meta → Ads)
+   and tick "use for reports". Basic Access to `ads_read` is enough to make these calls.
+3. Let the sync run for **15+ consecutive days** (check Attribution → Ad ROI shows
+   daily spend rows accumulating).
+4. Then hit **Request again** on the Marketing API Access Tier submission with the
+   same justification text.
+
+Note: the Access Tier is **not** required for lead capture. Lead Ads work with
+`leads_retrieval` + `pages_*`; you only need the tier for high-volume, multi-tenant
+ads reporting. If you don't want to wait, withdraw the tier request and ship without it.
