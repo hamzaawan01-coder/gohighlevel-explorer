@@ -94,7 +94,7 @@ export function buildAuthorizeUrl(state: string, mode: MetaOAuthMode = "leads"):
   u.searchParams.set("redirect_uri", metaRedirectUri());
   u.searchParams.set("state", state);
   u.searchParams.set("response_type", "code");
-  u.searchParams.set("scope", metaScopes().join(","));
+  u.searchParams.set("scope", metaScopes(mode).join(","));
   return u.toString();
 }
 
