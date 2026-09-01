@@ -143,18 +143,9 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
       return startFn({ data: { subAccountId: subId } }).finally(() => toast.dismiss(id));
     },
     onSuccess: ({ url }) => {
-      // Facebook refuses to render inside an iframe (the Lovable preview),
-      // so always hand off in a top-level tab/window.
-      const w = window.open(url, "_blank", "noopener,noreferrer");
-      if (!w) {
-        try {
-          window.top!.location.href = url;
-        } catch {
-          toast.error("Popup blocked — allow popups, or open the app in a new tab and retry.");
-        }
-      } else {
-        toast.info("Continue in the Facebook tab, then come back and click Refresh accounts.");
-      }
+      // A same-tab handoff cannot be blocked by popup protection and Meta sends
+      // the user straight back to this settings page after consent.
+      window.location.assign(url);
     },
     onError: (e: Error) => toast.error(`Could not start Facebook login — ${e.message}`),
   });
@@ -265,6 +256,11 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
 
   const data = q.data;
   const conn = data?.connection;
+  const requiredScopes = data?.setup?.scopes ?? [];
+  const grantedScopes = conn?.granted_scopes ?? [];
+  const missingScopes = conn
+    ? requiredScopes.filter((scope: string) => !grantedScopes.includes(scope))
+    : [];
   const pages = (data?.pages ?? []) as PageRow[];
   const adAccounts = (data?.adAccounts ?? []) as AdAccountRow[];
   const subscribedCount = pages.filter((p) => p.webhook_subscribed).length;
@@ -325,6 +321,22 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
       <MetaConnectWizard subId={subId} />
       {/* Dead / expiring user tokens surface here instead of silently stopping. */}
       {conn && <MetaReconnectBanner subId={subId} />}
+      {conn && missingScopes.length > 0 && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>Facebook permissions are incomplete</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p className="text-xs">
+              This account did not grant: {missingScopes.join(", ")}. Leads, messages, or reporting
+              may not work until these permissions are approved and the account is reconnected.
+            </p>
+            <Button size="sm" variant="outline" onClick={() => connect.mutate()} disabled={connect.isPending}>
+              <Link2 className="size-3.5" />
+              Reconnect and approve access
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
       {/* ── Connection header ─────────────────────────────── */}
       <div className="surface-card overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 p-5">

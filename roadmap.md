@@ -1,5 +1,11 @@
 # Roadmap
 
+## Immediate priority — Client Meta connection
+- [x] Pin OAuth and callback URLs to `https://leadsconvert.co.uk`
+- [x] Replace popup-dependent Facebook login with a reliable same-tab handoff
+- [x] Add actionable callback diagnostics for cancelled, expired, and failed OAuth attempts
+- [ ] Meta dashboard: switch the app to Live and obtain Advanced Access for client-facing permissions
+
 ## 1. SaaS mode extras
 - [ ] Usage rebilling markup (SMS / email / AI) — per-unit cost + agency markup, usage ledger, invoice rollup
 - [ ] Snapshot templates — capture pipelines/workflows/templates/modules from a sub-account, clone into new clients

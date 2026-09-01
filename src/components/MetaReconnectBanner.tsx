@@ -25,12 +25,7 @@ export function MetaReconnectBanner({ subId }: { subId: string }) {
   const reconnect = useMutation({
     mutationFn: () => startFn({ data: { subAccountId: subId } }),
     onSuccess: (res: { url: string }) => {
-      const w = window.open(res.url, "_blank", "noopener,noreferrer");
-      if (!w) {
-        toast.error("Popup blocked — allow popups, or open the link manually", {
-          action: { label: "Open", onClick: () => (window.location.href = res.url) },
-        });
-      }
+      window.location.assign(res.url);
     },
     onError: (e: Error) => toast.error(e.message),
   });
