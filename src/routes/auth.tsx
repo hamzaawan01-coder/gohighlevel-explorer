@@ -78,17 +78,23 @@ function AuthPage() {
 
   async function handleGoogle() {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error(result.error.message ?? "Google sign-in failed");
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/auth/callback`,
+      });
+      if (result.error) {
+        toast.error(result.error.message ?? "Google sign-in failed");
+        setLoading(false);
+        return;
+      }
+      if (result.redirected) return;
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
       setLoading(false);
-      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
   }
+
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">

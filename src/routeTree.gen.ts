@@ -34,6 +34,7 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedWorkflowsRouteImport } from './routes/_authenticated/workflows'
+import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -211,6 +212,11 @@ const AuthenticatedWorkflowsRoute = AuthenticatedWorkflowsRouteImport.update({
   id: '/workflows',
   path: '/workflows',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth_/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BSlugRoute = BSlugRouteImport.update({
   id: '/b/$slug',
@@ -515,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AuthenticatedTasksRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -589,6 +596,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof AuthenticatedTasksRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -665,6 +673,7 @@ export interface FileRoutesById {
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/workflows': typeof AuthenticatedWorkflowsRoute
+  '/auth_/callback': typeof AuthCallbackRoute
   '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -741,6 +750,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/templates'
     | '/workflows'
+    | '/auth/callback'
     | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
@@ -815,6 +825,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/templates'
     | '/workflows'
+    | '/auth/callback'
     | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
@@ -890,6 +901,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tasks'
     | '/_authenticated/templates'
     | '/_authenticated/workflows'
+    | '/auth_/callback'
     | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
@@ -951,6 +963,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   BSlugRoute: typeof BSlugRoute
   FSlugRoute: typeof FSlugRoute
   InviteTokenRoute: typeof InviteTokenRoute
@@ -1155,6 +1168,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/workflows'
       preLoaderRoute: typeof AuthenticatedWorkflowsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth_/callback': {
+      id: '/auth_/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/b/$slug': {
       id: '/b/$slug'
@@ -1592,6 +1612,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   BSlugRoute: BSlugRoute,
   FSlugRoute: FSlugRoute,
   InviteTokenRoute: InviteTokenRoute,
