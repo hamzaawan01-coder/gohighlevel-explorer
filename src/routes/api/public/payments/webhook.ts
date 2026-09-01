@@ -14,13 +14,26 @@ function invoiceDb(): InvoicePaymentDb {
       // edited) must stay outstanding.
       const { data: current } = await getSupabase()
         .from("invoices")
-        .select("total,amount_paid,status")
+        .select("total,amount_paid,status,stripe_payment_intent_id,stripe_checkout_session_id")
         .eq("id", invoiceId)
         .maybeSingle();
-      const total = Number((current as { total?: number } | null)?.total ?? 0);
-      const previouslyPaid = Number((current as { amount_paid?: number } | null)?.amount_paid ?? 0);
-      const paidTotal = previouslyPaid + amountPaid;
+      const cur = (current ?? null) as {
+        total?: number;
+        amount_paid?: number;
+        stripe_payment_intent_id?: string | null;
+        stripe_checkout_session_id?: string | null;
+      } | null;
+      const total = Number(cur?.total ?? 0);
+      const previouslyPaid = Number(cur?.amount_paid ?? 0);
+      // The same payment reaches us twice (checkout.session.completed and
+      // payment_intent.succeeded carry different event ids), so accumulate only
+      // when this payment intent / session has not been recorded yet.
+      const alreadyApplied =
+        (!!paymentIntentId && cur?.stripe_payment_intent_id === paymentIntentId) ||
+        (!!checkoutSessionId && cur?.stripe_checkout_session_id === checkoutSessionId);
+      const paidTotal = alreadyApplied ? previouslyPaid : previouslyPaid + amountPaid;
       const covered = total <= 0 || paidTotal + 0.005 >= total;
+
 
       const { data, error } = await getSupabase()
         .from("invoices")
