@@ -65,6 +65,7 @@ import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/bo
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicHooksAppointmentsRouteImport } from './routes/api/public/hooks/appointments'
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
+import { Route as ApiPublicHooksSyncMetaAdsRouteImport } from './routes/api/public/hooks/sync-meta-ads'
 import { Route as ApiPublicInvoicesRemindersRouteImport } from './routes/api/public/invoices/reminders'
 import { Route as ApiPublicLSlugRouteImport } from './routes/api/public/l.$slug'
 import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta.data-deletion'
@@ -390,6 +391,12 @@ const ApiPublicHooksSyncGoogleAdsRoute =
     path: '/api/public/hooks/sync-google-ads',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksSyncMetaAdsRoute =
+  ApiPublicHooksSyncMetaAdsRouteImport.update({
+    id: '/api/public/hooks/sync-meta-ads',
+    path: '/api/public/hooks/sync-meta-ads',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicInvoicesRemindersRoute =
   ApiPublicInvoicesRemindersRouteImport.update({
     id: '/api/public/invoices/reminders',
@@ -552,6 +559,7 @@ export interface FileRoutesByFullPath {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
+  '/api/public/hooks/sync-meta-ads': typeof ApiPublicHooksSyncMetaAdsRoute
   '/api/public/invoices/reminders': typeof ApiPublicInvoicesRemindersRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
@@ -627,6 +635,7 @@ export interface FileRoutesByTo {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
+  '/api/public/hooks/sync-meta-ads': typeof ApiPublicHooksSyncMetaAdsRoute
   '/api/public/invoices/reminders': typeof ApiPublicInvoicesRemindersRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
@@ -704,6 +713,7 @@ export interface FileRoutesById {
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
+  '/api/public/hooks/sync-meta-ads': typeof ApiPublicHooksSyncMetaAdsRoute
   '/api/public/invoices/reminders': typeof ApiPublicInvoicesRemindersRoute
   '/api/public/l/$slug': typeof ApiPublicLSlugRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
@@ -781,6 +791,7 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
+    | '/api/public/hooks/sync-meta-ads'
     | '/api/public/invoices/reminders'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
@@ -856,6 +867,7 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
+    | '/api/public/hooks/sync-meta-ads'
     | '/api/public/invoices/reminders'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
@@ -932,6 +944,7 @@ export interface FileRouteTypes {
     | '/api/public/forms/$slug'
     | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
+    | '/api/public/hooks/sync-meta-ads'
     | '/api/public/invoices/reminders'
     | '/api/public/l/$slug'
     | '/api/public/meta/data-deletion'
@@ -972,6 +985,7 @@ export interface RootRouteChildren {
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
   ApiPublicHooksAppointmentsRoute: typeof ApiPublicHooksAppointmentsRoute
   ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
+  ApiPublicHooksSyncMetaAdsRoute: typeof ApiPublicHooksSyncMetaAdsRoute
   ApiPublicInvoicesRemindersRoute: typeof ApiPublicInvoicesRemindersRoute
   ApiPublicLSlugRoute: typeof ApiPublicLSlugRoute
   ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
@@ -1386,6 +1400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncGoogleAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sync-meta-ads': {
+      id: '/api/public/hooks/sync-meta-ads'
+      path: '/api/public/hooks/sync-meta-ads'
+      fullPath: '/api/public/hooks/sync-meta-ads'
+      preLoaderRoute: typeof ApiPublicHooksSyncMetaAdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/invoices/reminders': {
       id: '/api/public/invoices/reminders'
       path: '/api/public/invoices/reminders'
@@ -1621,6 +1642,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
   ApiPublicHooksAppointmentsRoute: ApiPublicHooksAppointmentsRoute,
   ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
+  ApiPublicHooksSyncMetaAdsRoute: ApiPublicHooksSyncMetaAdsRoute,
   ApiPublicInvoicesRemindersRoute: ApiPublicInvoicesRemindersRoute,
   ApiPublicLSlugRoute: ApiPublicLSlugRoute,
   ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,

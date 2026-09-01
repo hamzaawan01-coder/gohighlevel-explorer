@@ -207,6 +207,40 @@ export async function fetchAdAccountInsights(
   return r.data ?? [];
 }
 
+export type MetaCampaignDailyRow = {
+  campaign_id?: string;
+  campaign_name?: string;
+  spend?: string;
+  impressions?: string;
+  clicks?: string;
+  date_start?: string;
+  date_stop?: string;
+  actions?: { action_type: string; value: string }[];
+};
+
+/**
+ * Daily, campaign-level insights for one ad account (Marketing API).
+ * Used by the scheduled ads sync so ad spend / ROI reporting stays current.
+ */
+export async function fetchCampaignDailyInsights(
+  adAccountId: string,
+  token: string,
+  datePreset: "last_7d" | "last_14d" | "last_30d" = "last_7d",
+): Promise<MetaCampaignDailyRow[]> {
+  const r = await graph<{ data: MetaCampaignDailyRow[] }>(
+    `/${adAccountId}/insights`,
+    {
+      fields: "campaign_id,campaign_name,spend,impressions,clicks,actions",
+      level: "campaign",
+      time_increment: "1",
+      date_preset: datePreset,
+      limit: "500",
+    },
+    token,
+  );
+  return r.data ?? [];
+}
+
 /** Subscribe a page to the app for leadgen + messages webhooks. Requires page access token. */
 export async function subscribePageToApp(pageId: string, pageAccessToken: string): Promise<void> {
   const url = new URL(`${GRAPH_BASE}/${pageId}/subscribed_apps`);
