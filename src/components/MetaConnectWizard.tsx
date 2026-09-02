@@ -274,7 +274,7 @@ export function MetaConnectWizard({ subId }: { subId: string }) {
               </p>
             ) : (
               <div className="divide-y divide-border rounded-lg border border-border">
-                {pages.slice(0, 25).map((p) => (
+                {pages.map((p) => (
                   <div key={p.id} className="flex flex-wrap items-center gap-3 p-2.5 text-xs">
                     <span className="min-w-0 flex-1 truncate font-medium">{p.page_name}</span>
                     {p.webhook_subscribed && (
