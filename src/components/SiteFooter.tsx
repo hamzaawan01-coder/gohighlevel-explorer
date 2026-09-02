@@ -5,7 +5,7 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-card px-6 py-3 text-[11px] text-muted-foreground">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <span>© {new Date().getFullYear()} Click Away Finance</span>
+        <span>© {new Date().getFullYear()} Leads Convert</span>
         <Link to="/privacy" className="hover:text-foreground hover:underline">
           Privacy Policy
         </Link>

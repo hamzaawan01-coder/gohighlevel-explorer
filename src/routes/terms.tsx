@@ -3,16 +3,16 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of Service | Click Away Finance CRM" },
+      { title: "Terms of Service | Leads Convert CRM" },
       {
         name: "description",
         content:
-          "The terms that apply when you use Click Away Finance CRM or contact us through our web forms, Facebook, Instagram, WhatsApp or SMS channels.",
+          "The terms that apply when you use Leads Convert CRM or contact us through our web forms, Facebook, Instagram, WhatsApp or SMS channels.",
       },
-      { property: "og:title", content: "Terms of Service | Click Away Finance CRM" },
+      { property: "og:title", content: "Terms of Service | Leads Convert CRM" },
       {
         property: "og:description",
-        content: "Acceptable use, messaging consent, availability and contact details for Click Away Finance CRM.",
+        content: "Acceptable use, messaging consent, availability and contact details for Leads Convert CRM.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -34,7 +34,7 @@ function TermsPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Terms of Service</h1>
-      <p className="mt-3 text-sm text-muted-foreground">Operated by Click Away Finance.</p>
+      <p className="mt-3 text-sm text-muted-foreground">Operated by Leads Convert.</p>
 
       <Section title="Acceptance">
         <p>
@@ -46,7 +46,7 @@ function TermsPage() {
 
       <Section title="Who may use the service">
         <p>
-          Access to the CRM itself is limited to authorised Click Away Finance staff and invited team
+          Access to the CRM itself is limited to authorised Leads Convert staff and invited team
           members. Accounts are personal; you are responsible for keeping your sign-in details
           confidential and for activity carried out under your account.
         </p>
@@ -109,8 +109,8 @@ function TermsPage() {
       <Section title="Contact">
         <p>
           Questions about these terms can be sent to{" "}
-          <a className="underline" href="mailto:info@clickawayfinance.com">
-            info@clickawayfinance.com
+          <a className="underline" href="mailto:info@leadsconvert.co.uk">
+            info@leadsconvert.co.uk
           </a>
           .
         </p>
