@@ -174,14 +174,25 @@ export type MetaAdAccountDTO = {
   account_status?: number;
 };
 
+/**
+ * Ad accounts need `ads_read`, which lead-only connections do not grant — Meta
+ * then answers with "(#100) Unsupported get request". Treat that as "no ad
+ * accounts" instead of failing the whole refresh.
+ */
 export async function fetchUserAdAccounts(token: string): Promise<MetaAdAccountDTO[]> {
-  const r = await graph<{ data: MetaAdAccountDTO[] }>(
-    "/me/adaccounts",
-    { fields: "id,name,currency,timezone_name,account_status", limit: "200" },
-    token,
-  );
-  return r.data ?? [];
+  try {
+    const r = await graph<{ data: MetaAdAccountDTO[] }>(
+      "/me/adaccounts",
+      { fields: "id,name,currency,timezone_name,account_status", limit: "200" },
+      token,
+    );
+    return r.data ?? [];
+  } catch (e) {
+    console.warn("[meta] ad accounts unavailable:", e instanceof Error ? e.message : e);
+    return [];
+  }
 }
+
 
 export type MetaInsightsRow = {
   spend?: string;
