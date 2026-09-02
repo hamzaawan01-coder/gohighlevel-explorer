@@ -3,13 +3,13 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy | Click Away Finance CRM" },
+      { title: "Privacy Policy | Leads Convert CRM" },
       {
         name: "description",
         content:
-          "How Click Away Finance CRM collects, uses, stores and deletes customer data, including data received from Facebook, Instagram and SMS channels.",
+          "How Leads Convert CRM collects, uses, stores and deletes customer data, including data received from Facebook, Instagram and SMS channels.",
       },
-      { property: "og:title", content: "Privacy Policy | Click Away Finance CRM" },
+      { property: "og:title", content: "Privacy Policy | Leads Convert CRM" },
       {
         property: "og:description",
         content: "Our privacy practices for CRM contacts, messaging channels and data deletion requests.",
@@ -34,14 +34,14 @@ function PrivacyPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Privacy Policy</h1>
-      <p className="mt-3 text-sm text-muted-foreground">Operated by Click Away Finance.</p>
+      <p className="mt-3 text-sm text-muted-foreground">Operated by Leads Convert.</p>
 
       <Section title="Who we are">
         <p>
-          This CRM is operated by Click Away Finance to manage enquiries, leads and conversations with people
+          This CRM is operated by Leads Convert to manage enquiries, leads and conversations with people
           who contact us or respond to our advertising. Questions about this policy can be sent to{" "}
-          <a className="underline" href="mailto:info@clickawayfinance.com">
-            info@clickawayfinance.com
+          <a className="underline" href="mailto:info@leadsconvert.co.uk">
+            info@leadsconvert.co.uk
           </a>
           .
         </p>
@@ -96,8 +96,8 @@ function PrivacyPage() {
       <Section title="Your choices and data deletion">
         <p>
           You can ask us to access, correct or delete the personal information we hold about you by emailing{" "}
-          <a className="underline" href="mailto:info@clickawayfinance.com">
-            info@clickawayfinance.com
+          <a className="underline" href="mailto:info@leadsconvert.co.uk">
+            info@leadsconvert.co.uk
           </a>
           .
         </p>

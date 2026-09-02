@@ -12,13 +12,13 @@ type Status = {
 export const Route = createFileRoute("/data-deletion")({
   head: () => ({
     meta: [
-      { title: "Data Deletion Status | Click Away Finance CRM" },
+      { title: "Data Deletion Status | Leads Convert CRM" },
       {
         name: "description",
         content:
-          "Check the status of a data deletion request for Click Away Finance CRM, including Facebook and Instagram messaging data.",
+          "Check the status of a data deletion request for Leads Convert CRM, including Facebook and Instagram messaging data.",
       },
-      { property: "og:title", content: "Data Deletion Status | Click Away Finance CRM" },
+      { property: "og:title", content: "Data Deletion Status | Leads Convert CRM" },
       {
         property: "og:description",
         content: "Look up a data deletion confirmation code and see the status of your request.",
@@ -194,8 +194,8 @@ function DataDeletionPage() {
 
       <p className="mt-10 text-sm text-muted-foreground">
         To request deletion directly, email{" "}
-        <a className="underline" href="mailto:info@clickawayfinance.com">
-          info@clickawayfinance.com
+        <a className="underline" href="mailto:info@leadsconvert.co.uk">
+          info@leadsconvert.co.uk
         </a>
         . See our{" "}
         <Link className="underline" to="/privacy">
