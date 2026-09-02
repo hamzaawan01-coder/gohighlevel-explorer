@@ -243,31 +243,48 @@ export async function fetchCampaignDailyInsights(
 
 /**
  * Subscribe a page to the app. Messaging fields need `pages_messaging`, which
- * lead-only connections do not grant, so we fall back to `leadgen` alone
- * instead of failing the whole setup.
+ * lead-only connections do not grant, so we fall back to `leadgen` alone.
+ * Meta also returns transient "unexpected error" responses here, so each field
+ * set is retried with a short backoff before giving up.
  */
 export async function subscribePageToApp(pageId: string, pageAccessToken: string): Promise<void> {
-  const attempt = async (fields: string) => {
+  const call = async (fields: string) => {
     const url = new URL(`${GRAPH_BASE}/${pageId}/subscribed_apps`);
     url.searchParams.set("access_token", pageAccessToken);
     url.searchParams.set("subscribed_fields", fields);
     const res = await fetch(url.toString(), { method: "POST" });
     const body = (await res.json().catch(() => ({}))) as {
       success?: boolean;
-      error?: { message?: string };
+      error?: { message?: string; code?: number };
     };
-    return { ok: res.ok && !body.error, message: body.error?.message ?? String(res.status) };
+    return {
+      ok: res.ok && !body.error,
+      message: body.error?.message ?? String(res.status),
+      code: body.error?.code,
+    };
+  };
+
+  const attempt = async (fields: string) => {
+    let last = await call(fields);
+    for (let i = 0; i < 2 && !last.ok; i++) {
+      // Codes 1/2 and 5xx are Meta-side transient failures — worth a retry.
+      const transient = last.code === 1 || last.code === 2 || /unexpected error/i.test(last.message);
+      if (!transient) break;
+      await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+      last = await call(fields);
+    }
+    return last;
   };
 
   const full = await attempt("leadgen,messages,messaging_postbacks,message_reads");
   if (full.ok) return;
-  if (/pages_messaging/i.test(full.message)) {
-    const leadOnly = await attempt("leadgen");
-    if (leadOnly.ok) return;
-    throw new Error(`Subscribe page failed: ${leadOnly.message}`);
-  }
-  throw new Error(`Subscribe page failed: ${full.message}`);
+
+  // Fall back to lead-only fields regardless of why the full set failed.
+  const leadOnly = await attempt("leadgen");
+  if (leadOnly.ok) return;
+  throw new Error(`Subscribe page failed: ${leadOnly.message}`);
 }
+
 
 
 /**
