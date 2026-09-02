@@ -274,7 +274,7 @@ export function MetaConnectWizard({ subId }: { subId: string }) {
               </p>
             ) : (
               <div className="divide-y divide-border rounded-lg border border-border">
-                {pages.slice(0, 25).map((p) => (
+                {pages.map((p) => (
                   <div key={p.id} className="flex flex-wrap items-center gap-3 p-2.5 text-xs">
                     <span className="min-w-0 flex-1 truncate font-medium">{p.page_name}</span>
                     {p.webhook_subscribed && (
@@ -298,12 +298,10 @@ export function MetaConnectWizard({ subId }: { subId: string }) {
                     </label>
                   </div>
                 ))}
-                {pages.length > 25 && (
-                  <p className="p-2.5 text-[11px] text-muted-foreground">
-                    Showing 25 of {pages.length} — use <b>Use all Pages</b> or the Channels tab
-                    below for the rest.
-                  </p>
-                )}
+                <p className="p-2.5 text-[11px] text-muted-foreground">
+                  Showing all {pages.length} Page{pages.length === 1 ? "" : "s"} you granted access to.
+                </p>
+
               </div>
             )}
             <div className="flex gap-2">

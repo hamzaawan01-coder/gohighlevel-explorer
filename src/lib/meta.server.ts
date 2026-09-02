@@ -157,14 +157,27 @@ export type MetaPageDTO = {
   instagram_business_account?: { id: string };
 };
 
+/** Walk every page of /me/accounts so large portfolios import fully. */
 export async function fetchUserPages(token: string): Promise<MetaPageDTO[]> {
-  const r = await graph<{ data: MetaPageDTO[] }>(
-    "/me/accounts",
-    { fields: "id,name,access_token,category,instagram_business_account", limit: "200" },
-    token,
-  );
-  return r.data ?? [];
+  const out: MetaPageDTO[] = [];
+  let after: string | undefined;
+  for (let i = 0; i < 40; i++) {
+    const r = await graph<{ data?: MetaPageDTO[]; paging?: { cursors?: { after?: string }; next?: string } }>(
+      "/me/accounts",
+      {
+        fields: "id,name,access_token,category,instagram_business_account",
+        limit: "100",
+        ...(after ? { after } : {}),
+      },
+      token,
+    );
+    out.push(...(r.data ?? []));
+    if (!r.paging?.next || !r.paging?.cursors?.after) break;
+    after = r.paging.cursors.after;
+  }
+  return out;
 }
+
 
 export type MetaAdAccountDTO = {
   id: string; // act_...
