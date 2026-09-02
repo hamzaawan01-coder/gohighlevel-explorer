@@ -72,8 +72,16 @@ export const Route = createFileRoute("/api/public/oauth/meta/callback")({
           shortTok = await exchangeCodeForToken(code);
         } catch (e) {
           console.error("Meta OAuth token exchange failed", e);
-          return redirectBack("error", `token_exchange:${(e as Error).message.slice(0, 120)}`);
+          const msg = (e as Error).message ?? "";
+          if (/desktop app/i.test(msg)) {
+            return redirectBack(
+              "error",
+              "Facebook rejected the login because the Facebook app is set up as a native/desktop app. In the Meta app settings, turn off \"Native or desktop app?\" under Settings → Advanced and keep Facebook Login for Business (Web) enabled, then try again.",
+            );
+          }
+          return redirectBack("error", `token_exchange:${msg.slice(0, 120)}`);
         }
+
 
         let longTok: { access_token: string; expires_in?: number };
         try {
