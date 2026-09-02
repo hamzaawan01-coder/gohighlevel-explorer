@@ -241,15 +241,34 @@ export async function fetchCampaignDailyInsights(
   return r.data ?? [];
 }
 
-/** Subscribe a page to the app for leadgen + messages webhooks. Requires page access token. */
+/**
+ * Subscribe a page to the app. Messaging fields need `pages_messaging`, which
+ * lead-only connections do not grant, so we fall back to `leadgen` alone
+ * instead of failing the whole setup.
+ */
 export async function subscribePageToApp(pageId: string, pageAccessToken: string): Promise<void> {
-  const url = new URL(`${GRAPH_BASE}/${pageId}/subscribed_apps`);
-  url.searchParams.set("access_token", pageAccessToken);
-  url.searchParams.set("subscribed_fields", "leadgen,messages,messaging_postbacks,message_reads");
-  const res = await fetch(url.toString(), { method: "POST" });
-  const body = (await res.json().catch(() => ({}))) as { success?: boolean; error?: { message?: string } };
-  if (!res.ok || body.error) throw new Error(`Subscribe page failed: ${body.error?.message ?? res.status}`);
+  const attempt = async (fields: string) => {
+    const url = new URL(`${GRAPH_BASE}/${pageId}/subscribed_apps`);
+    url.searchParams.set("access_token", pageAccessToken);
+    url.searchParams.set("subscribed_fields", fields);
+    const res = await fetch(url.toString(), { method: "POST" });
+    const body = (await res.json().catch(() => ({}))) as {
+      success?: boolean;
+      error?: { message?: string };
+    };
+    return { ok: res.ok && !body.error, message: body.error?.message ?? String(res.status) };
+  };
+
+  const full = await attempt("leadgen,messages,messaging_postbacks,message_reads");
+  if (full.ok) return;
+  if (/pages_messaging/i.test(full.message)) {
+    const leadOnly = await attempt("leadgen");
+    if (leadOnly.ok) return;
+    throw new Error(`Subscribe page failed: ${leadOnly.message}`);
+  }
+  throw new Error(`Subscribe page failed: ${full.message}`);
 }
+
 
 /**
  * Register the app-level webhook callback URL + fields with Meta.
