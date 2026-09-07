@@ -78,10 +78,34 @@ function getSupabase() {
 function db(): WebhookDb {
   return {
     async upsertSubscription(patch) {
+      // Remember the status before the write so we can tell a brand-new paid
+      // signup apart from an ordinary renewal/update event.
+      const { data: before } = await getSupabase()
+        .from("sub_account_subscriptions")
+        .select("status")
+        .eq("sub_account_id", patch.sub_account_id)
+        .maybeSingle();
+
       const { error } = await getSupabase()
         .from("sub_account_subscriptions")
         .upsert(patch, { onConflict: "sub_account_id" });
       if (error) throw error;
+
+      const { isLiveStatus, notifySubscriptionActivated } = await import(
+        "@/lib/subscription-notify.server"
+      );
+      const wasLive = isLiveStatus((before as { status?: string } | null)?.status);
+      if (!wasLive && isLiveStatus(patch.status)) {
+        try {
+          await notifySubscriptionActivated(getSupabase(), {
+            subAccountId: patch.sub_account_id,
+            planId: patch.plan_id ?? null,
+          });
+        } catch (e) {
+          // Never fail the webhook over a notification.
+          console.error("Subscription activation notify failed:", e);
+        }
+      }
     },
     async cancelSubscription(stripeSubscriptionId, patch) {
       const { error } = await getSupabase()

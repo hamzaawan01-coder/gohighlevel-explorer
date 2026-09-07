@@ -29,6 +29,7 @@ export function SiteFooter() {
           <ul className="mt-3 space-y-2 text-sm">
             <li><Link to="/features" className="text-muted-foreground hover:text-foreground">Features</Link></li>
             <li><Link to="/pricing" className="text-muted-foreground hover:text-foreground">Pricing</Link></li>
+            <li><Link to="/connect" className="text-muted-foreground hover:text-foreground">Connect an AI assistant</Link></li>
             <li><Link to="/auth" className="text-muted-foreground hover:text-foreground">Sign in</Link></li>
           </ul>
         </div>
