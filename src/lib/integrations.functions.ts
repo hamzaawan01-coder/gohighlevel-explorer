@@ -1,6 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig } from "./integrations";
+import type {
+  SmtpConfig,
+  ResendConfig,
+  SendGridConfig,
+  TwilioConfig,
+  TextMagicConfig,
+} from "./integrations";
 
 /**
  * Verify the caller is an owner/admin of the workspace, then return a
@@ -58,6 +64,8 @@ export const getIntegrationSafeConfig = createServerFn({ method: "POST" })
       sms: {
         account_sid: str(sms.account_sid),
         has_auth_token: Boolean(sms.auth_token),
+        username: str(sms.username),
+        has_api_key: Boolean(sms.api_key),
       },
     };
   });
@@ -122,10 +130,12 @@ export const saveSmsIntegrationSecure = createServerFn({ method: "POST" })
   .inputValidator(
     (data: {
       sub_account_id: string;
-      provider: "twilio" | "twilio_connector";
+      provider: "twilio" | "twilio_connector" | "textmagic";
       from_number: string;
       account_sid?: string;
       auth_token?: string;
+      username?: string;
+      api_key?: string;
     }) => data,
   )
   .handler(async ({ data, context }) => {
@@ -141,10 +151,16 @@ export const saveSmsIntegrationSecure = createServerFn({ method: "POST" })
     const config: ConfigRecord =
       data.provider === "twilio_connector"
         ? {}
-        : {
-            account_sid: data.account_sid ?? str(prev.account_sid),
-            auth_token: data.auth_token ? data.auth_token : str(prev.auth_token),
-          };
+        : data.provider === "textmagic"
+          ? {
+              username: data.username ?? str(prev.username),
+              api_key: data.api_key ? data.api_key : str(prev.api_key),
+            }
+          : {
+              account_sid: data.account_sid ?? str(prev.account_sid),
+              auth_token: data.auth_token ? data.auth_token : str(prev.auth_token),
+            };
+
 
     const { error } = await sb.from("sub_account_integrations").upsert(
       {
@@ -220,21 +236,34 @@ export const sendTestSms = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row || !row.sms_provider) throw new Error("No SMS provider configured");
-    if (!row.sms_from_number) throw new Error("Missing from number");
+    if (!row.sms_from_number && row.sms_provider !== "textmagic") {
+      throw new Error("Missing from number");
+    }
 
-    const { sendSmsViaTwilio, sendSmsViaTwilioGateway } = await import("./integrations.server");
-    const result = row.sms_provider === "twilio_connector"
-      ? await sendSmsViaTwilioGateway({
-          from: row.sms_from_number,
-          to: data.to,
-          body: "Test SMS from your CRM. Integration works.",
-        })
-      : await sendSmsViaTwilio({
-          config: row.sms_config as TwilioConfig,
-          from: row.sms_from_number,
-          to: data.to,
-          body: "Test SMS from your CRM. Integration works.",
-        });
+    const { sendSmsViaTwilio, sendSmsViaTwilioGateway, sendSmsViaTextMagic } = await import(
+      "./integrations.server"
+    );
+    const body = "Test SMS from your CRM. Integration works.";
+    const result =
+      row.sms_provider === "twilio_connector"
+        ? await sendSmsViaTwilioGateway({
+            from: row.sms_from_number!,
+            to: data.to,
+            body,
+          })
+        : row.sms_provider === "textmagic"
+          ? await sendSmsViaTextMagic({
+              config: row.sms_config as TextMagicConfig,
+              from: row.sms_from_number ?? "",
+              to: data.to,
+              body,
+            })
+          : await sendSmsViaTwilio({
+              config: row.sms_config as TwilioConfig,
+              from: row.sms_from_number!,
+              to: data.to,
+              body,
+            });
 
     await sb
       .from("sub_account_integrations")

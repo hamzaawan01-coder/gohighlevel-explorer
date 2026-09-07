@@ -584,9 +584,12 @@ function SmsPanel({ subId }: { subId: string }) {
     queryFn: () => safeConfigFn({ data: { sub_account_id: subId } }),
   });
 
-  const [provider, setProvider] = useState<"twilio" | "twilio_connector">("twilio_connector");
+  type SmsMode = "twilio" | "twilio_connector" | "textmagic";
+  const [provider, setProvider] = useState<SmsMode>("twilio_connector");
   const [sid, setSid] = useState("");
   const [token, setToken] = useState("");
+  const [tmUser, setTmUser] = useState("");
+  const [tmKey, setTmKey] = useState("");
   const [fromNumber, setFromNumber] = useState("");
   const [testTo, setTestTo] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
@@ -594,7 +597,11 @@ function SmsPanel({ subId }: { subId: string }) {
   useEffect(() => {
     const row = q.data;
     if (!row) return;
-    if (row.sms_provider === "twilio" || row.sms_provider === "twilio_connector") {
+    if (
+      row.sms_provider === "twilio" ||
+      row.sms_provider === "twilio_connector" ||
+      row.sms_provider === "textmagic"
+    ) {
       setProvider(row.sms_provider);
     }
     setFromNumber(row.sms_from_number ?? "");
@@ -604,11 +611,14 @@ function SmsPanel({ subId }: { subId: string }) {
     const cfg = safeCfg.data?.sms;
     if (!cfg) return;
     setSid(cfg.account_sid);
-    // Auth token is never sent to the browser — blank means "keep existing".
+    setTmUser(cfg.username ?? "");
+    // Secrets are never sent to the browser — blank means "keep existing".
     setToken("");
+    setTmKey("");
   }, [safeCfg.data]);
 
   const tokenSet = Boolean(safeCfg.data?.sms.has_auth_token);
+  const tmKeySet = Boolean(safeCfg.data?.sms.has_api_key);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -619,6 +629,8 @@ function SmsPanel({ subId }: { subId: string }) {
           from_number: fromNumber,
           account_sid: sid,
           auth_token: token || undefined,
+          username: tmUser,
+          api_key: tmKey || undefined,
         },
       });
     },
@@ -649,8 +661,14 @@ function SmsPanel({ subId }: { subId: string }) {
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-8 lg:col-span-2">
         <ConsoleSection
-          title="Twilio configuration"
-          hint={provider === "twilio_connector" ? "Managed connector" : "Own credentials"}
+          title="Text messaging configuration"
+          hint={
+            provider === "twilio_connector"
+              ? "Managed connector"
+              : provider === "textmagic"
+                ? "TextMagic"
+                : "Own credentials"
+          }
           footer={
             <Button onClick={() => save.mutate()} disabled={save.isPending} className="px-8">
               {save.isPending ? (
@@ -666,22 +684,22 @@ function SmsPanel({ subId }: { subId: string }) {
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
               <FieldLabel>Connection mode</FieldLabel>
-              <Select
-                value={provider}
-                onValueChange={(v) => setProvider(v as "twilio" | "twilio_connector")}
-              >
+              <Select value={provider} onValueChange={(v) => setProvider(v as SmsMode)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="twilio_connector">Managed connector (recommended)</SelectItem>
                   <SelectItem value="twilio">Your own Twilio credentials</SelectItem>
+                  <SelectItem value="textmagic">TextMagic</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-[11px] text-muted-foreground">
                 {provider === "twilio_connector"
                   ? "Uses the Twilio connector linked at the workspace level — no per-tenant credentials needed."
-                  : "Paste your own Twilio Account SID and Auth Token. Stored per workspace."}
+                  : provider === "textmagic"
+                    ? "Paste your TextMagic username and API key. Stored per workspace and never shown again."
+                    : "Paste your own Twilio Account SID and Auth Token. Stored per workspace."}
               </p>
             </div>
 
@@ -710,8 +728,35 @@ function SmsPanel({ subId }: { subId: string }) {
               </>
             ) : null}
 
+            {provider === "textmagic" ? (
+              <>
+                <div className="space-y-2">
+                  <FieldLabel htmlFor="tm-user">TextMagic username</FieldLabel>
+                  <Input
+                    id="tm-user"
+                    value={tmUser}
+                    onChange={(e) => setTmUser(e.target.value)}
+                    placeholder="your-textmagic-login"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FieldLabel htmlFor="tm-key">API key</FieldLabel>
+                  <Input
+                    id="tm-key"
+                    value={tmKey}
+                    onChange={(e) => setTmKey(e.target.value)}
+                    type="password"
+                    placeholder={tmKeySet ? "Saved — leave blank to keep" : "••••••••"}
+                    className="tracking-widest"
+                  />
+                </div>
+              </>
+            ) : null}
+
             <div className="space-y-2 md:col-span-2">
-              <FieldLabel htmlFor="twilio-from">From number (E.164)</FieldLabel>
+              <FieldLabel htmlFor="twilio-from">
+                {provider === "textmagic" ? "Sender ID (optional)" : "From number (E.164)"}
+              </FieldLabel>
               <Input
                 id="twilio-from"
                 value={fromNumber}
@@ -719,16 +764,33 @@ function SmsPanel({ subId }: { subId: string }) {
                 placeholder="+15551234567"
               />
               <p className="text-[11px] text-muted-foreground">
-                Find your credentials and numbers at{" "}
-                <a
-                  className="underline"
-                  href="https://console.twilio.com"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  console.twilio.com
-                </a>
-                . The From number must be a Twilio-provisioned number.
+                {provider === "textmagic" ? (
+                  <>
+                    Create your API key under{" "}
+                    <a
+                      className="underline"
+                      href="https://my.textmagic.com/admin/api/token"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      TextMagic → API settings
+                    </a>
+                    . Leave the sender blank to use your TextMagic account default.
+                  </>
+                ) : (
+                  <>
+                    Find your credentials and numbers at{" "}
+                    <a
+                      className="underline"
+                      href="https://console.twilio.com"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      console.twilio.com
+                    </a>
+                    . The From number must be a Twilio-provisioned number.
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -831,7 +893,11 @@ function SmsPanel({ subId }: { subId: string }) {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Mode</span>
               <span className="font-medium">
-                {provider === "twilio_connector" ? "Connector" : "Own credentials"}
+                {provider === "twilio_connector"
+                  ? "Connector"
+                  : provider === "textmagic"
+                    ? "TextMagic"
+                    : "Own credentials"}
               </span>
             </div>
             <div className="flex items-center justify-between">

@@ -2,7 +2,13 @@
  * Server-only send helpers. Dispatches to the tenant's configured provider.
  * Never import this file from route/component code — always via a server function.
  */
-import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig } from "./integrations";
+import type {
+  SmtpConfig,
+  ResendConfig,
+  SendGridConfig,
+  TwilioConfig,
+  TextMagicConfig,
+} from "./integrations";
 
 export type SendEmailArgs = {
   provider: "smtp" | "resend" | "sendgrid";
@@ -126,4 +132,46 @@ export async function sendSmsViaTwilioGateway(args: {
   const body = (await res.json().catch(() => ({}))) as { sid?: string; message?: string };
   if (!res.ok) throw new Error(`Twilio gateway ${res.status}: ${body.message ?? JSON.stringify(body)}`);
   return { id: body.sid ?? "twilio" };
+}
+
+/**
+ * Send an SMS through TextMagic's REST API (v2).
+ * Auth is HTTP basic-style headers: X-TM-Username + X-TM-Key.
+ */
+export async function sendSmsViaTextMagic(args: {
+  config: TextMagicConfig;
+  from: string;
+  to: string;
+  body: string;
+}): Promise<{ id: string }> {
+  if (!args.config?.username || !args.config?.api_key) {
+    throw new Error("TextMagic username or API key is not configured");
+  }
+  const params = new URLSearchParams({
+    text: args.body,
+    phones: args.to.replace(/\s+/g, ""),
+  });
+  // A sender id is optional in TextMagic; only send it when present.
+  if (args.from) params.set("from", args.from.replace(/\s+/g, ""));
+
+  const res = await fetch("https://rest.textmagic.com/api/v2/messages", {
+    method: "POST",
+    headers: {
+      "X-TM-Username": args.config.username,
+      "X-TM-Key": args.config.api_key,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: params,
+  });
+  const body = (await res.json().catch(() => ({}))) as {
+    id?: number;
+    message?: string;
+    errors?: unknown;
+  };
+  if (!res.ok) {
+    throw new Error(
+      `TextMagic ${res.status}: ${body.message ?? JSON.stringify(body.errors ?? body)}`,
+    );
+  }
+  return { id: body.id ? String(body.id) : "textmagic" };
 }
