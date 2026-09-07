@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
+import { safeNext } from "@/lib/safe-next";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({ next: safeNext(s['next']) ?? undefined }),
   head: () => ({
     meta: [
       { title: "Sign in — Agency Engine" },
@@ -16,6 +18,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +31,8 @@ function AuthPage() {
     const go = () => {
       if (done) return;
       done = true;
-      navigate({ to: "/dashboard", replace: true });
+      if (next) window.location.replace(next);
+      else navigate({ to: "/dashboard", replace: true });
     };
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) go();
@@ -37,7 +41,7 @@ function AuthPage() {
       if (session) go();
     });
     return () => sub.subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, next]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -55,7 +59,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: next ? `${window.location.origin}${next}` : window.location.origin,
             data: { full_name: fullName },
           },
         });
@@ -80,7 +84,7 @@ function AuthPage() {
     setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth/callback`,
+        redirect_uri: `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ""}`,
       });
       if (result.error) {
         toast.error(result.error.message ?? "Google sign-in failed");
@@ -88,7 +92,8 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/dashboard", replace: true });
+      if (next) window.location.replace(next);
+      else navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Google sign-in failed");
       setLoading(false);
@@ -99,7 +104,7 @@ function AuthPage() {
     setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("apple", {
-        redirect_uri: `${window.location.origin}/auth/callback`,
+        redirect_uri: `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ""}`,
       });
       if (result.error) {
         toast.error(result.error.message ?? "Apple sign-in failed");
@@ -107,7 +112,8 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/dashboard", replace: true });
+      if (next) window.location.replace(next);
+      else navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Apple sign-in failed");
       setLoading(false);
@@ -118,7 +124,7 @@ function AuthPage() {
     setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("microsoft", {
-        redirect_uri: `${window.location.origin}/auth/callback`,
+        redirect_uri: `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ""}`,
       });
       if (result.error) {
         toast.error(result.error.message ?? "Microsoft sign-in failed");
@@ -126,7 +132,8 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/dashboard", replace: true });
+      if (next) window.location.replace(next);
+      else navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Microsoft sign-in failed");
       setLoading(false);
