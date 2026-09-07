@@ -160,20 +160,20 @@ async function attemptSend(row: Row): Promise<SendOutcome> {
       const r =
         cfg.sms_provider === "twilio_connector"
           ? await sendSmsViaTwilioGateway({
-              from: cfg.sms_from_number,
+              from: cfg.sms_from_number ?? "",
               to: row.to_address,
               body: row.body_text ?? "",
             })
           : cfg.sms_provider === "textmagic"
             ? await sendSmsViaTextMagic({
                 config: cfg.sms_config as TextMagicConfig,
-                from: cfg.sms_from_number,
+                from: cfg.sms_from_number ?? "",
                 to: row.to_address,
                 body: row.body_text ?? "",
               })
             : await sendSmsViaTwilio({
                 config: cfg.sms_config as TwilioConfig,
-                from: cfg.sms_from_number,
+                from: cfg.sms_from_number ?? "",
                 to: row.to_address,
                 body: row.body_text ?? "",
               });
