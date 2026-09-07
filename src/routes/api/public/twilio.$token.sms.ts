@@ -93,33 +93,18 @@ export const Route = createFileRoute("/api/public/twilio/$token/sms")({
         }
         if (!contact) return new Response("Contact resolve failed", { status: 500 });
 
-        // 4. Get-or-create conversation for this contact
-        let convoId: string;
-        const { data: existingConvo } = await (supabaseAdmin as any)
-          .from("conversations")
-          .select("id")
-          .eq("contact_id", contact.id)
-          .maybeSingle();
-        if (existingConvo) {
-          convoId = existingConvo.id;
-          await (supabaseAdmin as any)
-            .from("conversations")
-            .update({ channel: "sms", twilio_number_id: numRow.id })
-            .eq("id", convoId);
-        } else {
-          const { data: newConvo, error: convoErr } = await (supabaseAdmin as any)
-            .from("conversations")
-            .insert({
-              sub_account_id: conn.sub_account_id,
-              contact_id: contact.id,
-              channel: "sms",
-              twilio_number_id: numRow.id,
-            })
-            .select("id")
-            .single();
-          if (convoErr) return new Response(convoErr.message, { status: 500 });
-          convoId = newConvo.id;
-        }
+        // 4. Get-or-create the SMS conversation for this contact
+        const { ensureInboundConversation, notifyInboundMessage } = await import(
+          "@/lib/twilio-inbound.server"
+        );
+        const convo = await ensureInboundConversation(supabaseAdmin as any, {
+          subAccountId: conn.sub_account_id,
+          contactId: contact.id,
+          channel: "sms",
+          twilioNumberId: numRow.id,
+        });
+        if ("error" in convo) return new Response(convo.error, { status: 500 });
+        const convoId = convo.id;
 
         // 5. Insert message (dedup on external_id via unique index)
         const { error: msgErr } = await (supabaseAdmin as any)
@@ -142,6 +127,16 @@ export const Route = createFileRoute("/api/public/twilio/$token/sms")({
         if (msgErr && !String(msgErr.message ?? "").includes("duplicate")) {
           return new Response(msgErr.message, { status: 500 });
         }
+        if (!msgErr) {
+          await notifyInboundMessage(supabaseAdmin as any, {
+            subAccountId: conn.sub_account_id,
+            contactId: contact.id,
+            channel: "sms",
+            senderName: from,
+            body,
+          });
+        }
+
 
         // Respond with empty TwiML to acknowledge without auto-reply
         return new Response(

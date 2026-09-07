@@ -94,33 +94,18 @@ export const Route = createFileRoute("/api/public/twilio/$token/whatsapp")({
         }
         if (!contact) return new Response("Contact resolve failed", { status: 500 });
 
-        // Get-or-create conversation
-        let convoId: string;
-        const { data: existingConvo } = await (supabaseAdmin as any)
-          .from("conversations")
-          .select("id")
-          .eq("contact_id", contact.id)
-          .maybeSingle();
-        if (existingConvo) {
-          convoId = existingConvo.id;
-          await (supabaseAdmin as any)
-            .from("conversations")
-            .update({ channel: "whatsapp", twilio_number_id: numRow.id })
-            .eq("id", convoId);
-        } else {
-          const { data: newConvo, error: convoErr } = await (supabaseAdmin as any)
-            .from("conversations")
-            .insert({
-              sub_account_id: conn.sub_account_id,
-              contact_id: contact.id,
-              channel: "whatsapp",
-              twilio_number_id: numRow.id,
-            })
-            .select("id")
-            .single();
-          if (convoErr) return new Response(convoErr.message, { status: 500 });
-          convoId = newConvo.id;
-        }
+        // Get-or-create the WhatsApp conversation
+        const { ensureInboundConversation, notifyInboundMessage } = await import(
+          "@/lib/twilio-inbound.server"
+        );
+        const convo = await ensureInboundConversation(supabaseAdmin as any, {
+          subAccountId: conn.sub_account_id,
+          contactId: contact.id,
+          channel: "whatsapp",
+          twilioNumberId: numRow.id,
+        });
+        if ("error" in convo) return new Response(convo.error, { status: 500 });
+        const convoId = convo.id;
 
         const { error: msgErr } = await (supabaseAdmin as any)
           .from("messages")
@@ -141,6 +126,16 @@ export const Route = createFileRoute("/api/public/twilio/$token/whatsapp")({
         if (msgErr && !String(msgErr.message ?? "").includes("duplicate")) {
           return new Response(msgErr.message, { status: 500 });
         }
+        if (!msgErr) {
+          await notifyInboundMessage(supabaseAdmin as any, {
+            subAccountId: conn.sub_account_id,
+            contactId: contact.id,
+            channel: "whatsapp",
+            senderName: profileName || from,
+            body,
+          });
+        }
+
 
         return new Response(
           '<?xml version="1.0" encoding="UTF-8"?><Response/>',
