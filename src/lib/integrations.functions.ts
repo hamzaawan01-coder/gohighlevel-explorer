@@ -64,6 +64,8 @@ export const getIntegrationSafeConfig = createServerFn({ method: "POST" })
       sms: {
         account_sid: str(sms.account_sid),
         has_auth_token: Boolean(sms.auth_token),
+        username: str(sms.username),
+        has_api_key: Boolean(sms.api_key),
       },
     };
   });
