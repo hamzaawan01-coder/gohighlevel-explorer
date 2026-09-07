@@ -114,6 +114,26 @@ function AuthPage() {
     }
   }
 
+  async function handleMicrosoft() {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("microsoft", {
+        redirect_uri: `${window.location.origin}/auth/callback`,
+      });
+      if (result.error) {
+        toast.error(result.error.message ?? "Microsoft sign-in failed");
+        setLoading(false);
+        return;
+      }
+      if (result.redirected) return;
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Microsoft sign-in failed");
+      setLoading(false);
+    }
+  }
+
+
 
 
   return (
