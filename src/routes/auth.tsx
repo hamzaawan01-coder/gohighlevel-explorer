@@ -114,6 +114,26 @@ function AuthPage() {
     }
   }
 
+  async function handleMicrosoft() {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("microsoft", {
+        redirect_uri: `${window.location.origin}/auth/callback`,
+      });
+      if (result.error) {
+        toast.error(result.error.message ?? "Microsoft sign-in failed");
+        setLoading(false);
+        return;
+      }
+      if (result.redirected) return;
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Microsoft sign-in failed");
+      setLoading(false);
+    }
+  }
+
+
 
 
   return (
@@ -167,10 +187,19 @@ function AuthPage() {
               <button
                 onClick={handleApple}
                 disabled={loading}
-                className="w-full border border-border bg-card hover:bg-secondary rounded-md py-2 text-sm font-medium mb-4 disabled:opacity-50 transition-colors"
+                className="w-full border border-border bg-card hover:bg-secondary rounded-md py-2 text-sm font-medium mb-2 disabled:opacity-50 transition-colors"
               >
                 Continue with Apple
               </button>
+
+              <button
+                onClick={handleMicrosoft}
+                disabled={loading}
+                className="w-full border border-border bg-card hover:bg-secondary rounded-md py-2 text-sm font-medium mb-4 disabled:opacity-50 transition-colors"
+              >
+                Continue with Microsoft
+              </button>
+
 
 
               <div className="flex items-center gap-3 mb-4">
