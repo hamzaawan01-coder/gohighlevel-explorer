@@ -156,21 +156,30 @@ async function attemptSend(row: Row): Promise<SendOutcome> {
           latencyMs: Date.now() - start,
         };
       }
-      const r = cfg.sms_provider === "twilio_connector"
-        ? await sendSmsViaTwilioGateway({
-            from: cfg.sms_from_number,
-            to: row.to_address,
-            body: row.body_text ?? "",
-          })
-        : await sendSmsViaTwilio({
-            config: cfg.sms_config as TwilioConfig,
-            from: cfg.sms_from_number,
-            to: row.to_address,
-            body: row.body_text ?? "",
-          });
+      const { sendSmsViaTextMagic } = await import("./integrations.server");
+      const r =
+        cfg.sms_provider === "twilio_connector"
+          ? await sendSmsViaTwilioGateway({
+              from: cfg.sms_from_number,
+              to: row.to_address,
+              body: row.body_text ?? "",
+            })
+          : cfg.sms_provider === "textmagic"
+            ? await sendSmsViaTextMagic({
+                config: cfg.sms_config as TextMagicConfig,
+                from: cfg.sms_from_number,
+                to: row.to_address,
+                body: row.body_text ?? "",
+              })
+            : await sendSmsViaTwilio({
+                config: cfg.sms_config as TwilioConfig,
+                from: cfg.sms_from_number,
+                to: row.to_address,
+                body: row.body_text ?? "",
+              });
       return {
         ok: true,
-        provider: cfg.sms_provider === "twilio_connector" ? "twilio_connector" : "twilio",
+        provider: cfg.sms_provider,
         providerId: r.id,
         latencyMs: Date.now() - start,
       };
