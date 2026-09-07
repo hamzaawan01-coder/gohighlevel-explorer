@@ -95,6 +95,26 @@ function AuthPage() {
     }
   }
 
+  async function handleApple() {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("apple", {
+        redirect_uri: `${window.location.origin}/auth/callback`,
+      });
+      if (result.error) {
+        toast.error(result.error.message ?? "Apple sign-in failed");
+        setLoading(false);
+        return;
+      }
+      if (result.redirected) return;
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Apple sign-in failed");
+      setLoading(false);
+    }
+  }
+
+
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
