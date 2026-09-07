@@ -584,9 +584,12 @@ function SmsPanel({ subId }: { subId: string }) {
     queryFn: () => safeConfigFn({ data: { sub_account_id: subId } }),
   });
 
-  const [provider, setProvider] = useState<"twilio" | "twilio_connector">("twilio_connector");
+  type SmsMode = "twilio" | "twilio_connector" | "textmagic";
+  const [provider, setProvider] = useState<SmsMode>("twilio_connector");
   const [sid, setSid] = useState("");
   const [token, setToken] = useState("");
+  const [tmUser, setTmUser] = useState("");
+  const [tmKey, setTmKey] = useState("");
   const [fromNumber, setFromNumber] = useState("");
   const [testTo, setTestTo] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
@@ -594,7 +597,11 @@ function SmsPanel({ subId }: { subId: string }) {
   useEffect(() => {
     const row = q.data;
     if (!row) return;
-    if (row.sms_provider === "twilio" || row.sms_provider === "twilio_connector") {
+    if (
+      row.sms_provider === "twilio" ||
+      row.sms_provider === "twilio_connector" ||
+      row.sms_provider === "textmagic"
+    ) {
       setProvider(row.sms_provider);
     }
     setFromNumber(row.sms_from_number ?? "");
@@ -604,11 +611,14 @@ function SmsPanel({ subId }: { subId: string }) {
     const cfg = safeCfg.data?.sms;
     if (!cfg) return;
     setSid(cfg.account_sid);
-    // Auth token is never sent to the browser — blank means "keep existing".
+    setTmUser(cfg.username ?? "");
+    // Secrets are never sent to the browser — blank means "keep existing".
     setToken("");
+    setTmKey("");
   }, [safeCfg.data]);
 
   const tokenSet = Boolean(safeCfg.data?.sms.has_auth_token);
+  const tmKeySet = Boolean(safeCfg.data?.sms.has_api_key);
 
   const save = useMutation({
     mutationFn: async () => {
