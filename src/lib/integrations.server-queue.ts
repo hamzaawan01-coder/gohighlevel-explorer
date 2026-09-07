@@ -146,7 +146,7 @@ async function attemptSend(row: Row): Promise<SendOutcome> {
     }
 
     if (row.channel === "sms") {
-      if (!cfg.sms_provider || !cfg.sms_from_number) {
+      if (!cfg.sms_provider || (!cfg.sms_from_number && cfg.sms_provider !== "textmagic")) {
         return {
           ok: false,
           provider: cfg.sms_provider ?? null,
