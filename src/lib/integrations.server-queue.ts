@@ -13,7 +13,7 @@
  *  - drainAll never throws — a bad row is logged and skipped so one message
  *    can't take the whole cron run down (no more 500 storm on /process-outbound).
  */
-import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig } from "./integrations";
+import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig, TextMagicConfig } from "./integrations";
 import { sendEmailViaProvider, sendSmsViaTwilio, sendSmsViaTwilioGateway } from "./integrations.server";
 
 const MAX_ATTEMPTS = 5;
