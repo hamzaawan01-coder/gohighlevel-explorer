@@ -89,8 +89,8 @@ function Kpi({
 }
 
 function MessagingPage() {
-  const { subAccountId } = useTenancy();
-  const ready = useSessionReady();
+  const subAccountId = useTenancy((s) => s.currentSubAccountId);
+  const { ready } = useSessionReady();
   const [tab, setTab] = useState<DeliveryFilter>("pending");
 
   const q = useQuery({
@@ -103,6 +103,7 @@ function MessagingPage() {
   const rows = q.data ?? [];
   const counts = useMemo(() => deliveryCounts(rows), [rows]);
   const visible = useMemo(() => filterDeliveries(rows, tab), [rows, tab]);
+
 
   return (
     <AppShell>
