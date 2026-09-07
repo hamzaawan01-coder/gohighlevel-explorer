@@ -95,6 +95,26 @@ function AuthPage() {
     }
   }
 
+  async function handleApple() {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("apple", {
+        redirect_uri: `${window.location.origin}/auth/callback`,
+      });
+      if (result.error) {
+        toast.error(result.error.message ?? "Apple sign-in failed");
+        setLoading(false);
+        return;
+      }
+      if (result.redirected) return;
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Apple sign-in failed");
+      setLoading(false);
+    }
+  }
+
+
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
@@ -139,10 +159,19 @@ function AuthPage() {
               <button
                 onClick={handleGoogle}
                 disabled={loading}
-                className="w-full border border-border bg-card hover:bg-secondary rounded-md py-2 text-sm font-medium mb-4 disabled:opacity-50 transition-colors"
+                className="w-full border border-border bg-card hover:bg-secondary rounded-md py-2 text-sm font-medium mb-2 disabled:opacity-50 transition-colors"
               >
                 Continue with Google
               </button>
+
+              <button
+                onClick={handleApple}
+                disabled={loading}
+                className="w-full border border-border bg-card hover:bg-secondary rounded-md py-2 text-sm font-medium mb-4 disabled:opacity-50 transition-colors"
+              >
+                Continue with Apple
+              </button>
+
 
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex-1 h-px bg-border" />
