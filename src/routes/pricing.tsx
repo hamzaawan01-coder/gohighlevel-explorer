@@ -30,6 +30,7 @@ const PLANS = [
   {
     name: "Starter",
     tagline: "For a small team getting leads under control.",
+    price: null,
     features: [
       "Contacts & pipelines",
       "Web lead forms",
@@ -38,10 +39,12 @@ const PLANS = [
       "1 workspace",
     ],
     featured: false,
+    cta: { label: "Get a quote", to: "/contact" as const },
   },
   {
     name: "Growth",
     tagline: "For teams running paid ads and following up fast.",
+    price: "£97",
     features: [
       "Everything in Starter",
       "Meta Lead Ads & Messenger",
@@ -51,10 +54,12 @@ const PLANS = [
       "Invoicing",
     ],
     featured: true,
+    cta: { label: "Start on Growth", to: "/settings/subscriptions" as const },
   },
   {
     name: "Agency",
     tagline: "For agencies running client workspaces.",
+    price: null,
     features: [
       "Everything in Growth",
       "Multiple client workspaces",
@@ -63,6 +68,7 @@ const PLANS = [
       "Audit logs and roles",
     ],
     featured: false,
+    cta: { label: "Get a quote", to: "/contact" as const },
   },
 ];
 
