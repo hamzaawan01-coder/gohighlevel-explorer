@@ -108,6 +108,18 @@ function PricingPage() {
                   )}
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{p.tagline}</p>
+                <p className="mt-5 font-display text-3xl font-bold tracking-tight">
+                  {p.price ? (
+                    <>
+                      {p.price}
+                      <span className="ml-1 text-sm font-medium text-muted-foreground">
+                        per month
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-xl">Quoted</span>
+                  )}
+                </p>
                 <ul className="mt-6 flex-1 space-y-2.5">
                   {p.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
@@ -117,14 +129,14 @@ function PricingPage() {
                   ))}
                 </ul>
                 <Link
-                  to="/contact"
+                  to={p.cta.to}
                   className={`mt-7 flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
                     p.featured
                       ? "bg-primary text-primary-foreground hover:bg-primary/90"
                       : "border border-border hover:bg-secondary"
                   }`}
                 >
-                  Get a quote <ArrowRight className="size-3.5" />
+                  {p.cta.label} <ArrowRight className="size-3.5" />
                 </Link>
               </article>
             ))}
