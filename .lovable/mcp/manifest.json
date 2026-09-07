@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "sdk_version": "2.0.3",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://sopzwqzuguthxgisiiri.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "gohighlevel-explorer",
+      "version": "0.1.0",
+      "title": "GoHighlevel Explorer"
+    },
+    "tools": [
+      {
+        "name": "list_contacts",
+        "title": "List contacts",
+        "description": "List CRM contacts for the signed-in user, newest first, with optional name/email/phone search.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "search": {
+              "description": "Optional text to match against name, email or phone.",
+              "type": "string"
+            },
+            "limit": {
+              "default": 25,
+              "description": "Maximum number of contacts to return.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_contact",
+        "title": "Create contact",
+        "description": "Create a new CRM contact owned by the signed-in user.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "first_name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Contact first name."
+            },
+            "last_name": {
+              "description": "Contact last name.",
+              "type": "string"
+            },
+            "email": {
+              "description": "Contact email address.",
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "phone": {
+              "description": "Contact phone number in E.164 format when possible.",
+              "type": "string"
+            },
+            "company": {
+              "description": "Company name.",
+              "type": "string"
+            },
+            "lead_source": {
+              "description": "Where the lead came from.",
+              "type": "string"
+            },
+            "notes": {
+              "description": "Free-form notes about the contact.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "first_name"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_opportunities",
+        "title": "List opportunities",
+        "description": "List sales opportunities (deals) for the signed-in user, newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 25,
+              "description": "Maximum number of opportunities to return.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_recent_messages",
+        "title": "List recent messages",
+        "description": "List the most recent inbox messages (SMS, WhatsApp, Messenger, Instagram, email) with direction and channel.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 25,
+              "description": "Maximum number of messages to return.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "channel": {
+              "description": "Optional channel filter, e.g. sms, whatsapp, messenger, instagram, email.",
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

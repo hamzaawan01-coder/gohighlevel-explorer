@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { readNextFromLocation } from "@/lib/safe-next";
 
 export const Route = createFileRoute("/auth_/callback")({
   ssr: false,
@@ -22,9 +23,14 @@ function AuthCallback() {
 
   useEffect(() => {
     let done = false;
+    const next = readNextFromLocation(window.location.search);
     const go = (to: string) => {
       if (done) return;
       done = true;
+      if (next && to === "/dashboard") {
+        window.location.replace(next);
+        return;
+      }
       navigate({ to, replace: true });
     };
 

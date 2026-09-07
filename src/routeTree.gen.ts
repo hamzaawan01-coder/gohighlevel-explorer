@@ -15,10 +15,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as FeaturesRouteImport } from './routes/features'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAppointmentLogRouteImport } from './routes/_authenticated/appointment-log'
 import { Route as AuthenticatedAttributionRouteImport } from './routes/_authenticated/attribution'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
@@ -39,6 +41,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
@@ -117,6 +120,11 @@ const FeaturesRoute = FeaturesRouteImport.update({
   path: '/features',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -137,6 +145,12 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAppointmentLogRoute =
   AuthenticatedAppointmentLogRouteImport.update({
     id: '/appointment-log',
@@ -240,6 +254,11 @@ const FSlugRoute = FSlugRouteImport.update({
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedContactsIndexRoute =
@@ -527,10 +546,12 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/data-deletion': typeof DataDeletionRoute
   '/features': typeof FeaturesRoute
+  '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/appointment-log': typeof AuthenticatedAppointmentLogRoute
   '/attribution': typeof AuthenticatedAttributionRoute
   '/calendar': typeof AuthenticatedCalendarRoute
@@ -551,6 +572,7 @@ export interface FileRoutesByFullPath {
   '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
@@ -606,10 +628,12 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/data-deletion': typeof DataDeletionRoute
   '/features': typeof FeaturesRoute
+  '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/appointment-log': typeof AuthenticatedAppointmentLogRoute
   '/attribution': typeof AuthenticatedAttributionRoute
   '/calendar': typeof AuthenticatedCalendarRoute
@@ -630,6 +654,7 @@ export interface FileRoutesByTo {
   '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
@@ -687,10 +712,12 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/data-deletion': typeof DataDeletionRoute
   '/features': typeof FeaturesRoute
+  '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/appointment-log': typeof AuthenticatedAppointmentLogRoute
   '/_authenticated/attribution': typeof AuthenticatedAttributionRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
@@ -711,6 +738,7 @@ export interface FileRoutesById {
   '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/_authenticated/deals/$id': typeof AuthenticatedDealsIdRoute
   '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
@@ -768,10 +796,12 @@ export interface FileRouteTypes {
     | '/contact'
     | '/data-deletion'
     | '/features'
+    | '/mcp'
     | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/terms'
+    | '/.well-known/oauth-protected-resource'
     | '/appointment-log'
     | '/attribution'
     | '/calendar'
@@ -792,6 +822,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
+    | '/.lovable/oauth/consent'
     | '/contacts/$id'
     | '/deals/$id'
     | '/invoices/$id'
@@ -847,10 +878,12 @@ export interface FileRouteTypes {
     | '/contact'
     | '/data-deletion'
     | '/features'
+    | '/mcp'
     | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/terms'
+    | '/.well-known/oauth-protected-resource'
     | '/appointment-log'
     | '/attribution'
     | '/calendar'
@@ -871,6 +904,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
+    | '/.lovable/oauth/consent'
     | '/contacts/$id'
     | '/deals/$id'
     | '/invoices/$id'
@@ -927,10 +961,12 @@ export interface FileRouteTypes {
     | '/contact'
     | '/data-deletion'
     | '/features'
+    | '/mcp'
     | '/pricing'
     | '/privacy'
     | '/reset-password'
     | '/terms'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/appointment-log'
     | '/_authenticated/attribution'
     | '/_authenticated/calendar'
@@ -951,6 +987,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/contacts/$id'
     | '/_authenticated/deals/$id'
     | '/_authenticated/invoices/$id'
@@ -1008,14 +1045,17 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DataDeletionRoute: typeof DataDeletionRoute
   FeaturesRoute: typeof FeaturesRoute
+  McpRoute: typeof McpRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   BSlugRoute: typeof BSlugRoute
   FSlugRoute: typeof FSlugRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicProcessOutboundRoute: typeof ApiPublicProcessOutboundRoute
   ApiPublicBookingSlugRoute: typeof ApiPublicBookingSlugRoute
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
@@ -1088,6 +1128,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeaturesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -1114,6 +1161,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/appointment-log': {
@@ -1254,6 +1308,13 @@ declare module '@tanstack/react-router' {
       path: '/invite/$token'
       fullPath: '/invite/$token'
       preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/contacts/': {
@@ -1690,14 +1751,18 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DataDeletionRoute: DataDeletionRoute,
   FeaturesRoute: FeaturesRoute,
+  McpRoute: McpRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   BSlugRoute: BSlugRoute,
   FSlugRoute: FSlugRoute,
   InviteTokenRoute: InviteTokenRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicProcessOutboundRoute: ApiPublicProcessOutboundRoute,
   ApiPublicBookingSlugRoute: ApiPublicBookingSlugRoute,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
