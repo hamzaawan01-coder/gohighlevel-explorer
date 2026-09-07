@@ -1,0 +1,2 @@
+alter table public.sub_account_integrations drop constraint if exists sub_account_integrations_sms_provider_check;
+alter table public.sub_account_integrations add constraint sub_account_integrations_sms_provider_check check (sms_provider is null or sms_provider in ('twilio','twilio_connector','textmagic'));

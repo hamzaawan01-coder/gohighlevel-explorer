@@ -893,7 +893,11 @@ function SmsPanel({ subId }: { subId: string }) {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Mode</span>
               <span className="font-medium">
-                {provider === "twilio_connector" ? "Connector" : "Own credentials"}
+                {provider === "twilio_connector"
+                  ? "Connector"
+                  : provider === "textmagic"
+                    ? "TextMagic"
+                    : "Own credentials"}
               </span>
             </div>
             <div className="flex items-center justify-between">
