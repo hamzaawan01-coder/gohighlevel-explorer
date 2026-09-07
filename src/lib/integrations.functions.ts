@@ -236,21 +236,34 @@ export const sendTestSms = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row || !row.sms_provider) throw new Error("No SMS provider configured");
-    if (!row.sms_from_number) throw new Error("Missing from number");
+    if (!row.sms_from_number && row.sms_provider !== "textmagic") {
+      throw new Error("Missing from number");
+    }
 
-    const { sendSmsViaTwilio, sendSmsViaTwilioGateway } = await import("./integrations.server");
-    const result = row.sms_provider === "twilio_connector"
-      ? await sendSmsViaTwilioGateway({
-          from: row.sms_from_number,
-          to: data.to,
-          body: "Test SMS from your CRM. Integration works.",
-        })
-      : await sendSmsViaTwilio({
-          config: row.sms_config as TwilioConfig,
-          from: row.sms_from_number,
-          to: data.to,
-          body: "Test SMS from your CRM. Integration works.",
-        });
+    const { sendSmsViaTwilio, sendSmsViaTwilioGateway, sendSmsViaTextMagic } = await import(
+      "./integrations.server"
+    );
+    const body = "Test SMS from your CRM. Integration works.";
+    const result =
+      row.sms_provider === "twilio_connector"
+        ? await sendSmsViaTwilioGateway({
+            from: row.sms_from_number!,
+            to: data.to,
+            body,
+          })
+        : row.sms_provider === "textmagic"
+          ? await sendSmsViaTextMagic({
+              config: row.sms_config as TextMagicConfig,
+              from: row.sms_from_number ?? "",
+              to: data.to,
+              body,
+            })
+          : await sendSmsViaTwilio({
+              config: row.sms_config as TwilioConfig,
+              from: row.sms_from_number!,
+              to: data.to,
+              body,
+            });
 
     await sb
       .from("sub_account_integrations")
