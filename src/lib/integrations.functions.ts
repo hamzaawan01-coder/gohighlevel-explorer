@@ -1,6 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig } from "./integrations";
+import type {
+  SmtpConfig,
+  ResendConfig,
+  SendGridConfig,
+  TwilioConfig,
+  TextMagicConfig,
+} from "./integrations";
 
 /**
  * Verify the caller is an owner/admin of the workspace, then return a
