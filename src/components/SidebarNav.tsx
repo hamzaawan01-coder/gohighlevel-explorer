@@ -6,6 +6,8 @@ import {
   Users,
   Calendar,
   ScrollText,
+  Send,
+
   MessageSquare,
   Workflow,
   Settings,
