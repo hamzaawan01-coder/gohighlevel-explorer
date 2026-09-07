@@ -34,3 +34,5 @@
 
 ## Notes
 - Existing: invoices, subscription plans + module gating, Twilio (SMS/voice/WhatsApp), Meta ads + messaging, Google Ads sync.
+
+- [ ] Add /connect page with AI assistant (MCP) connection + refresh instructions
