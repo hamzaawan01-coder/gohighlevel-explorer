@@ -162,8 +162,9 @@ export async function sendSmsViaTextMagic(args: {
   const res = await fetch("https://rest.textmagic.com/api/v2/messages", {
     method: "POST",
     headers: {
-      "X-TM-Username": args.config.username,
-      "X-TM-Key": args.config.api_key,
+      "X-TM-Username": username,
+      "X-TM-Key": apiKey,
+
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: params,
