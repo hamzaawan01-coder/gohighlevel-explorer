@@ -56,8 +56,9 @@ export const MODULES: ModuleDef[] = [
     key: "conversations",
     label: "Conversations",
     description: "Two-way SMS, WhatsApp, email and social DMs.",
-    paths: ["/conversations", "/inbox"],
+    paths: ["/conversations", "/inbox", "/messaging"],
   },
+
   {
     key: "calls",
     label: "Calls & phone",
