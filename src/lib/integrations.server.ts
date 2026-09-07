@@ -144,9 +144,14 @@ export async function sendSmsViaTextMagic(args: {
   to: string;
   body: string;
 }): Promise<{ id: string }> {
-  if (!args.config?.username || !args.config?.api_key) {
+  // Per-workspace credentials win; otherwise fall back to the project-wide
+  // TextMagic account so a single agency key can serve every workspace.
+  const username = args.config?.username || process.env['TEXTMAGIC_USERNAME'] || "";
+  const apiKey = args.config?.api_key || process.env['TEXTMAGIC_API_KEY'] || "";
+  if (!username || !apiKey) {
     throw new Error("TextMagic username or API key is not configured");
   }
+
   const params = new URLSearchParams({
     text: args.body,
     phones: args.to.replace(/\s+/g, ""),
@@ -157,8 +162,9 @@ export async function sendSmsViaTextMagic(args: {
   const res = await fetch("https://rest.textmagic.com/api/v2/messages", {
     method: "POST",
     headers: {
-      "X-TM-Username": args.config.username,
-      "X-TM-Key": args.config.api_key,
+      "X-TM-Username": username,
+      "X-TM-Key": apiKey,
+
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: params,

@@ -6,6 +6,8 @@ import {
   Users,
   Calendar,
   ScrollText,
+  Send,
+
   MessageSquare,
   Workflow,
   Settings,
@@ -66,6 +68,8 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Inbox", icon: Inbox, to: "/inbox", module: "conversations", badge: "inbox", keywords: "messages unread" },
       { label: "Conversations", icon: MessageSquare, to: "/conversations", module: "conversations", keywords: "sms whatsapp chat" },
+      { label: "Message delivery", icon: Send, to: "/messaging", module: "conversations", keywords: "textmagic twilio sms status pending sent failed" },
+
       { label: "Calls", icon: PhoneCall, to: "/calls", module: "calls", keywords: "phone voice history" },
       { label: "Calendar", icon: Calendar, to: "/calendar", module: "calendar", keywords: "appointments bookings" },
       { label: "Appointment log", icon: ScrollText, to: "/appointment-log", module: "calendar", keywords: "audit reschedule reminders history" },
