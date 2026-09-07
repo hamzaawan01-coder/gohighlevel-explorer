@@ -39,6 +39,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedContactsIndexRouteImport } from './routes/_authenticated/contacts.index'
 import { Route as AuthenticatedContactsIdRouteImport } from './routes/_authenticated/contacts.$id'
 import { Route as AuthenticatedDealsIdRouteImport } from './routes/_authenticated/deals.$id'
@@ -240,6 +241,11 @@ const FSlugRoute = FSlugRouteImport.update({
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedContactsIndexRoute =
@@ -551,6 +557,7 @@ export interface FileRoutesByFullPath {
   '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
@@ -630,6 +637,7 @@ export interface FileRoutesByTo {
   '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/deals/$id': typeof AuthenticatedDealsIdRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRoute
@@ -711,6 +719,7 @@ export interface FileRoutesById {
   '/b/$slug': typeof BSlugRoute
   '/f/$slug': typeof FSlugRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/contacts/$id': typeof AuthenticatedContactsIdRoute
   '/_authenticated/deals/$id': typeof AuthenticatedDealsIdRoute
   '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRoute
@@ -792,6 +801,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
+    | '/.lovable/oauth/consent'
     | '/contacts/$id'
     | '/deals/$id'
     | '/invoices/$id'
@@ -871,6 +881,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
+    | '/.lovable/oauth/consent'
     | '/contacts/$id'
     | '/deals/$id'
     | '/invoices/$id'
@@ -951,6 +962,7 @@ export interface FileRouteTypes {
     | '/b/$slug'
     | '/f/$slug'
     | '/invite/$token'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/contacts/$id'
     | '/_authenticated/deals/$id'
     | '/_authenticated/invoices/$id'
@@ -1016,6 +1028,7 @@ export interface RootRouteChildren {
   BSlugRoute: typeof BSlugRoute
   FSlugRoute: typeof FSlugRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicProcessOutboundRoute: typeof ApiPublicProcessOutboundRoute
   ApiPublicBookingSlugRoute: typeof ApiPublicBookingSlugRoute
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
@@ -1254,6 +1267,13 @@ declare module '@tanstack/react-router' {
       path: '/invite/$token'
       fullPath: '/invite/$token'
       preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/contacts/': {
@@ -1698,6 +1718,7 @@ const rootRouteChildren: RootRouteChildren = {
   BSlugRoute: BSlugRoute,
   FSlugRoute: FSlugRoute,
   InviteTokenRoute: InviteTokenRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicProcessOutboundRoute: ApiPublicProcessOutboundRoute,
   ApiPublicBookingSlugRoute: ApiPublicBookingSlugRoute,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
