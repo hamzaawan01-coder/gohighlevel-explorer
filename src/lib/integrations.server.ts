@@ -2,7 +2,13 @@
  * Server-only send helpers. Dispatches to the tenant's configured provider.
  * Never import this file from route/component code — always via a server function.
  */
-import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig } from "./integrations";
+import type {
+  SmtpConfig,
+  ResendConfig,
+  SendGridConfig,
+  TwilioConfig,
+  TextMagicConfig,
+} from "./integrations";
 
 export type SendEmailArgs = {
   provider: "smtp" | "resend" | "sendgrid";
