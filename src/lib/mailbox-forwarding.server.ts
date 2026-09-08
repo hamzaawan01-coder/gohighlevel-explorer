@@ -335,7 +335,7 @@ export async function storeInboundMail(
       body_html: html,
       attachments: mail.attachments ?? [],
       unread: true,
-      thread_key: threadKeyFor(mail.subject),
+      thread_key: threadKey,
       provider_message_id: mail.messageId ?? null,
       in_reply_to: mail.inReplyTo ?? null,
       received_at: mail.receivedAt ?? new Date().toISOString(),
