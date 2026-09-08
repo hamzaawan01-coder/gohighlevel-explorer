@@ -66,12 +66,20 @@ function TeamPage() {
         role,
         sub_account_id: role === "admin" ? null : subAccountId || subsQ.data?.[0]?.id || null,
       }),
-    onSuccess: ({ token }) => {
+    onSuccess: async ({ invitation, token }) => {
       qc.invalidateQueries({ queryKey: ["invitations", agencyId] });
       setEmail("");
       const url = buildInviteUrl(token);
       navigator.clipboard?.writeText(url).catch(() => {});
       toast.success("Invite created — link copied to clipboard");
+      try {
+        const { sendInvitationEmail } = await import("@/lib/invite-email.functions");
+        const res = await sendInvitationEmail({ data: { invitationId: invitation.id, inviteUrl: url } });
+        if (res?.sent) toast.success(`Invitation emailed to ${invitation.email}`);
+        else toast.info("Invite created, but the email could not be delivered — share the link instead.");
+      } catch {
+        toast.info("Invite created, but the email could not be sent yet — share the copied link.");
+      }
     },
     onError: (e: any) => toast.error(e?.message ?? "Could not create invite"),
   });
@@ -93,6 +101,21 @@ function TeamPage() {
       toast.success("Link copied");
     } catch (e: any) {
       toast.error(e?.message ?? "Could not copy link");
+    }
+  };
+
+  const resendEmail = async (id: string, email: string) => {
+    try {
+      const { fetchInvitationToken } = await import("@/lib/invitations");
+      const { sendInvitationEmail } = await import("@/lib/invite-email.functions");
+      const token = await fetchInvitationToken(id);
+      const res = await sendInvitationEmail({
+        data: { invitationId: id, inviteUrl: buildInviteUrl(token) },
+      });
+      if (res?.sent) toast.success(`Invitation emailed to ${email}`);
+      else toast.info("Email could not be delivered — share the invite link instead.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not send the invitation email");
     }
   };
 
@@ -185,6 +208,9 @@ function TeamPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => resendEmail(inv.id, inv.email)}>
+                      <Mail className="size-3.5 mr-1.5" /> Resend email
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => copyLink(inv.id)}>
                       <Copy className="size-3.5 mr-1.5" /> Copy link
                     </Button>
