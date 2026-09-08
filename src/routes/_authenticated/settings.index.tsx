@@ -1,22 +1,8 @@
 import { AppShell } from "@/components/AppShell";
-import { SettingsShell } from "@/components/SettingsNav";
+import { useSettingsGroups } from "@/components/SettingsNav";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Palette,
-  Phone,
-  PhoneCall,
-  Settings as SettingsIcon,
-  Webhook,
-  Clock,
-  Users2,
-  ShieldCheck,
-  ToggleLeft,
-  Compass,
-  Building2,
-  Bot,
-} from "lucide-react";
+import { Compass } from "lucide-react";
 import { PageHeader, PageBody } from "@/components/PageHeader";
-import { isModuleEnabled, useModules } from "@/lib/modules";
 
 export const Route = createFileRoute("/_authenticated/settings/")({
   head: () => ({
