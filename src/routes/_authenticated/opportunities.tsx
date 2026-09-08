@@ -22,8 +22,10 @@ import {
   createDeal,
   moveDeal,
   listPipelines,
+  updateDeal,
   type Deal,
 } from "@/lib/pipeline";
+
 import { useTenancy } from "@/lib/tenancy";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { NewDealDialog } from "@/components/NewDealDialog";
@@ -206,6 +208,17 @@ function OpportunitiesPage() {
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["board", pipelineId] }),
   });
+
+  const setDateMut = useMutation({
+    mutationFn: ({ dealId, date }: { dealId: string; date: string | null }) =>
+      updateDeal(dealId, { expected_close_date: date }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board", pipelineId] });
+      toast.success("Date updated");
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not set that date"),
+  });
+
 
   const loading = defaultQuery.isLoading || pipelinesQuery.isLoading || boardQuery.isLoading;
   const totalDeals = filteredDeals.length;
