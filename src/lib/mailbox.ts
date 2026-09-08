@@ -47,6 +47,8 @@ export type MailboxAccount = {
   email: string | null;
   /** Forwarding mailboxes only: where the mail host should deliver copies. */
   inboundUrl?: string | null;
+  /** Friendlier delivery address, once an inbound mail service is set up. */
+  inboundAddress?: string | null;
   lastReceivedAt?: string | null;
 };
 

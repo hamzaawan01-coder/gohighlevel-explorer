@@ -608,28 +608,37 @@ function ForwardingPanel({ compact }: { compact?: boolean } = {}) {
           </div>
         </form>
 
-        {account?.inboundUrl ? (
+        {account?.connected ? (
           <div className="mt-5 rounded-md border border-dashed border-border p-3">
-            <p className="eyebrow">Delivery address for your mail host</p>
-            <code className="mt-1 block break-all rounded bg-muted px-2 py-1.5 text-[11px]">
-              {account.inboundUrl}
+            <p className="eyebrow">Step 2 — forward your mail here</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+              Sign in to your email host, open the settings for {account.email}, and add a
+              forwarding rule that sends a copy of every incoming email to this private address.
+              Keep it to yourself — anyone who has it can drop mail into this inbox.
+            </p>
+            <code className="mt-2 block break-all rounded bg-muted px-2 py-1.5 text-[11px]">
+              {account.inboundAddress ?? account.inboundUrl}
             </code>
             <button
               type="button"
               onClick={() => {
-                void navigator.clipboard.writeText(account.inboundUrl!);
+                void navigator.clipboard.writeText(account.inboundAddress ?? account.inboundUrl!);
                 toast.success("Copied");
               }}
               className="mt-2 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
             >
               Copy
             </button>
-            <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-              Point your mail forwarding at this address. Keep it private — anyone with it can drop
-              mail into your inbox here.
+            <p
+              className={`mt-3 rounded-md px-2 py-1.5 text-[11px] ${
+                account.lastReceivedAt
+                  ? "bg-muted text-foreground"
+                  : "border border-dashed border-border text-muted-foreground"
+              }`}
+            >
               {account.lastReceivedAt
-                ? ` Last email received ${new Date(account.lastReceivedAt).toLocaleString()}.`
-                : " No email has arrived yet."}
+                ? `Working — last email arrived ${new Date(account.lastReceivedAt).toLocaleString()}.`
+                : "Waiting for your first email. Send yourself a test message once the forwarding rule is saved."}
             </p>
           </div>
         ) : null}

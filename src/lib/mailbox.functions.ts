@@ -33,6 +33,15 @@ function inboundUrlFor(token: string) {
   return `${appOrigin()}/api/public/email/inbound/${token}`;
 }
 
+/**
+ * Once an inbound mail service delivers to a receiving subdomain, each mailbox
+ * gets a normal-looking address to forward to instead of a long URL.
+ */
+function inboundAddressFor(token: string) {
+  const domain = process.env["INBOUND_MAIL_DOMAIN"];
+  return domain ? `${token}@${domain}` : null;
+}
+
 /** Which providers the workspace owner has set up, and what this user linked. */
 export const getMailboxAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -61,6 +70,7 @@ export const getMailboxAccounts = createServerFn({ method: "GET" })
         connected: !!forwarded,
         email: forwarded?.address ?? null,
         inboundUrl: forwarded ? inboundUrlFor(forwarded.inbound_token) : null,
+        inboundAddress: forwarded ? inboundAddressFor(forwarded.inbound_token) : null,
         lastReceivedAt: forwarded?.last_received_at ?? null,
       },
     ];

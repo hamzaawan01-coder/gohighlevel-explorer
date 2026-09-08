@@ -305,6 +305,20 @@ export async function storeInboundMail(
   const from = splitAddress(mail.from);
   const text = mail.text ?? null;
   const html = mail.html ?? null;
+
+  // Prefer real threading headers over the subject line: a reply whose subject
+  // was edited still belongs to the same conversation.
+  let threadKey = threadKeyFor(mail.subject);
+  if (mail.inReplyTo) {
+    const { data: parent } = await db
+      .from("forwarded_messages")
+      .select("thread_key")
+      .eq("mailbox_id", mailbox.id)
+      .eq("provider_message_id", mail.inReplyTo)
+      .maybeSingle();
+    const parentKey = (parent as { thread_key?: string } | null)?.thread_key;
+    if (parentKey) threadKey = parentKey;
+  }
   const { error } = await db.from("forwarded_messages").upsert(
     {
       mailbox_id: mailbox.id,
@@ -321,7 +335,7 @@ export async function storeInboundMail(
       body_html: html,
       attachments: mail.attachments ?? [],
       unread: true,
-      thread_key: threadKeyFor(mail.subject),
+      thread_key: threadKey,
       provider_message_id: mail.messageId ?? null,
       in_reply_to: mail.inReplyTo ?? null,
       received_at: mail.receivedAt ?? new Date().toISOString(),
