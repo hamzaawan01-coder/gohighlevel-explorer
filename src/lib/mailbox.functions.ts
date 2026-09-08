@@ -14,7 +14,23 @@ import type {
 } from "@/lib/mailbox";
 
 function providerOf(value: unknown): MailProvider {
-  return value === "outlook" ? "outlook" : "gmail";
+  if (value === "outlook") return "outlook";
+  if (value === "forwarding") return "forwarding";
+  return "gmail";
+}
+
+/** Public base URL of this app, used for the forwarding delivery address. */
+function appOrigin() {
+  const request = getRequest();
+  if (!request) return "https://leadsconvert.co.uk";
+  const url = new URL(request.url);
+  const forwarded = request.headers.get("x-forwarded-host");
+  if (url.hostname === "localhost" && forwarded) return `https://${forwarded}`;
+  return url.origin;
+}
+
+function inboundUrlFor(token: string) {
+  return `${appOrigin()}/api/public/email/inbound/${token}`;
 }
 
 /** Which providers the workspace owner has set up, and what this user linked. */
@@ -22,7 +38,9 @@ export const getMailboxAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<MailboxAccount[]> => {
     const { listConnectionsForUser } = await import("@/lib/app-user-connector.server");
+    const { getForwardedMailbox } = await import("@/lib/mailbox-forwarding.server");
     const rows = await listConnectionsForUser(context.userId);
+    const forwarded = await getForwardedMailbox(context.userId);
     const find = (connector: string) => rows.find((r) => r.connector_id === connector);
     return [
       {
@@ -36,6 +54,14 @@ export const getMailboxAccounts = createServerFn({ method: "GET" })
         available: !!process.env["MICROSOFT_OUTLOOK_APP_USER_CONNECTOR_CLIENT_API_KEY"],
         connected: !!find("microsoft_outlook"),
         email: find("microsoft_outlook")?.account_email ?? null,
+      },
+      {
+        provider: "forwarding",
+        available: true,
+        connected: !!forwarded,
+        email: forwarded?.address ?? null,
+        inboundUrl: forwarded ? inboundUrlFor(forwarded.inbound_token) : null,
+        lastReceivedAt: forwarded?.last_received_at ?? null,
       },
     ];
   });
@@ -144,11 +170,27 @@ async function keyFor(userId: string, provider: MailProvider) {
   return key;
 }
 
+/** The signed-in user's forwarding mailbox, or an error when they have none. */
+async function forwardingMailboxFor(userId: string) {
+  const { getForwardedMailbox } = await import("@/lib/mailbox-forwarding.server");
+  const mailbox = await getForwardedMailbox(userId);
+  if (!mailbox) throw new Error("Add your forwarding address first.");
+  return mailbox;
+}
+
 export const listMailFolders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { provider: MailProvider }) => data)
   .handler(async ({ data, context }): Promise<MailFolder[]> => {
     const provider = providerOf(data.provider);
+    if (provider === "forwarding") {
+      const { getForwardedMailbox, forwardedFolders } = await import(
+        "@/lib/mailbox-forwarding.server"
+      );
+      const mailbox = await getForwardedMailbox(context.userId);
+      if (!mailbox) return [];
+      return forwardedFolders(mailbox);
+    }
     const key = await optionalKeyFor(context.userId, provider);
     if (!key) return [];
     const { fetchFolders } = await import("@/lib/mailbox.server");
@@ -172,15 +214,24 @@ export const listMailMessages = createServerFn({ method: "GET" })
       context,
     }): Promise<{ items: MailListItem[]; nextPageToken: string | null }> => {
       const provider = providerOf(data.provider);
+      const opts = {
+        folderId: data.folderId ?? null,
+        search: data.search ?? null,
+        pageToken: data.pageToken ?? null,
+      };
+      if (provider === "forwarding") {
+        const { getForwardedMailbox, forwardedMessages } = await import(
+          "@/lib/mailbox-forwarding.server"
+        );
+        const mailbox = await getForwardedMailbox(context.userId);
+        if (!mailbox) return { items: [], nextPageToken: null };
+        return forwardedMessages(mailbox, opts);
+      }
       const key = await optionalKeyFor(context.userId, provider);
       if (!key) return { items: [], nextPageToken: null };
       const { fetchMessages } = await import("@/lib/mailbox.server");
 
-      return fetchMessages(provider, key, {
-        folderId: data.folderId ?? null,
-        search: data.search ?? null,
-        pageToken: data.pageToken ?? null,
-      });
+      return fetchMessages(provider, key, opts);
     },
   );
 
@@ -189,6 +240,10 @@ export const getMailMessage = createServerFn({ method: "GET" })
   .inputValidator((data: { provider: MailProvider; id: string }) => data)
   .handler(async ({ data, context }): Promise<MailMessage> => {
     const provider = providerOf(data.provider);
+    if (provider === "forwarding") {
+      const { forwardedMessage } = await import("@/lib/mailbox-forwarding.server");
+      return forwardedMessage(await forwardingMailboxFor(context.userId), data.id);
+    }
     const key = await keyFor(context.userId, provider);
     const { fetchMessage } = await import("@/lib/mailbox.server");
     return fetchMessage(provider, key, data.id);
@@ -201,6 +256,9 @@ export const downloadMailAttachment = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }): Promise<{ base64: string }> => {
     const provider = providerOf(data.provider);
+    if (provider === "forwarding") {
+      throw new Error("Attachments on forwarded email can only be opened in the original mailbox.");
+    }
     const key = await keyFor(context.userId, provider);
     const { fetchAttachment } = await import("@/lib/mailbox.server");
     return fetchAttachment(provider, key, data.messageId, data.attachmentId);
@@ -222,6 +280,17 @@ export const sendMailMessage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     const provider = providerOf(data.provider);
     if (!data.to.trim()) throw new Error("Add at least one recipient.");
+    if (provider === "forwarding") {
+      const { sendForwardedMail } = await import("@/lib/mailbox-forwarding.server");
+      await sendForwardedMail(await forwardingMailboxFor(context.userId), {
+        to: data.to,
+        cc: data.cc ?? null,
+        subject: data.subject,
+        body: data.body,
+        inReplyToMessageId: data.inReplyToMessageId ?? null,
+      });
+      return { ok: true };
+    }
     const key = await keyFor(context.userId, provider);
     const { sendMail } = await import("@/lib/mailbox.server");
     await sendMail(provider, key, {
@@ -246,8 +315,41 @@ export const actOnMailMessage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     const provider = providerOf(data.provider);
+    if (provider === "forwarding") {
+      const { forwardedAction } = await import("@/lib/mailbox-forwarding.server");
+      await forwardedAction(await forwardingMailboxFor(context.userId), data.id, data.action);
+      return { ok: true };
+    }
     const key = await keyFor(context.userId, provider);
     const { applyMailAction } = await import("@/lib/mailbox.server");
     await applyMailAction(provider, key, data.id, data.action);
+    return { ok: true };
+  });
+
+/** Save (or change) the address this user forwards into the CRM. */
+export const saveForwardingMailbox = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { address: string; displayName?: string | null }) => data)
+  .handler(
+    async ({ data, context }): Promise<{ ok: true; address: string; inboundUrl: string }> => {
+      const { upsertForwardedMailbox } = await import("@/lib/mailbox-forwarding.server");
+      const mailbox = await upsertForwardedMailbox({
+        userId: context.userId,
+        address: data.address,
+        displayName: data.displayName ?? null,
+      });
+      return {
+        ok: true,
+        address: mailbox.address,
+        inboundUrl: inboundUrlFor(mailbox.inbound_token),
+      };
+    },
+  );
+
+export const removeForwardingMailbox = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ ok: true }> => {
+    const { deleteForwardedMailbox } = await import("@/lib/mailbox-forwarding.server");
+    await deleteForwardedMailbox(context.userId);
     return { ok: true };
   });

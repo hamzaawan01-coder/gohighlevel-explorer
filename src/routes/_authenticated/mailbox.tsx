@@ -37,6 +37,8 @@ import {
   getMailboxAccounts,
   listMailFolders,
   listMailMessages,
+  removeForwardingMailbox,
+  saveForwardingMailbox,
   sendMailMessage,
   startMailboxConnect,
 } from "@/lib/mailbox.functions";
@@ -483,6 +485,7 @@ function ConnectPanel({
   connecting: MailProvider | null;
   onConnect: (p: MailProvider) => void;
 }) {
+  if (provider === "forwarding") return <ForwardingPanel />;
   return (
     <div className="mx-auto max-w-xl rounded-lg border border-border bg-card p-6 text-center">
       <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-muted">
@@ -514,6 +517,123 @@ function ConnectPanel({
           {PROVIDER_LABEL[provider]} sign-in has not been switched on for this account yet.
         </p>
       )}
+    </div>
+  );
+}
+
+/** Set-up / details panel for a mailbox on any other host, e.g. Hostinger. */
+function ForwardingPanel({ compact }: { compact?: boolean } = {}) {
+  const qc = useQueryClient();
+  const accountsQ = useQuery({
+    queryKey: ["mailbox", "accounts"],
+    queryFn: () => getMailboxAccounts(),
+  });
+  const account = accountsQ.data?.find((a) => a.provider === "forwarding");
+  const [address, setAddress] = useState(account?.email ?? "");
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (account?.email) setAddress(account.email);
+  }, [account?.email]);
+
+  const saveMut = useMutation({
+    mutationFn: () =>
+      saveForwardingMailbox({ data: { address, displayName: name.trim() || null } }),
+    onSuccess: async () => {
+      toast.success("Forwarding address saved");
+      await qc.invalidateQueries({ queryKey: ["mailbox"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeMut = useMutation({
+    mutationFn: () => removeForwardingMailbox(),
+    onSuccess: async () => {
+      toast.success("Forwarding mailbox removed");
+      await qc.invalidateQueries({ queryKey: ["mailbox"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className={compact ? "" : "mx-auto max-w-2xl"}>
+      <div className="rounded-lg border border-border bg-card p-5">
+        <h2 className="font-display text-base font-semibold">
+          Bring in a mailbox from your own host
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          For addresses hosted at Hostinger, cPanel, Zoho and similar. Mail forwarded from that
+          host lands here, and your replies go out with that address on the Reply-To, so the
+          customer keeps writing to your own inbox.
+        </p>
+
+        <form
+          className="mt-4 grid gap-2 sm:grid-cols-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveMut.mutate();
+          }}
+        >
+          <Field
+            label="Your email address"
+            value={address}
+            onChange={setAddress}
+            placeholder="you@yourdomain.com"
+            required
+          />
+          <Field
+            label="Name shown on replies"
+            value={name}
+            onChange={setName}
+            placeholder="optional"
+          />
+          <div className="sm:col-span-2 flex items-center gap-2">
+            <button
+              type="submit"
+              disabled={saveMut.isPending}
+              className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs text-background hover:opacity-90 disabled:opacity-60"
+            >
+              {saveMut.isPending ? <Loader2 className="size-3.5 animate-spin" /> : null}
+              {account?.connected ? "Save changes" : "Set up forwarding"}
+            </button>
+            {account?.connected ? (
+              <button
+                type="button"
+                onClick={() => removeMut.mutate()}
+                className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Remove
+              </button>
+            ) : null}
+          </div>
+        </form>
+
+        {account?.inboundUrl ? (
+          <div className="mt-5 rounded-md border border-dashed border-border p-3">
+            <p className="eyebrow">Delivery address for your mail host</p>
+            <code className="mt-1 block break-all rounded bg-muted px-2 py-1.5 text-[11px]">
+              {account.inboundUrl}
+            </code>
+            <button
+              type="button"
+              onClick={() => {
+                void navigator.clipboard.writeText(account.inboundUrl!);
+                toast.success("Copied");
+              }}
+              className="mt-2 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              Copy
+            </button>
+            <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+              Point your mail forwarding at this address. Keep it private — anyone with it can drop
+              mail into your inbox here.
+              {account.lastReceivedAt
+                ? ` Last email received ${new Date(account.lastReceivedAt).toLocaleString()}.`
+                : " No email has arrived yet."}
+            </p>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

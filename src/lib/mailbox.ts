@@ -1,6 +1,6 @@
 /** Client-safe mailbox types shared between the mail page and server functions. */
 
-export type MailProvider = "gmail" | "outlook";
+export type MailProvider = "gmail" | "outlook" | "forwarding";
 
 export type MailFolder = {
   id: string;
@@ -45,11 +45,15 @@ export type MailboxAccount = {
   /** False when the workspace owner has not set that provider up yet. */
   available: boolean;
   email: string | null;
+  /** Forwarding mailboxes only: where the mail host should deliver copies. */
+  inboundUrl?: string | null;
+  lastReceivedAt?: string | null;
 };
 
 export const PROVIDER_LABEL: Record<MailProvider, string> = {
   gmail: "Gmail",
   outlook: "Outlook",
+  forwarding: "Other host (forwarding)",
 };
 
 /** Pretty display name from a raw "Name <a@b.com>" header. */

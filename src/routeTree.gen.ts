@@ -85,6 +85,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as ApiPublicBookingRescheduleTokenRouteImport } from './routes/api/public/booking.reschedule.$token'
+import { Route as ApiPublicEmailInboundTokenRouteImport } from './routes/api/public/email.inbound.$token'
 import { Route as ApiPublicHooksMetaTokenRouteImport } from './routes/api/public/hooks/meta.$token'
 import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
 import { Route as ApiPublicOauthGoogleAdsCallbackRouteImport } from './routes/api/public/oauth.google-ads.callback'
@@ -513,6 +514,12 @@ const ApiPublicBookingRescheduleTokenRoute =
     path: '/api/public/booking/reschedule/$token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicEmailInboundTokenRoute =
+  ApiPublicEmailInboundTokenRouteImport.update({
+    id: '/api/public/email/inbound/$token',
+    path: '/api/public/email/inbound/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksMetaTokenRoute = ApiPublicHooksMetaTokenRouteImport.update({
   id: '/api/public/hooks/meta/$token',
   path: '/api/public/hooks/meta/$token',
@@ -660,6 +667,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
+  '/api/public/email/inbound/$token': typeof ApiPublicEmailInboundTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -749,6 +757,7 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
+  '/api/public/email/inbound/$token': typeof ApiPublicEmailInboundTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -840,6 +849,7 @@ export interface FileRoutesById {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
+  '/api/public/email/inbound/$token': typeof ApiPublicEmailInboundTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
   '/api/public/oauth/google-ads/callback': typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -931,6 +941,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
     | '/api/public/booking/reschedule/$token'
+    | '/api/public/email/inbound/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
@@ -1020,6 +1031,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
     | '/api/public/booking/reschedule/$token'
+    | '/api/public/email/inbound/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
@@ -1110,6 +1122,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
     | '/api/public/booking/reschedule/$token'
+    | '/api/public/email/inbound/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
     | '/api/public/oauth/google-ads/callback'
@@ -1159,6 +1172,7 @@ export interface RootRouteChildren {
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiPublicBookingRescheduleTokenRoute: typeof ApiPublicBookingRescheduleTokenRoute
+  ApiPublicEmailInboundTokenRoute: typeof ApiPublicEmailInboundTokenRoute
   ApiPublicHooksMetaTokenRoute: typeof ApiPublicHooksMetaTokenRoute
   ApiPublicHooksWordpressTokenRoute: typeof ApiPublicHooksWordpressTokenRoute
   ApiPublicOauthGoogleAdsCallbackRoute: typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -1707,6 +1721,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookingRescheduleTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/email/inbound/$token': {
+      id: '/api/public/email/inbound/$token'
+      path: '/api/public/email/inbound/$token'
+      fullPath: '/api/public/email/inbound/$token'
+      preLoaderRoute: typeof ApiPublicEmailInboundTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/meta/$token': {
       id: '/api/public/hooks/meta/$token'
       path: '/api/public/hooks/meta/$token'
@@ -1927,6 +1948,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiPublicBookingRescheduleTokenRoute: ApiPublicBookingRescheduleTokenRoute,
+  ApiPublicEmailInboundTokenRoute: ApiPublicEmailInboundTokenRoute,
   ApiPublicHooksMetaTokenRoute: ApiPublicHooksMetaTokenRoute,
   ApiPublicHooksWordpressTokenRoute: ApiPublicHooksWordpressTokenRoute,
   ApiPublicOauthGoogleAdsCallbackRoute: ApiPublicOauthGoogleAdsCallbackRoute,
