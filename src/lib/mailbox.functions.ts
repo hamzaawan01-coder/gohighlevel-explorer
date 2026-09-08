@@ -172,8 +172,10 @@ export const listMailMessages = createServerFn({ method: "GET" })
       context,
     }): Promise<{ items: MailListItem[]; nextPageToken: string | null }> => {
       const provider = providerOf(data.provider);
-      const key = await keyFor(context.userId, provider);
+      const key = await optionalKeyFor(context.userId, provider);
+      if (!key) return { items: [], nextPageToken: null };
       const { fetchMessages } = await import("@/lib/mailbox.server");
+
       return fetchMessages(provider, key, {
         folderId: data.folderId ?? null,
         search: data.search ?? null,
