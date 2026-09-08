@@ -21,7 +21,7 @@ import type { Deal, Stage } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import { useTenancy } from "@/lib/tenancy";
 import {
-import { formatAmount } from "@/lib/custom-fields";
+import { currencySymbol, formatAmount } from "@/lib/custom-fields";
   User,
   Phone,
   MessageSquare,
@@ -31,9 +31,10 @@ import { formatAmount } from "@/lib/custom-fields";
   CalendarDays,
 } from "lucide-react";
 
-function formatMoney(n: number) {
-  if (n >= 1000) return `$${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`;
-  return `$${n}`;
+function formatMoney(n: number, currency?: string | null) {
+  const sym = currencySymbol(currency);
+  if (n >= 1000) return `${sym}${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`;
+  return `${sym}${n}`;
 }
 
 export function KanbanBoard({
@@ -119,7 +120,7 @@ export function KanbanBoard({
           const total = stageDeals.reduce((s, d) => s + Number(d.value), 0);
           const stageCurrency = stageDeals[0]?.currency;
           return (
-            <Column key={stage.id} stage={stage} count={stageDeals.length} total={total}>
+            <Column key={stage.id} stage={stage} count={stageDeals.length} total={total} currency={stageCurrency}>
               <SortableContext
                 items={stageDeals.map((d) => d.id)}
                 strategy={verticalListSortingStrategy}
@@ -162,11 +163,13 @@ function Column({
   stage,
   count,
   total,
+  currency,
   children,
 }: {
   stage: Stage;
   count: number;
   total: number;
+  currency?: string | null;
   children: React.ReactNode;
 }) {
   return (
@@ -186,7 +189,7 @@ function Column({
             </span>
           </div>
           <div className="font-mono text-[10px] tabular-nums text-muted-foreground">
-            {formatMoney(total)}
+            {formatMoney(total, currency)}
           </div>
         </div>
       </div>

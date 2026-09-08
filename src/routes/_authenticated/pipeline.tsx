@@ -23,6 +23,7 @@ import {
   type Stage,
 } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
+import { formatAmount } from "@/lib/custom-fields";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
   head: () => ({
@@ -44,8 +45,8 @@ export const Route = createFileRoute("/_authenticated/pipeline")({
   component: PipelinePage,
 });
 
-function money(value: number) {
-  return `£${Number(value || 0).toLocaleString()}`;
+function money(value: number, currency?: string | null) {
+  return formatAmount(value, currency);
 }
 
 function LeadRow({
@@ -68,7 +69,7 @@ function LeadRow({
         <p className="truncate text-sm font-semibold">{deal.title}</p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {contactName ? `${contactName} · ` : ""}
-          {money(Number(deal.value))}
+          {money(Number(deal.value), deal.currency)}
         </p>
       </div>
       <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
