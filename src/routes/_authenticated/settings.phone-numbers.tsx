@@ -1,4 +1,4 @@
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -90,12 +90,13 @@ function PhoneNumbersPage() {
         }
       />
       <PageBody width="full">
-        <SettingsNav />
+        <SettingsShell>
         {!subId ? (
           <EmptyState icon={Phone} title="Select a workspace" description="Select a workspace to manage phone numbers." />
         ) : (
           <PhonePanels subId={subId} />
         )}
+      </SettingsShell>
       </PageBody>
     </AppShell>
   );

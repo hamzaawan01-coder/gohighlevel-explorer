@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Check, Copy, Download, GitCompare, History, Plus, Star, Trash2, Upload } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { PageHeader, PageBody } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -299,8 +299,8 @@ function InvoiceTemplatesPage() {
           </div>
         }
       />
-      <SettingsNav />
       <PageBody>
+      <SettingsShell>
         {q.isLoading ? (
           <PanelSkeleton />
         ) : q.error ? (
@@ -578,6 +578,7 @@ function InvoiceTemplatesPage() {
             </ul>
           )}
         </section>
+      </SettingsShell>
       </PageBody>
     </AppShell>
   );

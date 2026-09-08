@@ -1,4 +1,4 @@
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -129,8 +129,8 @@ function TeamPage() {
         </div>
       }
     >
-      <div className="max-w-4xl mx-auto p-6 space-y-8">
-        <SettingsNav />
+      <div className="max-w-7xl mx-auto p-6 md:p-8 space-y-6 overflow-auto h-full">
+        <SettingsShell>
         <header>
           <h1 className="text-2xl font-semibold tracking-tight">Team & invites</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -253,6 +253,7 @@ function TeamPage() {
             )}
           </div>
         </section>
+      </SettingsShell>
       </div>
     </AppShell>
   );

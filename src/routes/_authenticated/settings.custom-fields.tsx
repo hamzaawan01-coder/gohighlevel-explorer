@@ -5,7 +5,7 @@ import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, PageBody } from "@/components/PageHeader";
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell, SettingsSection, SettingsRow } from "@/components/SettingsNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -146,25 +146,23 @@ function CustomFieldsSettings() {
         description="Pick the currency shown on deals and invoices, and create your own extra contact fields."
       />
       <PageBody>
-        <SettingsNav />
-        <div className="space-y-8 max-w-2xl">
+        <SettingsShell>
           {/* Currency */}
-          <section className="rounded-lg border border-border p-5 space-y-3">
-            <div>
-              <h2 className="text-sm font-semibold">Account currency</h2>
-              <p className="text-xs text-muted-foreground">
-                Used for new deals, totals and new invoices. Existing records keep the currency they were
-                saved with, and you can still pick a different currency on an individual deal.
-              </p>
-            </div>
-            <div className="max-w-xs space-y-2">
-              <Label htmlFor="currency">Currency</Label>
+          <SettingsSection
+            title="Account currency"
+            description="Used for new deals, totals and new invoices. Existing records keep the currency they were saved with, and you can still pick a different currency on an individual deal."
+          >
+            <SettingsRow
+              label="Currency"
+              htmlFor="currency"
+              description="Shown on deal cards, pipeline totals and new invoices."
+            >
               <Select
                 value={currencyQ.data ?? "GBP"}
                 onValueChange={(v) => currencyMut.mutate(v)}
                 disabled={!subId || currencyQ.isLoading}
               >
-                <SelectTrigger id="currency">
+                <SelectTrigger id="currency" className="w-64">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -175,18 +173,16 @@ function CustomFieldsSettings() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          </section>
+            </SettingsRow>
+          </SettingsSection>
 
           {/* Custom fields */}
-          <section className="rounded-lg border border-border p-5 space-y-4">
-            <div>
-              <h2 className="text-sm font-semibold">Extra contact fields</h2>
-              <p className="text-xs text-muted-foreground">
-                Anything you add here shows up on the contact form and on the contact’s overview.
-              </p>
-            </div>
-
+          <SettingsSection
+            title="Extra contact fields"
+            description="Anything you add here shows up on the contact form and on the contact’s overview."
+            padded
+          >
+            <div className="space-y-4">
             {fieldsQ.isLoading ? (
               <p className="text-xs text-muted-foreground">Loading…</p>
             ) : fields.length === 0 ? (
@@ -299,8 +295,9 @@ function CustomFieldsSettings() {
                 <Plus className="size-3.5" /> Add field
               </Button>
             </form>
-          </section>
-        </div>
+            </div>
+          </SettingsSection>
+      </SettingsShell>
       </PageBody>
     </AppShell>
   );

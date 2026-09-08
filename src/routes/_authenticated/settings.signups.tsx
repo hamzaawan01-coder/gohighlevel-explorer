@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { PageHeader, PageBody } from "@/components/PageHeader";
 import { ConsoleSection, ConsoleStat, StatusPill } from "@/components/console";
 import { Button } from "@/components/ui/button";
@@ -113,7 +113,7 @@ function SignupsPage() {
         }
       />
       <PageBody width="full">
-        <SettingsNav />
+        <SettingsShell>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <ConsoleSection title="Paid signups">
@@ -251,6 +251,7 @@ function SignupsPage() {
             </div>
           )}
         </ConsoleSection>
+      </SettingsShell>
       </PageBody>
 
       <Dialog open={!!rejecting} onOpenChange={(o) => !o && setRejecting(null)}>

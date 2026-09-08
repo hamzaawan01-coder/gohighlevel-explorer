@@ -1,4 +1,4 @@
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -76,8 +76,8 @@ function SubAccountsPage() {
         </button>
       }
     >
-      <div className="p-6 space-y-6 overflow-auto h-full">
-        <SettingsNav />
+      <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6 overflow-auto h-full">
+        <SettingsShell>
         <div>
           <h1 className="text-lg font-bold">Sub-accounts</h1>
           <p className="text-xs text-muted-foreground mt-1">
@@ -172,6 +172,7 @@ function SubAccountsPage() {
             );
           })}
         </div>
+      </SettingsShell>
       </div>
     </AppShell>
   );

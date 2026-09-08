@@ -1,4 +1,4 @@
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -116,7 +116,7 @@ function CallFlowsPage() {
         }
       />
       <PageBody width="full">
-        <SettingsNav />
+        <SettingsShell>
         {!subId ? (
           <EmptyState icon={Workflow} title="Select a workspace" description="Choose a workspace to configure call flows." />
         ) : flow.isLoading ? (
@@ -245,6 +245,7 @@ function CallFlowsPage() {
             }
           />
         )}
+      </SettingsShell>
       </PageBody>
     </AppShell>
   );

@@ -1,4 +1,4 @@
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -202,7 +202,7 @@ function IntegrationsPage() {
         }
       />
       <PageBody>
-        <SettingsNav />
+        <SettingsShell>
         {!subId ? (
           <div className="rounded-xl border border-border p-6 text-sm text-muted-foreground">
             Select a workspace to configure integrations.
@@ -262,6 +262,7 @@ function IntegrationsPage() {
             </TabsContent>
           </Tabs>
         )}
+      </SettingsShell>
       </PageBody>
     </AppShell>
   );
