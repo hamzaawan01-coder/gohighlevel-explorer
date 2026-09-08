@@ -103,3 +103,54 @@ export async function notifyInboundMessage(
     // Notifications are a convenience; inbound delivery must still succeed.
   }
 }
+
+/**
+ * When a lead replies, nudge their opportunity forward: any of their deals
+ * still sitting in the very first stage of its pipeline moves to the next
+ * stage. Best effort — never fails the webhook.
+ * Returns the names of the stages leads were moved into.
+ */
+export async function advanceStageOnReply(
+  supabaseAdmin: Admin,
+  args: { subAccountId: string; contactId: string },
+): Promise<string[]> {
+  const moved: string[] = [];
+  try {
+    const { data: deals } = await supabaseAdmin
+      .from("deals")
+      .select("id, pipeline_id, stage_id")
+      .eq("sub_account_id", args.subAccountId)
+      .eq("contact_id", args.contactId);
+    if (!deals?.length) return moved;
+
+    for (const deal of deals) {
+      const { data: stages } = await supabaseAdmin
+        .from("pipeline_stages")
+        .select("id, name, position")
+        .eq("pipeline_id", deal.pipeline_id)
+        .order("position", { ascending: true });
+      if (!stages || stages.length < 2) continue;
+
+      // Only auto-advance leads that have not been worked yet.
+      if (stages[0].id !== deal.stage_id) continue;
+      const next = stages[1];
+
+      const { data: tail } = await supabaseAdmin
+        .from("deals")
+        .select("position")
+        .eq("stage_id", next.id)
+        .order("position", { ascending: false })
+        .limit(1);
+      const nextPosition = ((tail ?? [])[0]?.position ?? 0) + 1;
+
+      const { error } = await supabaseAdmin
+        .from("deals")
+        .update({ stage_id: next.id, position: nextPosition })
+        .eq("id", deal.id);
+      if (!error) moved.push(next.name as string);
+    }
+  } catch {
+    // Stage automation is a convenience; inbound delivery must still succeed.
+  }
+  return moved;
+}
