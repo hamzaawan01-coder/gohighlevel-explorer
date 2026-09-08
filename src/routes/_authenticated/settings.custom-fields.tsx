@@ -5,7 +5,7 @@ import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, PageBody } from "@/components/PageHeader";
-import { SettingsShell } from "@/components/SettingsNav";
+import { SettingsShell, SettingsSection, SettingsRow } from "@/components/SettingsNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
