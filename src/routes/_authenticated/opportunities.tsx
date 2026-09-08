@@ -8,6 +8,8 @@ import {
   ArrowUpRight,
   ChevronDown,
   LayoutGrid,
+  CalendarDays,
+
   List,
   Search,
   Upload,
@@ -20,13 +22,17 @@ import {
   createDeal,
   moveDeal,
   listPipelines,
+  updateDeal,
   type Deal,
 } from "@/lib/pipeline";
+
 import { useTenancy } from "@/lib/tenancy";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { NewDealDialog } from "@/components/NewDealDialog";
 import { DealDetailPanel } from "@/components/DealDetailPanel";
 import { PipelinesManagerPanel } from "@/components/PipelinesManagerPanel";
+import { DealCalendar } from "@/components/DealCalendar";
+
 import { BulkActionsPanel } from "@/components/BulkActionsPanel";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -80,7 +86,7 @@ function OpportunitiesPage() {
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("opportunities");
-  const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [view, setView] = useState<"kanban" | "list" | "calendar">("kanban");
   const [search, setSearch] = useState("");
   const [savedView, setSavedView] = useState<SavedView>("all");
   const [newDealOpen, setNewDealOpen] = useState(false);
@@ -202,6 +208,17 @@ function OpportunitiesPage() {
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["board", pipelineId] }),
   });
+
+  const setDateMut = useMutation({
+    mutationFn: ({ dealId, date }: { dealId: string; date: string | null }) =>
+      updateDeal(dealId, { expected_close_date: date }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board", pipelineId] });
+      toast.success("Date updated");
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not set that date"),
+  });
+
 
   const loading = defaultQuery.isLoading || pipelinesQuery.isLoading || boardQuery.isLoading;
   const totalDeals = filteredDeals.length;
@@ -399,7 +416,21 @@ function OpportunitiesPage() {
                     >
                       <List className="size-3.5" />
                     </button>
+                    <button
+                      onClick={() => setView("calendar")}
+                      title="Calendar view"
+                      aria-label="Calendar view"
+                      aria-pressed={view === "calendar"}
+                      className={`size-7 rounded flex items-center justify-center ${
+                        view === "calendar"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <CalendarDays className="size-3.5" />
+                    </button>
                   </div>
+
                   <button
                     disabled
                     title="Coming soon"
@@ -438,7 +469,17 @@ function OpportunitiesPage() {
                       onOpenDeal={(id) => setOpenDealId(id)}
                     />
                   </div>
+                ) : view === "calendar" ? (
+                  <div className="h-full overflow-auto">
+                    <DealCalendar
+                      deals={filteredDeals}
+                      stages={stages}
+                      onSetDate={(dealId, date) => setDateMut.mutate({ dealId, date })}
+                      onOpenDeal={(id) => setOpenDealId(id)}
+                    />
+                  </div>
                 ) : (
+
                   <div className="h-full overflow-auto">
                     <OpportunitiesTable
                       deals={filteredDeals}
