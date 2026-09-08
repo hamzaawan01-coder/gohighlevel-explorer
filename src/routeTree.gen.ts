@@ -69,6 +69,7 @@ import { Route as AuthenticatedSettingsSubscriptionsRouteImport } from './routes
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings.team'
 import { Route as AuthenticatedSettingsWordpressRouteImport } from './routes/_authenticated/settings.wordpress'
 import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
+import { Route as OauthMailboxReturnRouteImport } from './routes/oauth.mailbox.return'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicHooksAppointmentsRouteImport } from './routes/api/public/hooks/appointments'
@@ -422,6 +423,11 @@ const ApiPublicProcessOutboundRoute =
     path: '/api/public/process-outbound',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OauthMailboxReturnRoute = OauthMailboxReturnRouteImport.update({
+  id: '/oauth/mailbox/return',
+  path: '/oauth/mailbox/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBookingSlugRoute = ApiPublicBookingSlugRouteImport.update({
   id: '/api/public/booking/$slug',
   path: '/api/public/booking/$slug',
@@ -629,6 +635,7 @@ export interface FileRoutesByFullPath {
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
+  '/oauth/mailbox/return': typeof OauthMailboxReturnRoute
   '/contacts/': typeof AuthenticatedContactsIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
@@ -716,6 +723,7 @@ export interface FileRoutesByTo {
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
+  '/oauth/mailbox/return': typeof OauthMailboxReturnRoute
   '/contacts': typeof AuthenticatedContactsIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
@@ -805,6 +813,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/_authenticated/settings/wordpress': typeof AuthenticatedSettingsWordpressRoute
   '/api/public/process-outbound': typeof ApiPublicProcessOutboundRoute
+  '/oauth/mailbox/return': typeof OauthMailboxReturnRoute
   '/_authenticated/contacts/': typeof AuthenticatedContactsIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
@@ -894,6 +903,7 @@ export interface FileRouteTypes {
     | '/settings/team'
     | '/settings/wordpress'
     | '/api/public/process-outbound'
+    | '/oauth/mailbox/return'
     | '/contacts/'
     | '/invoices/'
     | '/settings/'
@@ -981,6 +991,7 @@ export interface FileRouteTypes {
     | '/settings/team'
     | '/settings/wordpress'
     | '/api/public/process-outbound'
+    | '/oauth/mailbox/return'
     | '/contacts'
     | '/invoices'
     | '/settings'
@@ -1069,6 +1080,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/team'
     | '/_authenticated/settings/wordpress'
     | '/api/public/process-outbound'
+    | '/oauth/mailbox/return'
     | '/_authenticated/contacts/'
     | '/_authenticated/invoices/'
     | '/_authenticated/settings/'
@@ -1120,6 +1132,7 @@ export interface RootRouteChildren {
   InviteTokenRoute: typeof InviteTokenRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicProcessOutboundRoute: typeof ApiPublicProcessOutboundRoute
+  OauthMailboxReturnRoute: typeof OauthMailboxReturnRoute
   ApiPublicBookingSlugRoute: typeof ApiPublicBookingSlugRoute
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
   ApiPublicHooksAppointmentsRoute: typeof ApiPublicHooksAppointmentsRoute
@@ -1570,6 +1583,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicProcessOutboundRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oauth/mailbox/return': {
+      id: '/oauth/mailbox/return'
+      path: '/oauth/mailbox/return'
+      fullPath: '/oauth/mailbox/return'
+      preLoaderRoute: typeof OauthMailboxReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/booking/$slug': {
       id: '/api/public/booking/$slug'
       path: '/api/public/booking/$slug'
@@ -1871,6 +1891,7 @@ const rootRouteChildren: RootRouteChildren = {
   InviteTokenRoute: InviteTokenRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicProcessOutboundRoute: ApiPublicProcessOutboundRoute,
+  OauthMailboxReturnRoute: OauthMailboxReturnRoute,
   ApiPublicBookingSlugRoute: ApiPublicBookingSlugRoute,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
   ApiPublicHooksAppointmentsRoute: ApiPublicHooksAppointmentsRoute,
