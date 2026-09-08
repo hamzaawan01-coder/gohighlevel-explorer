@@ -1542,6 +1542,122 @@ export type Database = {
           },
         ]
       }
+      forwarded_mailboxes: {
+        Row: {
+          active: boolean
+          address: string
+          created_at: string
+          display_name: string | null
+          id: string
+          inbound_token: string
+          last_received_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          address: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          inbound_token: string
+          last_received_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          inbound_token?: string
+          last_received_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      forwarded_messages: {
+        Row: {
+          attachments: Json
+          body_html: string | null
+          body_text: string | null
+          cc_address: string
+          created_at: string
+          direction: string
+          folder: string
+          from_address: string
+          from_name: string
+          id: string
+          in_reply_to: string | null
+          mailbox_id: string
+          provider_message_id: string | null
+          received_at: string
+          snippet: string
+          starred: boolean
+          subject: string
+          thread_key: string
+          to_address: string
+          unread: boolean
+          user_id: string
+        }
+        Insert: {
+          attachments?: Json
+          body_html?: string | null
+          body_text?: string | null
+          cc_address?: string
+          created_at?: string
+          direction?: string
+          folder?: string
+          from_address?: string
+          from_name?: string
+          id?: string
+          in_reply_to?: string | null
+          mailbox_id: string
+          provider_message_id?: string | null
+          received_at?: string
+          snippet?: string
+          starred?: boolean
+          subject?: string
+          thread_key?: string
+          to_address?: string
+          unread?: boolean
+          user_id: string
+        }
+        Update: {
+          attachments?: Json
+          body_html?: string | null
+          body_text?: string | null
+          cc_address?: string
+          created_at?: string
+          direction?: string
+          folder?: string
+          from_address?: string
+          from_name?: string
+          id?: string
+          in_reply_to?: string | null
+          mailbox_id?: string
+          provider_message_id?: string | null
+          received_at?: string
+          snippet?: string
+          starred?: boolean
+          subject?: string
+          thread_key?: string
+          to_address?: string
+          unread?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forwarded_messages_mailbox_id_fkey"
+            columns: ["mailbox_id"]
+            isOneToOne: false
+            referencedRelation: "forwarded_mailboxes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invitations: {
         Row: {
           accepted_at: string | null
