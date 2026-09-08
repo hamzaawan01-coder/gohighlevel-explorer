@@ -1,4 +1,4 @@
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -108,8 +108,8 @@ function BookingSettingsPage() {
         </button>
       }
     >
-      <div className="p-8 max-w-4xl overflow-y-auto h-full">
-        <SettingsNav />
+      <div className="p-6 md:p-8 max-w-7xl mx-auto overflow-y-auto h-full">
+        <SettingsShell>
         <h1 className="text-2xl font-bold mb-1">Booking pages</h1>
         <p className="text-sm text-muted-foreground mb-6">Share a public link so people can pick a time from your availability.</p>
 
@@ -175,6 +175,7 @@ function BookingSettingsPage() {
         </Dialog>
 
         {editing && <EditDialog page={editing} onClose={() => setEditing(null)} subId={subId!} />}
+      </SettingsShell>
       </div>
     </AppShell>
   );
