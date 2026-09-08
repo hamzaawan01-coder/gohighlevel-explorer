@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { SettingsNav } from "@/components/SettingsNav";
 import { PageHeader, PageBody } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,7 +138,7 @@ function CustomFieldsSettings() {
   }
 
   return (
-    <AppShell sidebar={<SettingsNav />}>
+    <AppShell>
       <PageHeader
         title="Currency & custom fields"
         description="Pick the currency shown on deals and invoices, and create your own extra contact fields."
