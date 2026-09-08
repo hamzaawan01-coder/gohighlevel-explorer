@@ -30,6 +30,7 @@ import { Route as AuthenticatedConversationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFormsRouteImport } from './routes/_authenticated/forms'
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
+import { Route as AuthenticatedMailboxRouteImport } from './routes/_authenticated/mailbox'
 import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
 import { Route as AuthenticatedMessagingRouteImport } from './routes/_authenticated/messaging'
 import { Route as AuthenticatedModulesExplorerRouteImport } from './routes/_authenticated/modules-explorer'
@@ -203,6 +204,11 @@ const AuthenticatedFormsRoute = AuthenticatedFormsRouteImport.update({
 const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMailboxRoute = AuthenticatedMailboxRouteImport.update({
+  id: '/mailbox',
+  path: '/mailbox',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMarketingRoute = AuthenticatedMarketingRouteImport.update({
@@ -599,6 +605,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/forms': typeof AuthenticatedFormsRoute
   '/inbox': typeof AuthenticatedInboxRoute
+  '/mailbox': typeof AuthenticatedMailboxRoute
   '/marketing': typeof AuthenticatedMarketingRoute
   '/messaging': typeof AuthenticatedMessagingRoute
   '/modules-explorer': typeof AuthenticatedModulesExplorerRoute
@@ -687,6 +694,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/forms': typeof AuthenticatedFormsRoute
   '/inbox': typeof AuthenticatedInboxRoute
+  '/mailbox': typeof AuthenticatedMailboxRoute
   '/marketing': typeof AuthenticatedMarketingRoute
   '/messaging': typeof AuthenticatedMessagingRoute
   '/modules-explorer': typeof AuthenticatedModulesExplorerRoute
@@ -777,6 +785,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/forms': typeof AuthenticatedFormsRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
+  '/_authenticated/mailbox': typeof AuthenticatedMailboxRoute
   '/_authenticated/marketing': typeof AuthenticatedMarketingRoute
   '/_authenticated/messaging': typeof AuthenticatedMessagingRoute
   '/_authenticated/modules-explorer': typeof AuthenticatedModulesExplorerRoute
@@ -867,6 +876,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/forms'
     | '/inbox'
+    | '/mailbox'
     | '/marketing'
     | '/messaging'
     | '/modules-explorer'
@@ -955,6 +965,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/forms'
     | '/inbox'
+    | '/mailbox'
     | '/marketing'
     | '/messaging'
     | '/modules-explorer'
@@ -1044,6 +1055,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/forms'
     | '/_authenticated/inbox'
+    | '/_authenticated/mailbox'
     | '/_authenticated/marketing'
     | '/_authenticated/messaging'
     | '/_authenticated/modules-explorer'
@@ -1308,6 +1320,13 @@ declare module '@tanstack/react-router' {
       path: '/inbox'
       fullPath: '/inbox'
       preLoaderRoute: typeof AuthenticatedInboxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mailbox': {
+      id: '/_authenticated/mailbox'
+      path: '/mailbox'
+      fullPath: '/mailbox'
+      preLoaderRoute: typeof AuthenticatedMailboxRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/marketing': {
@@ -1784,6 +1803,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFormsRoute: typeof AuthenticatedFormsRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
+  AuthenticatedMailboxRoute: typeof AuthenticatedMailboxRoute
   AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRoute
   AuthenticatedMessagingRoute: typeof AuthenticatedMessagingRoute
   AuthenticatedModulesExplorerRoute: typeof AuthenticatedModulesExplorerRoute
@@ -1828,6 +1848,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFormsRoute: AuthenticatedFormsRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
+  AuthenticatedMailboxRoute: AuthenticatedMailboxRoute,
   AuthenticatedMarketingRoute: AuthenticatedMarketingRoute,
   AuthenticatedMessagingRoute: AuthenticatedMessagingRoute,
   AuthenticatedModulesExplorerRoute: AuthenticatedModulesExplorerRoute,
