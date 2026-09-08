@@ -81,34 +81,33 @@ function sizeLabel(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Open the provider sign-in in a popup and wait for our return page. */
-function waitForCode(popup: Window) {
+/** Wait for the sign-in window to report back with the one-time code. */
+function waitForCode() {
   return new Promise<string>((resolve, reject) => {
-    let poll: number | undefined;
+    let timer: number | undefined;
     const cleanup = () => {
       window.removeEventListener("message", onMessage);
-      if (poll !== undefined) window.clearInterval(poll);
+      if (timer !== undefined) window.clearTimeout(timer);
     };
     const onMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin || event.source !== popup) return;
+      if (event.origin !== window.location.origin) return;
       const type = event.data?.type;
       if (type !== "mailboxOAuthComplete" && type !== "mailboxOAuthFailed") return;
       cleanup();
       if (type === "mailboxOAuthComplete" && typeof event.data?.code === "string") {
         resolve(event.data.code);
       } else {
-        popup.close();
         reject(new Error("Sign-in was not completed."));
       }
     };
     window.addEventListener("message", onMessage);
-    poll = window.setInterval(() => {
-      if (!popup.closed) return;
+    timer = window.setTimeout(() => {
       cleanup();
-      reject(new Error("The sign-in window was closed."));
-    }, 500);
+      reject(new Error("Sign-in timed out. Please try again."));
+    }, 5 * 60 * 1000);
   });
 }
+
 
 function MailboxPage() {
   const { ready } = useSessionReady();
