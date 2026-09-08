@@ -21,6 +21,7 @@ import type { Deal, Stage } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import { useTenancy } from "@/lib/tenancy";
 import {
+import { formatAmount } from "@/lib/custom-fields";
   User,
   Phone,
   MessageSquare,
@@ -116,6 +117,7 @@ export function KanbanBoard({
         {stages.map((stage) => {
           const stageDeals = dealsByStage.get(stage.id) ?? [];
           const total = stageDeals.reduce((s, d) => s + Number(d.value), 0);
+          const stageCurrency = stageDeals[0]?.currency;
           return (
             <Column key={stage.id} stage={stage} count={stageDeals.length} total={total}>
               <SortableContext
@@ -324,7 +326,7 @@ function DealCardView({
         <div className="grid grid-cols-[92px_1fr] gap-2">
           <dt className="text-muted-foreground">Value:</dt>
           <dd className="font-medium text-foreground">
-            ${Number(deal.value).toLocaleString()}
+            {formatAmount(deal.value, deal.currency)}
           </dd>
         </div>
       </dl>
@@ -393,4 +395,3 @@ function DealCardView({
     </div>
   );
 }
-

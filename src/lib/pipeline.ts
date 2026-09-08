@@ -190,6 +190,7 @@ export async function createDeal(input: {
   sub_account_id: string;
   title: string;
   value: number;
+  currency?: string;
   owner_id: string;
   contact_id?: string | null;
 }) {
@@ -201,6 +202,7 @@ export async function createDeal(input: {
       sub_account_id: input.sub_account_id,
       title: input.title,
       value: input.value,
+      ...(input.currency ? { currency: input.currency } : {}),
       owner_id: input.owner_id,
       contact_id: input.contact_id ?? null,
     })

@@ -18,6 +18,7 @@ import {
   UserCircle,
   Users2,
   Webhook,
+  SlidersHorizontal,
 } from "lucide-react";
 import { isModuleEnabled, useModules } from "@/lib/modules";
 
@@ -44,6 +45,7 @@ export const SETTINGS_NAV_ITEMS: Item[] = [
   { label: "Modules", to: "/settings/modules", icon: ToggleLeft },
   { label: "Subscriptions", to: "/settings/subscriptions", icon: CreditCard },
   { label: "Signups & approvals", to: "/settings/signups", icon: UserCheck },
+  { label: "Currency & fields", to: "/settings/custom-fields", icon: SlidersHorizontal },
   { label: "Appearance", to: "/settings/appearance", icon: Palette },
   { label: "App review", to: "/settings/app-review", icon: ShieldCheck, module: "integrations" },
 ];

@@ -5,6 +5,7 @@ import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader, PageBody } from "@/components/PageHeader";
+import { SettingsNav } from "@/components/SettingsNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -141,9 +142,11 @@ function CustomFieldsSettings() {
     <AppShell>
       <PageHeader
         title="Currency & custom fields"
+        crumbs={[{ label: "Settings" }, { label: "Currency & fields" }]}
         description="Pick the currency shown on deals and invoices, and create your own extra contact fields."
       />
       <PageBody>
+        <SettingsNav />
         <div className="space-y-8 max-w-2xl">
           {/* Currency */}
           <section className="rounded-lg border border-border p-5 space-y-3">
