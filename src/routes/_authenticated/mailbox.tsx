@@ -171,28 +171,25 @@ function MailboxPage() {
 
   async function connect(target: MailProvider) {
     setConnecting(target);
-    const popup = window.open("", "mailbox-oauth", "width=600,height=720");
-    if (!popup) {
-      setConnecting(null);
-      toast.error("Allow pop-ups for this site, then try again.");
-      return;
-    }
+    // Google refuses to render inside the editor preview frame, so hand the
+    // sign-in to a real top-level tab/window instead of a framed popup.
+    const handoff = beginOAuthHandoff();
     try {
       const { authorizationUrl } = await startMailboxConnect({ data: { provider: target } });
-      const pending = waitForCode(popup);
-      popup.location.href = authorizationUrl;
+      const pending = waitForCode();
+      handoff(authorizationUrl);
       const code = await pending;
       const result = await completeMailboxConnect({ data: { code } });
       toast.success(result.email ? `Connected ${result.email}` : "Mail account connected");
       setProvider(target);
       await qc.invalidateQueries({ queryKey: ["mailbox"] });
     } catch (error) {
-      popup.close();
       toast.error(error instanceof Error ? error.message : "Could not connect that account.");
     } finally {
       setConnecting(null);
     }
   }
+
 
   const disconnectMut = useMutation({
     mutationFn: () => disconnectMailbox({ data: { provider } }),
