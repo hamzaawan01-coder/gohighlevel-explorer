@@ -35,6 +35,7 @@ import { Route as AuthenticatedMessagingRouteImport } from './routes/_authentica
 import { Route as AuthenticatedModulesExplorerRouteImport } from './routes/_authenticated/modules-explorer'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
+import { Route as AuthenticatedRecycleBinRouteImport } from './routes/_authenticated/recycle-bin'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
@@ -227,6 +228,11 @@ const AuthenticatedOpportunitiesRoute =
 const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRecycleBinRoute = AuthenticatedRecycleBinRouteImport.update({
+  id: '/recycle-bin',
+  path: '/recycle-bin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
@@ -585,6 +591,7 @@ export interface FileRoutesByFullPath {
   '/modules-explorer': typeof AuthenticatedModulesExplorerRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
+  '/recycle-bin': typeof AuthenticatedRecycleBinRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/templates': typeof AuthenticatedTemplatesRoute
@@ -670,6 +677,7 @@ export interface FileRoutesByTo {
   '/modules-explorer': typeof AuthenticatedModulesExplorerRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
+  '/recycle-bin': typeof AuthenticatedRecycleBinRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/templates': typeof AuthenticatedTemplatesRoute
@@ -757,6 +765,7 @@ export interface FileRoutesById {
   '/_authenticated/modules-explorer': typeof AuthenticatedModulesExplorerRoute
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
+  '/_authenticated/recycle-bin': typeof AuthenticatedRecycleBinRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
@@ -844,6 +853,7 @@ export interface FileRouteTypes {
     | '/modules-explorer'
     | '/opportunities'
     | '/pipeline'
+    | '/recycle-bin'
     | '/reports'
     | '/tasks'
     | '/templates'
@@ -929,6 +939,7 @@ export interface FileRouteTypes {
     | '/modules-explorer'
     | '/opportunities'
     | '/pipeline'
+    | '/recycle-bin'
     | '/reports'
     | '/tasks'
     | '/templates'
@@ -1015,6 +1026,7 @@ export interface FileRouteTypes {
     | '/_authenticated/modules-explorer'
     | '/_authenticated/opportunities'
     | '/_authenticated/pipeline'
+    | '/_authenticated/recycle-bin'
     | '/_authenticated/reports'
     | '/_authenticated/tasks'
     | '/_authenticated/templates'
@@ -1305,6 +1317,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof AuthenticatedPipelineRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/recycle-bin': {
+      id: '/_authenticated/recycle-bin'
+      path: '/recycle-bin'
+      fullPath: '/recycle-bin'
+      preLoaderRoute: typeof AuthenticatedRecycleBinRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports': {
@@ -1730,6 +1749,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModulesExplorerRoute: typeof AuthenticatedModulesExplorerRoute
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
+  AuthenticatedRecycleBinRoute: typeof AuthenticatedRecycleBinRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
@@ -1772,6 +1792,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModulesExplorerRoute: AuthenticatedModulesExplorerRoute,
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
+  AuthenticatedRecycleBinRoute: AuthenticatedRecycleBinRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,

@@ -61,6 +61,7 @@ export async function fetchInvoices(subAccountId: string): Promise<Invoice[]> {
     .from("invoices")
     .select("*")
     .eq("sub_account_id", subAccountId)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Invoice[];
@@ -146,8 +147,8 @@ export async function updateInvoice(
 
 
 export async function deleteInvoice(id: string): Promise<void> {
-  const { error } = await supabase.from("invoices").delete().eq("id", id);
-  if (error) throw error;
+  const { softDelete } = await import("@/lib/recycle-bin");
+  await softDelete("invoices", id);
 }
 
 export async function addInvoiceItem(input: {

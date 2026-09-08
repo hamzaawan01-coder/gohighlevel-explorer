@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   LayoutGrid,
+  Trash2,
   MoveRight,
   LayoutDashboard,
   Users,
@@ -92,6 +93,7 @@ export const NAV_SECTIONS: NavSection[] = [
 /** Items reachable from the settings hub — used for filtering and pinning. */
 export const SETTINGS_ITEMS: NavItem[] = [
   { label: "Settings", icon: Settings, to: "/settings", keywords: "configuration preferences admin" },
+  { label: "Recycle bin", icon: Trash2, to: "/recycle-bin", module: "recycle-bin", keywords: "deleted restore trash undo recover" },
   { label: "Module explorer", icon: Compass, to: "/modules-explorer", keywords: "features catalog" },
 ];
 

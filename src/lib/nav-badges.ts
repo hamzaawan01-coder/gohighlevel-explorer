@@ -40,6 +40,7 @@ export function useNavBadges(): NavBadges {
           .from("tasks")
           .select("id", { count: "exact", head: true })
           .eq("sub_account_id", subAccountId)
+          .is("deleted_at", null)
           .in("status", ["open", "in_progress"])
           .lt("due_at", nowIso),
         supabase

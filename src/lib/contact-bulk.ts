@@ -14,8 +14,8 @@ export async function bulkUpdateStage(ids: string[], stage: LifecycleStage) {
 
 export async function bulkDeleteContacts(ids: string[]) {
   if (ids.length === 0) return;
-  const { error } = await supabase.from("contacts").delete().in("id", ids);
-  if (error) throw error;
+  const { softDelete } = await import("@/lib/recycle-bin");
+  for (const id of ids) await softDelete("contacts", id);
 }
 
 /** Add a tag to a set of contacts, preserving existing tags per row. */

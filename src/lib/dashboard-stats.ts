@@ -28,15 +28,18 @@ export async function fetchDashboardStats(subAccountId: string): Promise<Dashboa
     supabase
       .from("deals")
       .select("id,title,value,stage_id,updated_at,created_at")
-      .eq("sub_account_id", subAccountId),
+      .eq("sub_account_id", subAccountId)
+      .is("deleted_at", null),
     supabase
       .from("tasks")
       .select("id,title,status,due_at,updated_at,created_at")
-      .eq("sub_account_id", subAccountId),
+      .eq("sub_account_id", subAccountId)
+      .is("deleted_at", null),
     supabase
       .from("contacts")
       .select("id,first_name,last_name,email,created_at")
       .eq("sub_account_id", subAccountId)
+      .is("deleted_at", null)
       .gte("created_at", startOfWeek),
   ]);
 
