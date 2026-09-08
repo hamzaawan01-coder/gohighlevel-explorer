@@ -52,6 +52,12 @@ import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { initials, stringHue } from "@/lib/initials";
 import { MetaLeadSourcePanel } from "@/components/MetaLeadSourcePanel";
+import {
+  displayCustomValue,
+  fetchCustomFields,
+  formatAmount,
+  type CustomFieldDef,
+} from "@/lib/custom-fields";
 
 export function ContactDetailPanel({
   contactId,
@@ -91,6 +97,12 @@ export function ContactDetailPanel({
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const customFieldsQ = useQuery({
+    queryKey: ["custom-fields", subId, "contacts"],
+    queryFn: () => fetchCustomFields(subId!, "contacts"),
+    enabled: !!subId,
   });
 
   const stagesQ = useQuery({
@@ -272,6 +284,8 @@ export function ContactDetailPanel({
             notes={c.notes}
             openTaskCount={openTasks.length}
             dealCount={deals.length}
+            customDefs={customFieldsQ.data ?? []}
+            customValues={(c.custom_fields ?? {}) as Record<string, unknown>}
           />
           {subId && <MetaLeadSourcePanel subId={subId} contactId={contactId} />}
         </TabsContent>
@@ -300,7 +314,7 @@ export function ContactDetailPanel({
                     </div>
                     <span className="inline-flex items-center gap-1 text-xs font-mono">
                       <DollarSign className="size-3 text-muted-foreground" />
-                      {Number(d.value).toLocaleString()}
+                      {formatAmount(d.value, d.currency)}
                     </span>
                     <Link
                       to="/opportunities"
@@ -424,10 +438,13 @@ export function ContactDetailPanel({
 
 function OverviewGrid({
   email, phone, company, leadSource, createdAt, notes, openTaskCount, dealCount,
+  customDefs = [], customValues = {},
 }: {
   email: string | null; phone: string | null; company: string | null;
   leadSource: string | null; createdAt: string; notes: string | null;
   openTaskCount: number; dealCount: number;
+  customDefs?: CustomFieldDef[];
+  customValues?: Record<string, unknown>;
 }) {
   const fields: [string, React.ReactNode][] = [
     ["Email", email ?? "—"],
@@ -437,6 +454,9 @@ function OverviewGrid({
     ["Added", formatDistanceToNow(new Date(createdAt), { addSuffix: true })],
     ["Open tasks", openTaskCount],
     ["Deals", dealCount],
+    ...customDefs.map(
+      (d) => [d.label, displayCustomValue(d, customValues[d.key])] as [string, React.ReactNode],
+    ),
   ];
   return (
     <>
