@@ -66,12 +66,20 @@ function TeamPage() {
         role,
         sub_account_id: role === "admin" ? null : subAccountId || subsQ.data?.[0]?.id || null,
       }),
-    onSuccess: ({ token }) => {
+    onSuccess: async ({ invitation, token }) => {
       qc.invalidateQueries({ queryKey: ["invitations", agencyId] });
       setEmail("");
       const url = buildInviteUrl(token);
       navigator.clipboard?.writeText(url).catch(() => {});
       toast.success("Invite created — link copied to clipboard");
+      try {
+        const { sendInvitationEmail } = await import("@/lib/invite-email.functions");
+        const res = await sendInvitationEmail({ data: { invitationId: invitation.id, inviteUrl: url } });
+        if (res?.sent) toast.success(`Invitation emailed to ${invitation.email}`);
+        else toast.info("Invite created, but the email could not be delivered — share the link instead.");
+      } catch {
+        toast.info("Invite created, but the email could not be sent yet — share the copied link.");
+      }
     },
     onError: (e: any) => toast.error(e?.message ?? "Could not create invite"),
   });
