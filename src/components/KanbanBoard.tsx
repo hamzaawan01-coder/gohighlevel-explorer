@@ -20,8 +20,8 @@ import { useQuery } from "@tanstack/react-query";
 import type { Deal, Stage } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import { useTenancy } from "@/lib/tenancy";
-import {
 import { currencySymbol, formatAmount } from "@/lib/custom-fields";
+import {
   User,
   Phone,
   MessageSquare,
