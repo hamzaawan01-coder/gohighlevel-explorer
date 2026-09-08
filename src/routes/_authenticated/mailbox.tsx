@@ -111,7 +111,7 @@ function waitForCode(popup: Window) {
 }
 
 function MailboxPage() {
-  const ready = useSessionReady();
+  const { ready } = useSessionReady();
   const qc = useQueryClient();
 
   const [provider, setProvider] = useState<MailProvider>("gmail");
@@ -367,10 +367,7 @@ function MailboxPage() {
                     <TableSkeleton rows={6} />
                   </div>
                 ) : listQ.error ? (
-                  <ErrorState
-                    message={(listQ.error as Error).message}
-                    onRetry={() => void listQ.refetch()}
-                  />
+                  <ErrorState error={listQ.error} onRetry={() => void listQ.refetch()} />
                 ) : items.length === 0 ? (
                   <EmptyState
                     icon={Mail}
@@ -438,10 +435,7 @@ function MailboxPage() {
                   <TableSkeleton rows={5} />
                 </div>
               ) : messageQ.error ? (
-                <ErrorState
-                  message={(messageQ.error as Error).message}
-                  onRetry={() => void messageQ.refetch()}
-                />
+                <ErrorState error={messageQ.error} onRetry={() => void messageQ.refetch()} />
               ) : messageQ.data ? (
                 <MessageView
                   message={messageQ.data}
