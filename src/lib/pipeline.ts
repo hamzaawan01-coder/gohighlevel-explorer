@@ -233,6 +233,7 @@ export async function fetchDeal(dealId: string): Promise<Deal> {
 export type DealUpdate = Partial<{
   title: string;
   value: number;
+  currency: string;
   stage_id: string;
   notes: string | null;
   contact_id: string | null;
