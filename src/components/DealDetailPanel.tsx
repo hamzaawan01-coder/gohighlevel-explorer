@@ -36,6 +36,7 @@ import {
 import { formatBytes, isImage } from "@/lib/contact-files";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { CURRENCIES, formatAmount } from "@/lib/custom-fields";
 import {
   Select,
   SelectContent,
@@ -153,7 +154,7 @@ export function DealDetailPanel({
           <div className="flex items-center gap-4 mt-1 flex-wrap text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5 font-mono">
               <DollarSign className="size-3" />
-              {Number(d.value).toLocaleString()} {d.currency}
+              {formatAmount(d.value, d.currency)}
             </span>
             {d.expected_close_date && (
               <span className="inline-flex items-center gap-1.5">
@@ -345,6 +346,7 @@ function OverviewTab({
   const [stageId, setStageId] = useState(deal.stage_id);
   const [contactId, setContactId] = useState<string>(deal.contact_id ?? "__none");
   const [closeDate, setCloseDate] = useState(deal.expected_close_date ?? "");
+  const [currency, setCurrency] = useState(deal.currency ?? "GBP");
 
   useEffect(() => {
     setTitle(deal.title);
@@ -352,13 +354,15 @@ function OverviewTab({
     setStageId(deal.stage_id);
     setContactId(deal.contact_id ?? "__none");
     setCloseDate(deal.expected_close_date ?? "");
-  }, [deal.id, deal.title, deal.value, deal.stage_id, deal.contact_id, deal.expected_close_date]);
+    setCurrency(deal.currency ?? "GBP");
+  }, [deal.id, deal.title, deal.value, deal.stage_id, deal.contact_id, deal.expected_close_date, deal.currency]);
 
   const dirty =
     title !== deal.title ||
     Number(value) !== Number(deal.value) ||
     stageId !== deal.stage_id ||
     (contactId === "__none" ? null : contactId) !== deal.contact_id ||
+    currency !== (deal.currency ?? "GBP") ||
     (closeDate || null) !== (deal.expected_close_date ?? null);
 
   return (
@@ -374,6 +378,18 @@ function OverviewTab({
             value={value}
             onChange={(e) => setValue(e.target.value)}
           />
+        </Field>
+        <Field label="Currency">
+          <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CURRENCIES.map((c) => (
+                <SelectItem key={c.code} value={c.code}>
+                  {c.code} {c.symbol.trim()}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Field>
         <Field label="Expected close">
           <Input type="date" value={closeDate} onChange={(e) => setCloseDate(e.target.value)} />
@@ -419,6 +435,7 @@ function OverviewTab({
             onSave({
               title: title.trim(),
               value: Number(value) || 0,
+              currency,
               stage_id: stageId,
               contact_id: contactId === "__none" ? null : contactId,
               expected_close_date: closeDate || null,

@@ -14,6 +14,7 @@ import type { Stage } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import { useTenancy } from "@/lib/tenancy";
 import { useQuery } from "@tanstack/react-query";
+import { CURRENCIES, fetchDefaultCurrency } from "@/lib/custom-fields";
 
 const NO_CONTACT = "__none__";
 
@@ -29,6 +30,7 @@ export function NewDealDialog({
   onCreate: (input: {
     title: string;
     value: number;
+    currency: string;
     stage_id: string;
     contact_id: string | null;
   }) => Promise<void>;
@@ -37,6 +39,7 @@ export function NewDealDialog({
   const [value, setValue] = useState("");
   const [stageId, setStageId] = useState<string>(stages[0]?.id ?? "");
   const [contactId, setContactId] = useState<string>(NO_CONTACT);
+  const [currency, setCurrency] = useState<string>("GBP");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -49,6 +52,15 @@ export function NewDealDialog({
   }, [open, stages]);
 
   const subId = useTenancy((s) => s.currentSubAccountId);
+  const defaultCurrencyQuery = useQuery({
+    queryKey: ["default-currency", subId],
+    queryFn: () => fetchDefaultCurrency(subId!),
+    enabled: !!subId,
+  });
+
+  useEffect(() => {
+    if (open && defaultCurrencyQuery.data) setCurrency(defaultCurrencyQuery.data);
+  }, [open, defaultCurrencyQuery.data]);
   const contactsQuery = useQuery({
     queryKey: ["contacts", subId],
     queryFn: () => fetchContacts(subId!),
@@ -77,6 +89,7 @@ export function NewDealDialog({
       await onCreate({
         title: title.trim(),
         value: Number(value) || 0,
+        currency,
         stage_id: stageId,
         contact_id: contactId === NO_CONTACT ? null : contactId,
       });
@@ -106,7 +119,7 @@ export function NewDealDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="value">Value (USD)</Label>
+              <Label htmlFor="value">Value</Label>
               <Input
                 id="value"
                 type="number"
@@ -115,6 +128,21 @@ export function NewDealDialog({
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="5000"
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.code} {c.symbol.trim()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Stage</Label>

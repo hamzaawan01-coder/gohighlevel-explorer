@@ -56,6 +56,7 @@ import { Route as AuthenticatedSettingsAppReviewRouteImport } from './routes/_au
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings.appearance'
 import { Route as AuthenticatedSettingsBookingRouteImport } from './routes/_authenticated/settings.booking'
 import { Route as AuthenticatedSettingsCallFlowsRouteImport } from './routes/_authenticated/settings.call-flows'
+import { Route as AuthenticatedSettingsCustomFieldsRouteImport } from './routes/_authenticated/settings.custom-fields'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsInvoicesRouteImport } from './routes/_authenticated/settings.invoices'
 import { Route as AuthenticatedSettingsMessagingRouteImport } from './routes/_authenticated/settings.messaging'
@@ -343,6 +344,12 @@ const AuthenticatedSettingsCallFlowsRoute =
     path: '/settings/call-flows',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsCustomFieldsRoute =
+  AuthenticatedSettingsCustomFieldsRouteImport.update({
+    id: '/settings/custom-fields',
+    path: '/settings/custom-fields',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsIntegrationsRoute =
   AuthenticatedSettingsIntegrationsRouteImport.update({
     id: '/settings/integrations',
@@ -609,6 +616,7 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
+  '/settings/custom-fields': typeof AuthenticatedSettingsCustomFieldsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/invoices': typeof AuthenticatedSettingsInvoicesRoute
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
@@ -695,6 +703,7 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
+  '/settings/custom-fields': typeof AuthenticatedSettingsCustomFieldsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/invoices': typeof AuthenticatedSettingsInvoicesRoute
   '/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
@@ -783,6 +792,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/booking': typeof AuthenticatedSettingsBookingRoute
   '/_authenticated/settings/call-flows': typeof AuthenticatedSettingsCallFlowsRoute
+  '/_authenticated/settings/custom-fields': typeof AuthenticatedSettingsCustomFieldsRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/settings/invoices': typeof AuthenticatedSettingsInvoicesRoute
   '/_authenticated/settings/messaging': typeof AuthenticatedSettingsMessagingRoute
@@ -871,6 +881,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/booking'
     | '/settings/call-flows'
+    | '/settings/custom-fields'
     | '/settings/integrations'
     | '/settings/invoices'
     | '/settings/messaging'
@@ -957,6 +968,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/booking'
     | '/settings/call-flows'
+    | '/settings/custom-fields'
     | '/settings/integrations'
     | '/settings/invoices'
     | '/settings/messaging'
@@ -1044,6 +1056,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/booking'
     | '/_authenticated/settings/call-flows'
+    | '/_authenticated/settings/custom-fields'
     | '/_authenticated/settings/integrations'
     | '/_authenticated/settings/invoices'
     | '/_authenticated/settings/messaging'
@@ -1466,6 +1479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsCallFlowsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/custom-fields': {
+      id: '/_authenticated/settings/custom-fields'
+      path: '/settings/custom-fields'
+      fullPath: '/settings/custom-fields'
+      preLoaderRoute: typeof AuthenticatedSettingsCustomFieldsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/integrations': {
       id: '/_authenticated/settings/integrations'
       path: '/settings/integrations'
@@ -1762,6 +1782,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsAppearanceRoute: typeof AuthenticatedSettingsAppearanceRoute
   AuthenticatedSettingsBookingRoute: typeof AuthenticatedSettingsBookingRoute
   AuthenticatedSettingsCallFlowsRoute: typeof AuthenticatedSettingsCallFlowsRoute
+  AuthenticatedSettingsCustomFieldsRoute: typeof AuthenticatedSettingsCustomFieldsRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedSettingsInvoicesRoute: typeof AuthenticatedSettingsInvoicesRoute
   AuthenticatedSettingsMessagingRoute: typeof AuthenticatedSettingsMessagingRoute
@@ -1805,6 +1826,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsAppearanceRoute: AuthenticatedSettingsAppearanceRoute,
   AuthenticatedSettingsBookingRoute: AuthenticatedSettingsBookingRoute,
   AuthenticatedSettingsCallFlowsRoute: AuthenticatedSettingsCallFlowsRoute,
+  AuthenticatedSettingsCustomFieldsRoute:
+    AuthenticatedSettingsCustomFieldsRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
   AuthenticatedSettingsInvoicesRoute: AuthenticatedSettingsInvoicesRoute,

@@ -1130,6 +1130,7 @@ export type Database = {
         Row: {
           company: string | null
           created_at: string
+          custom_fields: Json
           deleted_at: string | null
           deleted_by: string | null
           email: string | null
@@ -1149,6 +1150,7 @@ export type Database = {
         Insert: {
           company?: string | null
           created_at?: string
+          custom_fields?: Json
           deleted_at?: string | null
           deleted_by?: string | null
           email?: string | null
@@ -1168,6 +1170,7 @@ export type Database = {
         Update: {
           company?: string | null
           created_at?: string
+          custom_fields?: Json
           deleted_at?: string | null
           deleted_by?: string | null
           email?: string | null
@@ -1263,6 +1266,56 @@ export type Database = {
             columns: ["twilio_number_id"]
             isOneToOne: false
             referencedRelation: "twilio_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_field_defs: {
+        Row: {
+          created_at: string
+          entity: string
+          field_type: string
+          id: string
+          key: string
+          label: string
+          options: Json
+          position: number
+          required: boolean
+          sub_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity?: string
+          field_type?: string
+          id?: string
+          key: string
+          label: string
+          options?: Json
+          position?: number
+          required?: boolean
+          sub_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity?: string
+          field_type?: string
+          id?: string
+          key?: string
+          label?: string
+          options?: Json
+          position?: number
+          required?: boolean
+          sub_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_field_defs_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -3481,6 +3534,7 @@ export type Database = {
           company_number: string | null
           country: string | null
           created_at: string
+          default_currency: string
           id: string
           industry: string | null
           logo_url: string | null
@@ -3507,6 +3561,7 @@ export type Database = {
           company_number?: string | null
           country?: string | null
           created_at?: string
+          default_currency?: string
           id?: string
           industry?: string | null
           logo_url?: string | null
@@ -3533,6 +3588,7 @@ export type Database = {
           company_number?: string | null
           country?: string | null
           created_at?: string
+          default_currency?: string
           id?: string
           industry?: string | null
           logo_url?: string | null

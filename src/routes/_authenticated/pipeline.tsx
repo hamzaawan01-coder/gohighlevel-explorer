@@ -23,6 +23,7 @@ import {
   type Stage,
 } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
+import { formatAmount } from "@/lib/custom-fields";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
   head: () => ({
@@ -44,8 +45,8 @@ export const Route = createFileRoute("/_authenticated/pipeline")({
   component: PipelinePage,
 });
 
-function money(value: number) {
-  return `£${Number(value || 0).toLocaleString()}`;
+function money(value: number, currency?: string | null) {
+  return formatAmount(value, currency);
 }
 
 function LeadRow({
@@ -68,7 +69,7 @@ function LeadRow({
         <p className="truncate text-sm font-semibold">{deal.title}</p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {contactName ? `${contactName} · ` : ""}
-          {money(Number(deal.value))}
+          {money(Number(deal.value), deal.currency)}
         </p>
       </div>
       <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
@@ -204,12 +205,13 @@ function PipelinePage() {
 
   const loading = defaultQuery.isLoading || pipelinesQuery.isLoading || boardQuery.isLoading;
   const totalValue = filtered.reduce((s, d) => s + Number(d.value || 0), 0);
+  const boardCurrency = filtered[0]?.currency;
 
   return (
     <AppShell
       headerStatus={
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-          {filtered.length} leads · {money(totalValue)}
+          {filtered.length} leads · {money(totalValue, boardCurrency)}
         </span>
       }
     >
@@ -280,7 +282,7 @@ function PipelinePage() {
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <h2 className="text-sm font-bold uppercase tracking-wider">{stage.name}</h2>
                     <span className="font-mono text-[11px] text-muted-foreground">
-                      {items.length} · {money(value)}
+                      {items.length} · {money(value, items[0]?.currency ?? boardCurrency)}
                     </span>
                   </div>
                   {items.length === 0 ? (
