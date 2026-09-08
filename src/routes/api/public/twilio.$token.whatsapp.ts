@@ -95,9 +95,8 @@ export const Route = createFileRoute("/api/public/twilio/$token/whatsapp")({
         if (!contact) return new Response("Contact resolve failed", { status: 500 });
 
         // Get-or-create the WhatsApp conversation
-        const { ensureInboundConversation, notifyInboundMessage } = await import(
-          "@/lib/twilio-inbound.server"
-        );
+        const { ensureInboundConversation, notifyInboundMessage, advanceStageOnReply } =
+          await import("@/lib/twilio-inbound.server");
         const convo = await ensureInboundConversation(supabaseAdmin as any, {
           subAccountId: conn.sub_account_id,
           contactId: contact.id,
@@ -134,6 +133,21 @@ export const Route = createFileRoute("/api/public/twilio/$token/whatsapp")({
             senderName: profileName || from,
             body,
           });
+          const movedTo = await advanceStageOnReply(supabaseAdmin as any, {
+            subAccountId: conn.sub_account_id,
+            contactId: contact.id,
+          });
+          for (const stageName of movedTo) {
+            await (supabaseAdmin as any).from("messages").insert({
+              conversation_id: convoId,
+              sub_account_id: conn.sub_account_id,
+              author_user_id: null,
+              body: `Lead replied on WhatsApp — moved to "${stageName}".`,
+              channel: "note",
+              direction: "inbound",
+              kind: "note",
+            });
+          }
         }
 
 
