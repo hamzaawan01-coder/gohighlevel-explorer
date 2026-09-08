@@ -1,8 +1,10 @@
 import { AppShell } from "@/components/AppShell";
 import { useSettingsGroups } from "@/components/SettingsNav";
+import { CurrencyFieldsPanel } from "@/components/CurrencyFieldsPanel";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Compass } from "lucide-react";
 import { PageHeader, PageBody } from "@/components/PageHeader";
+
 
 export const Route = createFileRoute("/_authenticated/settings/")({
   head: () => ({
@@ -81,7 +83,13 @@ function SettingsHub() {
             </section>
           ))}
 
+          <section className="space-y-4">
+            <h2 className="eyebrow">Currency, custom fields & contact fields</h2>
+            <CurrencyFieldsPanel />
+          </section>
+
           <section className="space-y-3">
+
             <h2 className="eyebrow">Reference</h2>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <Link
