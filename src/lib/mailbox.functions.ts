@@ -70,6 +70,7 @@ export const getMailboxAccounts = createServerFn({ method: "GET" })
         connected: !!forwarded,
         email: forwarded?.address ?? null,
         inboundUrl: forwarded ? inboundUrlFor(forwarded.inbound_token) : null,
+        inboundAddress: forwarded ? inboundAddressFor(forwarded.inbound_token) : null,
         lastReceivedAt: forwarded?.last_received_at ?? null,
       },
     ];
