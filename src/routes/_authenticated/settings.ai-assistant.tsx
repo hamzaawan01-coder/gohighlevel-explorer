@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/AppShell";
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -114,7 +114,7 @@ function AiAssistantSettingsPage() {
         }
       />
       <PageBody>
-        <SettingsNav />
+        <SettingsShell>
         {settingsQ.isError ? (
           <ErrorState onRetry={() => settingsQ.refetch()} />
         ) : !form ? (
@@ -253,6 +253,7 @@ function AiAssistantSettingsPage() {
             </div>
           </div>
         )}
+      </SettingsShell>
       </PageBody>
     </AppShell>
   );

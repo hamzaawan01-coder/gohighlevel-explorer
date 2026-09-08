@@ -4,7 +4,7 @@ import { Building2, KeyRound, Loader2, Mail, Trash2, Upload, User } from "lucide
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { PageBody, PageHeader } from "@/components/PageHeader";
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -263,7 +263,7 @@ function ProfileSettingsPage() {
         crumbs={[{ label: "Settings" }, { label: "Profile" }]}
       />
       <PageBody>
-        <SettingsNav />
+        <SettingsShell>
 
         {loading ? (
           <div className="flex items-center gap-2 py-10 text-sm text-muted-foreground">
@@ -645,6 +645,7 @@ function ProfileSettingsPage() {
             </Section>
           </div>
         )}
+      </SettingsShell>
       </PageBody>
     </AppShell>
   );

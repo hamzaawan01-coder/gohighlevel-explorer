@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, Layers, Package, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { HeaderStat, PageBody, PageHeader } from "@/components/PageHeader";
 import { ConsoleSection, ConsoleSplit, ConsoleTips, StatusPill } from "@/components/console";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
@@ -241,7 +241,7 @@ function SubscriptionsSettingsPage() {
         }
       />
       <PageBody width="full">
-        <SettingsNav />
+        <SettingsShell>
         <PaymentTestModeBanner />
         <ConsoleSplit
           main={
@@ -413,6 +413,7 @@ function SubscriptionsSettingsPage() {
             </>
           }
         />
+      </SettingsShell>
       </PageBody>
 
       <PlanEditorDialog

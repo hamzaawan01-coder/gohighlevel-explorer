@@ -1,4 +1,4 @@
-import { SettingsNav } from "@/components/SettingsNav";
+import { SettingsShell } from "@/components/SettingsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -113,7 +113,7 @@ function AppReviewPage() {
         }
       />
       <PageBody width="full">
-        <SettingsNav />
+        <SettingsShell>
         {!subId ? (
           <EmptyState icon={ShieldCheck} title="Select a workspace" description="Choose a workspace to view App Review readiness." />
         ) : status.isError ? (
@@ -269,6 +269,7 @@ function AppReviewPage() {
             }
           />
         )}
+      </SettingsShell>
       </PageBody>
     </AppShell>
   );
