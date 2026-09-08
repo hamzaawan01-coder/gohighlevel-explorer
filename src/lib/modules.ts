@@ -102,6 +102,12 @@ export const MODULES: ModuleDef[] = [
     paths: ["/forms"],
   },
   {
+    key: "recycle-bin",
+    label: "Recycle bin",
+    description: "Restore deleted contacts, opportunities, tasks and invoices.",
+    paths: ["/recycle-bin"],
+  },
+  {
     key: "integrations",
     label: "Integrations",
     description: "Twilio, Meta, WordPress and other connections.",
