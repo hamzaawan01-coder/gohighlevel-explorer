@@ -1130,6 +1130,8 @@ export type Database = {
         Row: {
           company: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           email: string | null
           first_name: string | null
           id: string
@@ -1147,6 +1149,8 @@ export type Database = {
         Insert: {
           company?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
@@ -1164,6 +1168,8 @@ export type Database = {
         Update: {
           company?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
@@ -1317,6 +1323,8 @@ export type Database = {
           contact_id: string | null
           created_at: string
           currency: string
+          deleted_at: string | null
+          deleted_by: string | null
           expected_close_date: string | null
           id: string
           notes: string | null
@@ -1333,6 +1341,8 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           currency?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           expected_close_date?: string | null
           id?: string
           notes?: string | null
@@ -1349,6 +1359,8 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           currency?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           expected_close_date?: string | null
           id?: string
           notes?: string | null
@@ -1902,6 +1914,8 @@ export type Database = {
           created_by: string | null
           currency: string
           deal_id: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           due_date: string | null
           id: string
           issue_date: string
@@ -1932,6 +1946,8 @@ export type Database = {
           created_by?: string | null
           currency?: string
           deal_id?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           due_date?: string | null
           id?: string
           issue_date?: string
@@ -1962,6 +1978,8 @@ export type Database = {
           created_by?: string | null
           currency?: string
           deal_id?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           due_date?: string | null
           id?: string
           issue_date?: string
@@ -3606,6 +3624,8 @@ export type Database = {
           created_at: string
           created_by: string
           deal_id: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           due_at: string | null
           id: string
@@ -3622,6 +3642,8 @@ export type Database = {
           created_at?: string
           created_by: string
           deal_id?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           due_at?: string | null
           id?: string
@@ -3638,6 +3660,8 @@ export type Database = {
           created_at?: string
           created_by?: string
           deal_id?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           due_at?: string | null
           id?: string
@@ -4245,6 +4269,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_recycle_bin: {
+        Args: { _sub: string }
+        Returns: {
+          deleted_at: string
+          deleted_by: string
+          deleted_by_name: string
+          entity: string
+          id: string
+          label: string
+        }[]
+      }
       list_subscription_signups: {
         Args: never
         Returns: {
@@ -4285,6 +4320,18 @@ export type Database = {
         }[]
       }
       recalc_invoice_totals: { Args: { _invoice: string }; Returns: undefined }
+      recycle_bin_purge: {
+        Args: { _entity: string; _id: string }
+        Returns: undefined
+      }
+      recycle_bin_restore: {
+        Args: { _entity: string; _id: string }
+        Returns: undefined
+      }
+      recycle_bin_soft_delete: {
+        Args: { _entity: string; _id: string }
+        Returns: undefined
+      }
       release_billing_reconcile_lease: {
         Args: { _result?: Json }
         Returns: undefined
