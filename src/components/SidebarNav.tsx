@@ -58,7 +58,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard", module: "dashboard", keywords: "home overview" },
       { label: "Opportunities", icon: LayoutGrid, to: "/opportunities", module: "opportunities", keywords: "deals pipeline kanban" },
-      { label: "Pipeline", icon: MoveRight, to: "/pipeline", module: "opportunities", keywords: "stages leads move stage grouped" },
+      
       { label: "Contacts", icon: Users, to: "/contacts", module: "contacts", keywords: "people leads customers" },
       { label: "Tasks", icon: CheckSquare, to: "/tasks", module: "tasks", badge: "tasks", keywords: "todo follow up" },
       { label: "Invoices", icon: Receipt, to: "/invoices", module: "invoices", keywords: "billing invoice payments quote" },
