@@ -72,6 +72,7 @@ import { Route as AuthenticatedSettingsWordpressRouteImport } from './routes/_au
 import { Route as ApiPublicProcessOutboundRouteImport } from './routes/api/public/process-outbound'
 import { Route as OauthMailboxReturnRouteImport } from './routes/oauth.mailbox.return'
 import { Route as ApiPublicBookingSlugRouteImport } from './routes/api/public/booking.$slug'
+import { Route as ApiPublicEmailInboundRouteImport } from './routes/api/public/email.inbound'
 import { Route as ApiPublicFormsSlugRouteImport } from './routes/api/public/forms.$slug'
 import { Route as ApiPublicHooksAppointmentsRouteImport } from './routes/api/public/hooks/appointments'
 import { Route as ApiPublicHooksSyncGoogleAdsRouteImport } from './routes/api/public/hooks/sync-google-ads'
@@ -440,6 +441,11 @@ const ApiPublicBookingSlugRoute = ApiPublicBookingSlugRouteImport.update({
   path: '/api/public/booking/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicEmailInboundRoute = ApiPublicEmailInboundRouteImport.update({
+  id: '/api/public/email/inbound',
+  path: '/api/public/email/inbound',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicFormsSlugRoute = ApiPublicFormsSlugRouteImport.update({
   id: '/api/public/forms/$slug',
   path: '/api/public/forms/$slug',
@@ -516,9 +522,9 @@ const ApiPublicBookingRescheduleTokenRoute =
   } as any)
 const ApiPublicEmailInboundTokenRoute =
   ApiPublicEmailInboundTokenRouteImport.update({
-    id: '/api/public/email/inbound/$token',
-    path: '/api/public/email/inbound/$token',
-    getParentRoute: () => rootRouteImport,
+    id: '/$token',
+    path: '/$token',
+    getParentRoute: () => ApiPublicEmailInboundRoute,
   } as any)
 const ApiPublicHooksMetaTokenRoute = ApiPublicHooksMetaTokenRouteImport.update({
   id: '/api/public/hooks/meta/$token',
@@ -654,6 +660,7 @@ export interface FileRoutesByFullPath {
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
+  '/api/public/email/inbound': typeof ApiPublicEmailInboundRouteWithChildren
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
@@ -744,6 +751,7 @@ export interface FileRoutesByTo {
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
+  '/api/public/email/inbound': typeof ApiPublicEmailInboundRouteWithChildren
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
@@ -836,6 +844,7 @@ export interface FileRoutesById {
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/api/public/booking/$slug': typeof ApiPublicBookingSlugRoute
+  '/api/public/email/inbound': typeof ApiPublicEmailInboundRouteWithChildren
   '/api/public/forms/$slug': typeof ApiPublicFormsSlugRoute
   '/api/public/hooks/appointments': typeof ApiPublicHooksAppointmentsRoute
   '/api/public/hooks/sync-google-ads': typeof ApiPublicHooksSyncGoogleAdsRoute
@@ -928,6 +937,7 @@ export interface FileRouteTypes {
     | '/invoices/'
     | '/settings/'
     | '/api/public/booking/$slug'
+    | '/api/public/email/inbound'
     | '/api/public/forms/$slug'
     | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
@@ -1018,6 +1028,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/settings'
     | '/api/public/booking/$slug'
+    | '/api/public/email/inbound'
     | '/api/public/forms/$slug'
     | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
@@ -1109,6 +1120,7 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices/'
     | '/_authenticated/settings/'
     | '/api/public/booking/$slug'
+    | '/api/public/email/inbound'
     | '/api/public/forms/$slug'
     | '/api/public/hooks/appointments'
     | '/api/public/hooks/sync-google-ads'
@@ -1159,6 +1171,7 @@ export interface RootRouteChildren {
   ApiPublicProcessOutboundRoute: typeof ApiPublicProcessOutboundRoute
   OauthMailboxReturnRoute: typeof OauthMailboxReturnRoute
   ApiPublicBookingSlugRoute: typeof ApiPublicBookingSlugRoute
+  ApiPublicEmailInboundRoute: typeof ApiPublicEmailInboundRouteWithChildren
   ApiPublicFormsSlugRoute: typeof ApiPublicFormsSlugRoute
   ApiPublicHooksAppointmentsRoute: typeof ApiPublicHooksAppointmentsRoute
   ApiPublicHooksSyncGoogleAdsRoute: typeof ApiPublicHooksSyncGoogleAdsRoute
@@ -1172,7 +1185,6 @@ export interface RootRouteChildren {
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiPublicBookingRescheduleTokenRoute: typeof ApiPublicBookingRescheduleTokenRoute
-  ApiPublicEmailInboundTokenRoute: typeof ApiPublicEmailInboundTokenRoute
   ApiPublicHooksMetaTokenRoute: typeof ApiPublicHooksMetaTokenRoute
   ApiPublicHooksWordpressTokenRoute: typeof ApiPublicHooksWordpressTokenRoute
   ApiPublicOauthGoogleAdsCallbackRoute: typeof ApiPublicOauthGoogleAdsCallbackRoute
@@ -1630,6 +1642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/email/inbound': {
+      id: '/api/public/email/inbound'
+      path: '/api/public/email/inbound'
+      fullPath: '/api/public/email/inbound'
+      preLoaderRoute: typeof ApiPublicEmailInboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/forms/$slug': {
       id: '/api/public/forms/$slug'
       path: '/api/public/forms/$slug'
@@ -1723,10 +1742,10 @@ declare module '@tanstack/react-router' {
     }
     '/api/public/email/inbound/$token': {
       id: '/api/public/email/inbound/$token'
-      path: '/api/public/email/inbound/$token'
+      path: '/$token'
       fullPath: '/api/public/email/inbound/$token'
       preLoaderRoute: typeof ApiPublicEmailInboundTokenRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiPublicEmailInboundRoute
     }
     '/api/public/hooks/meta/$token': {
       id: '/api/public/hooks/meta/$token'
@@ -1912,6 +1931,19 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiPublicEmailInboundRouteChildren {
+  ApiPublicEmailInboundTokenRoute: typeof ApiPublicEmailInboundTokenRoute
+}
+
+const ApiPublicEmailInboundRouteChildren: ApiPublicEmailInboundRouteChildren = {
+  ApiPublicEmailInboundTokenRoute: ApiPublicEmailInboundTokenRoute,
+}
+
+const ApiPublicEmailInboundRouteWithChildren =
+  ApiPublicEmailInboundRoute._addFileChildren(
+    ApiPublicEmailInboundRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -1935,6 +1967,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicProcessOutboundRoute: ApiPublicProcessOutboundRoute,
   OauthMailboxReturnRoute: OauthMailboxReturnRoute,
   ApiPublicBookingSlugRoute: ApiPublicBookingSlugRoute,
+  ApiPublicEmailInboundRoute: ApiPublicEmailInboundRouteWithChildren,
   ApiPublicFormsSlugRoute: ApiPublicFormsSlugRoute,
   ApiPublicHooksAppointmentsRoute: ApiPublicHooksAppointmentsRoute,
   ApiPublicHooksSyncGoogleAdsRoute: ApiPublicHooksSyncGoogleAdsRoute,
@@ -1948,7 +1981,6 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiPublicBookingRescheduleTokenRoute: ApiPublicBookingRescheduleTokenRoute,
-  ApiPublicEmailInboundTokenRoute: ApiPublicEmailInboundTokenRoute,
   ApiPublicHooksMetaTokenRoute: ApiPublicHooksMetaTokenRoute,
   ApiPublicHooksWordpressTokenRoute: ApiPublicHooksWordpressTokenRoute,
   ApiPublicOauthGoogleAdsCallbackRoute: ApiPublicOauthGoogleAdsCallbackRoute,
