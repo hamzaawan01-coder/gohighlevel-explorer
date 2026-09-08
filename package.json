@@ -114,5 +114,9 @@
     "overrides": {
       "entities": "4.5.0"
     }
+  },
+  "overrides": {
+    "browserslist": "^4.28.9",
+    "js-yaml": "^5.4.1"
   }
 }
