@@ -29,6 +29,8 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { NewDealDialog } from "@/components/NewDealDialog";
 import { DealDetailPanel } from "@/components/DealDetailPanel";
 import { PipelinesManagerPanel } from "@/components/PipelinesManagerPanel";
+import { DealCalendar } from "@/components/DealCalendar";
+
 import { BulkActionsPanel } from "@/components/BulkActionsPanel";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -454,7 +456,17 @@ function OpportunitiesPage() {
                       onOpenDeal={(id) => setOpenDealId(id)}
                     />
                   </div>
+                ) : view === "calendar" ? (
+                  <div className="h-full overflow-auto">
+                    <DealCalendar
+                      deals={filteredDeals}
+                      stages={stages}
+                      onSetDate={(dealId, date) => setDateMut.mutate({ dealId, date })}
+                      onOpenDeal={(id) => setOpenDealId(id)}
+                    />
+                  </div>
                 ) : (
+
                   <div className="h-full overflow-auto">
                     <OpportunitiesTable
                       deals={filteredDeals}
