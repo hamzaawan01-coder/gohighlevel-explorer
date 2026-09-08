@@ -132,11 +132,15 @@ export const disconnectMailbox = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-async function keyFor(userId: string, provider: MailProvider) {
+async function optionalKeyFor(userId: string, provider: MailProvider) {
   const { getConnectionKeyForUser } = await import("@/lib/app-user-connector.server");
   const { connectorFor } = await import("@/lib/mailbox.server");
-  const key = await getConnectionKeyForUser(userId, connectorFor(provider));
-  if (!key) throw new Error("NOT_CONNECTED");
+  return getConnectionKeyForUser(userId, connectorFor(provider));
+}
+
+async function keyFor(userId: string, provider: MailProvider) {
+  const key = await optionalKeyFor(userId, provider);
+  if (!key) throw new Error("Connect your email account first.");
   return key;
 }
 
@@ -145,10 +149,12 @@ export const listMailFolders = createServerFn({ method: "GET" })
   .inputValidator((data: { provider: MailProvider }) => data)
   .handler(async ({ data, context }): Promise<MailFolder[]> => {
     const provider = providerOf(data.provider);
-    const key = await keyFor(context.userId, provider);
+    const key = await optionalKeyFor(context.userId, provider);
+    if (!key) return [];
     const { fetchFolders } = await import("@/lib/mailbox.server");
     return fetchFolders(provider, key);
   });
+
 
 export const listMailMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -166,8 +172,10 @@ export const listMailMessages = createServerFn({ method: "GET" })
       context,
     }): Promise<{ items: MailListItem[]; nextPageToken: string | null }> => {
       const provider = providerOf(data.provider);
-      const key = await keyFor(context.userId, provider);
+      const key = await optionalKeyFor(context.userId, provider);
+      if (!key) return { items: [], nextPageToken: null };
       const { fetchMessages } = await import("@/lib/mailbox.server");
+
       return fetchMessages(provider, key, {
         folderId: data.folderId ?? null,
         search: data.search ?? null,
