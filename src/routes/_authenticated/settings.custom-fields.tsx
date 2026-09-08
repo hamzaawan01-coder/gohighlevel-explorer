@@ -295,8 +295,8 @@ function CustomFieldsSettings() {
                 <Plus className="size-3.5" /> Add field
               </Button>
             </form>
-          </section>
-        </div>
+            </div>
+          </SettingsSection>
       </SettingsShell>
       </PageBody>
     </AppShell>
