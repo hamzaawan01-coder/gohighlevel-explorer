@@ -205,12 +205,13 @@ function PipelinePage() {
 
   const loading = defaultQuery.isLoading || pipelinesQuery.isLoading || boardQuery.isLoading;
   const totalValue = filtered.reduce((s, d) => s + Number(d.value || 0), 0);
+  const boardCurrency = filtered[0]?.currency;
 
   return (
     <AppShell
       headerStatus={
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-          {filtered.length} leads · {money(totalValue)}
+          {filtered.length} leads · {money(totalValue, boardCurrency)}
         </span>
       }
     >
@@ -281,7 +282,7 @@ function PipelinePage() {
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <h2 className="text-sm font-bold uppercase tracking-wider">{stage.name}</h2>
                     <span className="font-mono text-[11px] text-muted-foreground">
-                      {items.length} · {money(value)}
+                      {items.length} · {money(value, items[0]?.currency ?? boardCurrency)}
                     </span>
                   </div>
                   {items.length === 0 ? (

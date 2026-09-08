@@ -43,6 +43,7 @@ import { DataTable, type Column } from "@/components/DataTable";
 import { ErrorState } from "@/components/ui/states";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import { toast } from "sonner";
+import { formatAmount } from "@/lib/custom-fields";
 
 export const Route = createFileRoute("/_authenticated/opportunities")({
   head: () => ({
@@ -161,6 +162,7 @@ function OpportunitiesPage() {
     mutationFn: async (input: {
       title: string;
       value: number;
+      currency?: string;
       stage_id: string;
       contact_id: string | null;
     }) => {
@@ -271,7 +273,7 @@ function OpportunitiesPage() {
                   <div key={d.id} className="p-4 border-b border-border">
                     <p className="text-xs font-semibold mb-1">{d.title}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      ${Number(d.value).toLocaleString()} ·{" "}
+                      {formatAmount(d.value, d.currency)} ·{" "}
                       {stages.find((s) => s.id === d.stage_id)?.name ?? "—"}
                     </p>
                   </div>
@@ -339,7 +341,7 @@ function OpportunitiesPage() {
                 </DropdownMenu>
 
                 <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
-                  {totalDeals} opportunities · ${totalValue.toLocaleString()}
+                  {totalDeals} opportunities · {formatAmount(totalValue, deals[0]?.currency)}
                 </span>
 
                 <div className="flex items-center gap-1 border border-border rounded-md p-0.5 bg-card">
@@ -583,7 +585,7 @@ function OpportunitiesTable({
       key: "value",
       header: "Value",
       sortValue: (d) => Number(d.value),
-      cell: (d) => <span className="font-mono">${Number(d.value).toLocaleString()}</span>,
+      cell: (d) => <span className="font-mono">{formatAmount(d.value, d.currency)}</span>,
     },
     {
       key: "owner",
