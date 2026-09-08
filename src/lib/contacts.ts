@@ -23,6 +23,7 @@ export type Contact = {
   notes: string | null;
   lifecycle_stage: LifecycleStage;
   lead_source: string | null;
+  custom_fields: Record<string, string | number | boolean | null>;
   created_at: string;
   updated_at: string;
 };
@@ -58,6 +59,7 @@ export type ContactInput = {
   notes?: string | null;
   lifecycle_stage?: LifecycleStage;
   lead_source?: string | null;
+  custom_fields?: Record<string, string | number | boolean | null>;
 };
 
 export async function createContact(

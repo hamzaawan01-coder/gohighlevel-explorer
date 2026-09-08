@@ -7,6 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { LIFECYCLE_STAGES, type Contact, type ContactInput, type LifecycleStage } from "@/lib/contacts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Switch } from "@/components/ui/switch";
+import { useTenancy } from "@/lib/tenancy";
+import { fetchCustomFields, type CustomFieldDef } from "@/lib/custom-fields";
 
 export function ContactDialog({
   open,
@@ -22,6 +26,17 @@ export function ContactDialog({
   const [form, setForm] = useState<ContactInput>({});
   const [tagInput, setTagInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const subId = useTenancy((s) => s.currentSubAccountId);
+  const customFieldsQuery = useQuery({
+    queryKey: ["custom-fields", subId, "contacts"],
+    queryFn: () => fetchCustomFields(subId!, "contacts"),
+    enabled: open && !!subId,
+  });
+  const defs: CustomFieldDef[] = customFieldsQuery.data ?? [];
+
+  function setCustom(key: string, value: string | number | boolean | null) {
+    setForm((f) => ({ ...f, custom_fields: { ...(f.custom_fields ?? {}), [key]: value } }));
+  }
 
   useEffect(() => {
     if (open) {
@@ -35,6 +50,7 @@ export function ContactDialog({
         notes: initial?.notes ?? "",
         lifecycle_stage: initial?.lifecycle_stage ?? "lead",
         lead_source: initial?.lead_source ?? "",
+        custom_fields: (initial?.custom_fields ?? {}) as Record<string, string | number | boolean | null>,
       });
       setTagInput("");
     }
@@ -69,6 +85,7 @@ export function ContactDialog({
         notes: form.notes?.toString().trim() || null,
         lead_source: form.lead_source?.toString().trim() || null,
         lifecycle_stage: form.lifecycle_stage ?? "lead",
+        custom_fields: form.custom_fields ?? {},
       });
       onOpenChange(false);
     } finally {
@@ -190,6 +207,69 @@ export function ContactDialog({
               </Button>
             </div>
           </div>
+          {defs.length > 0 && (
+            <div className="space-y-3 border-t border-border pt-3">
+              {defs.map((d) => {
+                const raw = (form.custom_fields ?? {})[d.key];
+                const id = `cf_${d.key}`;
+                return (
+                  <div key={d.id} className="space-y-2">
+                    <Label htmlFor={id}>
+                      {d.label}
+                      {d.required && <span className="text-destructive"> *</span>}
+                    </Label>
+                    {d.field_type === "textarea" ? (
+                      <Textarea
+                        id={id}
+                        rows={2}
+                        required={d.required}
+                        value={raw == null ? "" : String(raw)}
+                        onChange={(e) => setCustom(d.key, e.target.value)}
+                      />
+                    ) : d.field_type === "select" ? (
+                      <Select
+                        value={raw == null || raw === "" ? undefined : String(raw)}
+                        onValueChange={(v) => setCustom(d.key, v)}
+                      >
+                        <SelectTrigger id={id}>
+                          <SelectValue placeholder="Choose…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {d.options.map((o) => (
+                            <SelectItem key={o} value={o}>
+                              {o}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : d.field_type === "checkbox" ? (
+                      <div className="flex items-center gap-2">
+                        <Switch checked={!!raw} onCheckedChange={(v) => setCustom(d.key, v)} />
+                        <span className="text-xs text-muted-foreground">{raw ? "Yes" : "No"}</span>
+                      </div>
+                    ) : (
+                      <Input
+                        id={id}
+                        type={d.field_type === "number" ? "number" : d.field_type === "date" ? "date" : "text"}
+                        required={d.required}
+                        value={raw == null ? "" : String(raw)}
+                        onChange={(e) =>
+                          setCustom(
+                            d.key,
+                            d.field_type === "number"
+                              ? e.target.value === ""
+                                ? null
+                                : Number(e.target.value)
+                              : e.target.value,
+                          )
+                        }
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
