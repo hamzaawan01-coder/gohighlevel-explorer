@@ -48,15 +48,16 @@ async function ensureSubAccess(supabase: any, userId: string, subId: string) {
 /** Start OAuth: create signed state, return Facebook authorize URL. */
 export const startMetaOAuth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { subAccountId: string; redirectAfter?: string; mode?: "leads" | "messaging" }) =>
+  .inputValidator((d: { subAccountId: string; redirectAfter?: string; mode?: "leads" | "messaging" | "ads" }) =>
     z
       .object({
         subAccountId: z.string().uuid(),
         redirectAfter: z.string().optional(),
-        mode: z.enum(["leads", "messaging"]).optional(),
+        mode: z.enum(["leads", "messaging", "ads"]).optional(),
       })
       .parse(d),
   )
+
   .handler(async ({ data, context }) => {
     await ensureSubAccess(context.supabase, context.userId, data.subAccountId);
     if (!process.env.META_APP_ID) throw new Error("META_APP_ID is not configured yet. Ask an admin to add it.");
