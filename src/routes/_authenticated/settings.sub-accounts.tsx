@@ -58,6 +58,18 @@ function SubAccountsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const { currentSubAccountId } = useTenancy();
+  const archiveMut = useMutation({
+    mutationFn: (id: string) => archiveSubAccount(id),
+    onSuccess: (_r, id) => {
+      queryClient.invalidateQueries({ queryKey: ["my-sub-accounts"] });
+      if (currentSubAccountId === id) setCurrent(null);
+      toast.success("Sub-account removed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
   return (
     <AppShell
       headerStatus={
