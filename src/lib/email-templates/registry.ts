@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { template as teamInviteTemplate } from './team-invite'
 
 export interface TemplateEntry {
   component: ComponentType<any>
