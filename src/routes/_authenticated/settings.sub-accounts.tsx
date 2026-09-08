@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  archiveSubAccount,
   createSubAccount,
   fetchMyAgencies,
   fetchMySubAccounts,
@@ -19,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Building2 } from "lucide-react";
+import { Plus, Building2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings/sub-accounts")({
@@ -56,6 +57,18 @@ function SubAccountsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const { currentSubAccountId } = useTenancy();
+  const archiveMut = useMutation({
+    mutationFn: (id: string) => archiveSubAccount(id),
+    onSuccess: (_r, id) => {
+      queryClient.invalidateQueries({ queryKey: ["my-sub-accounts"] });
+      if (currentSubAccountId === id) setCurrent(null);
+      toast.success("Sub-account removed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   return (
     <AppShell
@@ -152,23 +165,43 @@ function SubAccountsPage() {
           {subs.map((s) => {
             const agency = agencies.find((a) => a.id === s.agency_id);
             return (
-              <button
+              <div
                 key={s.id}
-                onClick={() => setCurrent(s.id)}
-                className="text-left bg-card border border-border rounded-lg p-4 hover:border-primary transition-colors"
+                className="bg-card border border-border rounded-lg p-4 hover:border-primary transition-colors"
               >
                 <div className="flex items-start gap-3">
-                  <div className="size-9 rounded bg-accent/15 text-accent flex items-center justify-center">
-                    <Building2 className="size-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">{s.name}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {agency?.name ?? "Agency"} · {s.industry ?? "General"}
-                    </p>
-                  </div>
+                  <button
+                    onClick={() => setCurrent(s.id)}
+                    className="flex items-start gap-3 flex-1 min-w-0 text-left"
+                  >
+                    <div className="size-9 rounded bg-accent/15 text-accent flex items-center justify-center">
+                      <Building2 className="size-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{s.name}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {agency?.name ?? "Agency"} · {s.industry ?? "General"}
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    aria-label={`Remove ${s.name}`}
+                    disabled={archiveMut.isPending}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Remove "${s.name}"? Its data is kept but the workspace is hidden from everyone.`,
+                        )
+                      ) {
+                        archiveMut.mutate(s.id);
+                      }
+                    }}
+                    className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>

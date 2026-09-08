@@ -68,3 +68,11 @@ export async function createSubAccount(input: {
   if (error) throw error;
   return data as SubAccount;
 }
+
+export async function archiveSubAccount(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("sub_accounts")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw error;
+}
