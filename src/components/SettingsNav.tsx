@@ -87,100 +87,46 @@ function useVisibleItems() {
 }
 
 /**
- * Grouped vertical settings menu. Every section stays reachable without any
- * sideways scrolling, and the current section is highlighted.
+ * Compact "back to settings" bar shown at the top of every settings page.
+ * The settings home is a grid of tiles, so no sideways tab strip or side menu.
  */
 export function SettingsNav({ className = "" }: { className?: string }) {
-  const { items, active, pathname } = useVisibleItems();
-  const scroller = useRef<HTMLElement | null>(null);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    setOpen(false);
-    const el = scroller.current?.querySelector<HTMLElement>('[data-active="true"]');
-    el?.scrollIntoView({ block: "nearest" });
-  }, [pathname]);
-
-  const list = (
-    <nav ref={scroller} aria-label="Settings sections" className="flex flex-col gap-5">
-      {GROUP_LABELS.map((g) => {
-        const groupItems = items.filter((i) => i.group === g.key);
-        if (groupItems.length === 0) return null;
-        return (
-          <div key={g.key}>
-            <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              {g.label}
-            </p>
-            <ul className="space-y-0.5">
-              {groupItems.map((item) => {
-                const isActive = active?.to === item.to;
-                return (
-                  <li key={item.to}>
-                    <Link
-                      to={item.to}
-                      data-active={isActive ? "true" : "false"}
-                      aria-current={isActive ? "page" : undefined}
-                      className={[
-                        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        isActive
-                          ? "border-l-2 border-primary bg-primary/10 pl-2.5 font-semibold text-foreground"
-                          : "font-medium text-muted-foreground hover:bg-secondary hover:text-foreground",
-                      ].join(" ")}
-                    >
-                      <item.icon className="size-4 shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        );
-      })}
-    </nav>
-  );
-
+  const { active } = useVisibleItems();
+  if (active?.to === "/settings") return null;
   return (
     <div className={className}>
-      {/* Mobile: collapsible picker so the menu never pushes content off screen */}
-      <div className="lg:hidden">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-semibold"
-        >
-          <span className="flex items-center gap-2">
-            {active ? <active.icon className="size-4 text-muted-foreground" /> : null}
-            {active?.label ?? "Settings"}
-          </span>
-          <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
-        </button>
-        {open ? <div className="mt-2 rounded-lg border border-border bg-card p-2">{list}</div> : null}
-      </div>
-
-      {/* Desktop: persistent grouped sub-menu */}
-      <div className="hidden lg:block">
-        <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-xl border border-border bg-card p-3">
-          {list}
-        </div>
-      </div>
+      <Link
+        to="/settings"
+        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 -ml-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <ArrowLeft className="size-3.5" />
+        All settings
+      </Link>
     </div>
   );
 }
 
 /**
- * Two-column settings layout: grouped sub-menu on the left, page content on the
- * right. Wrap the body of every settings route in this so they share one shape.
+ * Settings page frame: one wide column with a back link to the settings grid.
  */
 export function SettingsShell({ children }: { children: ReactNode }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <SettingsNav />
       <div className="min-w-0 space-y-6">{children}</div>
     </div>
   );
 }
+
+/** Every settings destination, grouped, for the settings home grid. */
+export function useSettingsGroups() {
+  const { items } = useVisibleItems();
+  return GROUP_LABELS.map((g) => ({
+    label: g.label,
+    items: items.filter((i) => i.group === g.key && i.to !== "/settings"),
+  })).filter((g) => g.items.length > 0);
+}
+
 
 /** A titled group of settings rows, matching the shape used across settings. */
 export function SettingsSection({
