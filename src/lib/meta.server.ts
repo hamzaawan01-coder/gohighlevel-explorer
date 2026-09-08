@@ -35,7 +35,14 @@ export const META_MESSAGING_SCOPES = [
   "instagram_manage_messages",
 ] as const;
 
-export type MetaOAuthMode = "leads" | "messaging";
+/**
+ * Ads scopes, requested only when the user explicitly wants ad accounts and
+ * campaign spend pulled in. `ads_read` is what makes /me/adaccounts return
+ * anything at all, so a lead-only connection never sees ad accounts.
+ */
+export const META_ADS_SCOPES = ["ads_read"] as const;
+
+export type MetaOAuthMode = "leads" | "messaging" | "ads";
 
 export function metaScopes(mode: MetaOAuthMode = "leads"): string[] {
   const extra = (process.env.META_EXTRA_SCOPES || "")
@@ -43,8 +50,10 @@ export function metaScopes(mode: MetaOAuthMode = "leads"): string[] {
     .map((s) => s.trim())
     .filter(Boolean);
   const messaging = mode === "messaging" ? [...META_MESSAGING_SCOPES] : [];
-  return [...new Set([...META_BASE_SCOPES, ...messaging, ...extra])];
+  const ads = mode === "ads" ? [...META_ADS_SCOPES] : [];
+  return [...new Set([...META_BASE_SCOPES, ...messaging, ...ads, ...extra])];
 }
+
 
 /** Backwards-compatible export used by UI/setup panels. */
 export const META_SCOPES = META_BASE_SCOPES;
