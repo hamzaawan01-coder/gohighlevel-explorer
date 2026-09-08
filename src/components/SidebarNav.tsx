@@ -72,6 +72,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Inbox", icon: Inbox, to: "/inbox", module: "conversations", badge: "inbox", keywords: "messages unread" },
       { label: "Conversations", icon: MessageSquare, to: "/conversations", module: "conversations", keywords: "sms whatsapp chat" },
       { label: "Message delivery", icon: Send, to: "/messaging", module: "conversations", keywords: "textmagic twilio sms status pending sent failed" },
+      { label: "Mailbox", icon: Mail, to: "/mailbox", module: "mailbox", keywords: "email gmail outlook inbox compose" },
+
 
       { label: "Calls", icon: PhoneCall, to: "/calls", module: "calls", keywords: "phone voice history" },
       { label: "Calendar", icon: Calendar, to: "/calendar", module: "calendar", keywords: "appointments bookings" },
