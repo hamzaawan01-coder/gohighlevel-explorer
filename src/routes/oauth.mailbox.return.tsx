@@ -23,31 +23,42 @@ function MailboxOAuthReturn() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const notify = (
-      type: "mailboxOAuthComplete" | "mailboxOAuthFailed",
-      code?: string | null,
-    ) => {
-      window.opener?.postMessage(
-        { type, connectorId: params.get("connector_id"), code: code ?? null },
-        window.location.origin,
-      );
-      window.close();
-    };
+    const opener = window.opener as Window | null;
 
     if (params.get("success") !== "true") {
       setMessage(params.get("error") ?? "Sign-in did not complete. You can close this window.");
-      notify("mailboxOAuthFailed");
+      opener?.postMessage({ type: "mailboxOAuthFailed", code: null }, window.location.origin);
+      if (opener) window.close();
       return;
     }
     const code = params.get("code");
     if (!code) {
       setMessage("Sign-in completed but no confirmation was returned.");
-      notify("mailboxOAuthFailed");
+      opener?.postMessage({ type: "mailboxOAuthFailed", code: null }, window.location.origin);
+      if (opener) window.close();
       return;
     }
-    setMessage("Connected. You can close this window.");
-    notify("mailboxOAuthComplete", code);
+
+    if (opener) {
+      setMessage("Connected. You can close this window.");
+      opener.postMessage({ type: "mailboxOAuthComplete", code }, window.location.origin);
+      window.close();
+      return;
+    }
+
+    // Opened as a standalone tab: finish the link here, then go to the mailbox.
+    void (async () => {
+      try {
+        const { completeMailboxConnect } = await import("@/lib/mailbox.functions");
+        await completeMailboxConnect({ data: { code } });
+        setMessage("Connected. Taking you to your mailbox…");
+      } catch {
+        setMessage("We could not finish connecting. Please try again from the Mailbox page.");
+      }
+      window.location.replace("/mailbox");
+    })();
   }, []);
+
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-8 text-foreground">

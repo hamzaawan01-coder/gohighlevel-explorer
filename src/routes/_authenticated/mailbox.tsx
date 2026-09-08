@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { beginOAuthHandoff } from "@/lib/oauth-handoff";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -81,34 +83,33 @@ function sizeLabel(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Open the provider sign-in in a popup and wait for our return page. */
-function waitForCode(popup: Window) {
+/** Wait for the sign-in window to report back with the one-time code. */
+function waitForCode() {
   return new Promise<string>((resolve, reject) => {
-    let poll: number | undefined;
+    let timer: number | undefined;
     const cleanup = () => {
       window.removeEventListener("message", onMessage);
-      if (poll !== undefined) window.clearInterval(poll);
+      if (timer !== undefined) window.clearTimeout(timer);
     };
     const onMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin || event.source !== popup) return;
+      if (event.origin !== window.location.origin) return;
       const type = event.data?.type;
       if (type !== "mailboxOAuthComplete" && type !== "mailboxOAuthFailed") return;
       cleanup();
       if (type === "mailboxOAuthComplete" && typeof event.data?.code === "string") {
         resolve(event.data.code);
       } else {
-        popup.close();
         reject(new Error("Sign-in was not completed."));
       }
     };
     window.addEventListener("message", onMessage);
-    poll = window.setInterval(() => {
-      if (!popup.closed) return;
+    timer = window.setTimeout(() => {
       cleanup();
-      reject(new Error("The sign-in window was closed."));
-    }, 500);
+      reject(new Error("Sign-in timed out. Please try again."));
+    }, 5 * 60 * 1000);
   });
 }
+
 
 function MailboxPage() {
   const { ready } = useSessionReady();
@@ -171,28 +172,25 @@ function MailboxPage() {
 
   async function connect(target: MailProvider) {
     setConnecting(target);
-    const popup = window.open("", "mailbox-oauth", "width=600,height=720");
-    if (!popup) {
-      setConnecting(null);
-      toast.error("Allow pop-ups for this site, then try again.");
-      return;
-    }
+    // Google refuses to render inside the editor preview frame, so hand the
+    // sign-in to a real top-level tab/window instead of a framed popup.
+    const handoff = beginOAuthHandoff();
     try {
       const { authorizationUrl } = await startMailboxConnect({ data: { provider: target } });
-      const pending = waitForCode(popup);
-      popup.location.href = authorizationUrl;
+      const pending = waitForCode();
+      handoff(authorizationUrl);
       const code = await pending;
       const result = await completeMailboxConnect({ data: { code } });
       toast.success(result.email ? `Connected ${result.email}` : "Mail account connected");
       setProvider(target);
       await qc.invalidateQueries({ queryKey: ["mailbox"] });
     } catch (error) {
-      popup.close();
       toast.error(error instanceof Error ? error.message : "Could not connect that account.");
     } finally {
       setConnecting(null);
     }
   }
+
 
   const disconnectMut = useMutation({
     mutationFn: () => disconnectMailbox({ data: { provider } }),
