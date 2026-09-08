@@ -26,7 +26,7 @@ export const MODULES: ModuleDef[] = [
     key: "opportunities",
     label: "Opportunities",
     description: "Pipelines, stages and deal kanban board.",
-    paths: ["/opportunities", "/deals"],
+    paths: ["/opportunities", "/deals", "/pipeline"],
   },
   {
     key: "contacts",
