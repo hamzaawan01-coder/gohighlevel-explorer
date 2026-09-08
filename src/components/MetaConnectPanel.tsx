@@ -464,6 +464,18 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
                 Enable DM replies
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => connect.mutate("ads")}
+                disabled={connect.isPending}
+                title="Adds permission to read your ad accounts and campaign spend."
+              >
+                <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
+                Connect ad accounts
+              </Button>
+
 
               {pages.length > 0 && (
                 <Button
