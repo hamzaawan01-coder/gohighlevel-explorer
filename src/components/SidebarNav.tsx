@@ -18,6 +18,8 @@ import {
   FileText,
   Receipt,
   Inbox,
+  Mail,
+
   CalendarClock,
   Megaphone,
   PhoneCall,
