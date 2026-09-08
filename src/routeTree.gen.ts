@@ -34,6 +34,7 @@ import { Route as AuthenticatedMarketingRouteImport } from './routes/_authentica
 import { Route as AuthenticatedMessagingRouteImport } from './routes/_authenticated/messaging'
 import { Route as AuthenticatedModulesExplorerRouteImport } from './routes/_authenticated/modules-explorer'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
+import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
@@ -222,6 +223,11 @@ const AuthenticatedOpportunitiesRoute =
     path: '/opportunities',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -571,6 +577,7 @@ export interface FileRoutesByFullPath {
   '/messaging': typeof AuthenticatedMessagingRoute
   '/modules-explorer': typeof AuthenticatedModulesExplorerRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
+  '/pipeline': typeof AuthenticatedPipelineRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/templates': typeof AuthenticatedTemplatesRoute
@@ -654,6 +661,7 @@ export interface FileRoutesByTo {
   '/messaging': typeof AuthenticatedMessagingRoute
   '/modules-explorer': typeof AuthenticatedModulesExplorerRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
+  '/pipeline': typeof AuthenticatedPipelineRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/templates': typeof AuthenticatedTemplatesRoute
@@ -739,6 +747,7 @@ export interface FileRoutesById {
   '/_authenticated/messaging': typeof AuthenticatedMessagingRoute
   '/_authenticated/modules-explorer': typeof AuthenticatedModulesExplorerRoute
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
+  '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
@@ -824,6 +833,7 @@ export interface FileRouteTypes {
     | '/messaging'
     | '/modules-explorer'
     | '/opportunities'
+    | '/pipeline'
     | '/reports'
     | '/tasks'
     | '/templates'
@@ -907,6 +917,7 @@ export interface FileRouteTypes {
     | '/messaging'
     | '/modules-explorer'
     | '/opportunities'
+    | '/pipeline'
     | '/reports'
     | '/tasks'
     | '/templates'
@@ -991,6 +1002,7 @@ export interface FileRouteTypes {
     | '/_authenticated/messaging'
     | '/_authenticated/modules-explorer'
     | '/_authenticated/opportunities'
+    | '/_authenticated/pipeline'
     | '/_authenticated/reports'
     | '/_authenticated/tasks'
     | '/_authenticated/templates'
@@ -1272,6 +1284,13 @@ declare module '@tanstack/react-router' {
       path: '/opportunities'
       fullPath: '/opportunities'
       preLoaderRoute: typeof AuthenticatedOpportunitiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pipeline': {
+      id: '/_authenticated/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof AuthenticatedPipelineRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports': {
@@ -1689,6 +1708,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMessagingRoute: typeof AuthenticatedMessagingRoute
   AuthenticatedModulesExplorerRoute: typeof AuthenticatedModulesExplorerRoute
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
+  AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
@@ -1730,6 +1750,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMessagingRoute: AuthenticatedMessagingRoute,
   AuthenticatedModulesExplorerRoute: AuthenticatedModulesExplorerRoute,
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
+  AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
