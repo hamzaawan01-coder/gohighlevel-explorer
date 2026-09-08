@@ -46,6 +46,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MetaLeadSourcePanel } from "@/components/MetaLeadSourcePanel";
+import { DealTimeline } from "@/components/DealTimeline";
+
 
 export function DealDetailPanel({
   dealId,
@@ -191,6 +193,7 @@ export function DealDetailPanel({
       <Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden min-h-0">
         <TabsList className="mx-6 mt-3 self-start">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="tasks">Tasks · {openTasks.length}</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
@@ -208,6 +211,11 @@ export function DealDetailPanel({
           {contact && <ContactInfoCard contact={contact} />}
           {subId && <MetaLeadSourcePanel subId={subId} dealId={d.id} />}
         </TabsContent>
+
+        <TabsContent value="timeline" className="flex-1 overflow-auto px-6 py-4">
+          <DealTimeline deal={d} />
+        </TabsContent>
+
 
 
         <TabsContent value="messages" className="flex-1 overflow-auto px-6 py-4">
