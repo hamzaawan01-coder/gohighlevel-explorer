@@ -58,6 +58,15 @@ export const MODULES: ModuleDef[] = [
     description: "Two-way SMS, WhatsApp, email and social DMs.",
     paths: ["/conversations", "/inbox", "/messaging"],
   },
+  {
+
+    key: "mailbox",
+    label: "Mailbox",
+    description: "Each user signs in to their own Gmail or Outlook inbox inside the CRM.",
+    paths: ["/mailbox"],
+  },
+
+
 
   {
     key: "calls",

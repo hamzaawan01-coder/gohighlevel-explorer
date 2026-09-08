@@ -38,7 +38,7 @@
 - [ ] Add /connect page with AI assistant (MCP) connection + refresh instructions
 
 ## Mailbox (in progress)
-- [ ] Google/Microsoft sign-in mailbox: customer connects their own Gmail/Outlook (needs Google + Microsoft app registration from Hamza)
-- [ ] Full mail page: folders, search, attachments, compose
+- [x] Google/Microsoft sign-in mailbox: customer connects their own Gmail/Outlook (needs Google + Microsoft app registration from Hamza)
+- [x] Full mail page: folders, search, attachments, compose
 - [ ] Forward-into-CRM address per account for other providers
 - [ ] Blocked (Meta): Messenger + Instagram messaging permissions not yet approved, so no DMs arrive
