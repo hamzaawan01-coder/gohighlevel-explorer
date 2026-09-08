@@ -28,6 +28,7 @@ export type Deal = {
   contact_id: string | null;
   owner_id: string | null;
   expected_close_date: string | null;
+  custom_fields: Record<string, string | number | boolean | null>;
   created_at: string;
   updated_at: string;
 };
@@ -193,6 +194,7 @@ export async function createDeal(input: {
   currency?: string;
   owner_id: string;
   contact_id?: string | null;
+  custom_fields?: Record<string, string | number | boolean | null>;
 }) {
   const { data, error } = await supabase
     .from("deals")
@@ -205,6 +207,7 @@ export async function createDeal(input: {
       ...(input.currency ? { currency: input.currency } : {}),
       owner_id: input.owner_id,
       contact_id: input.contact_id ?? null,
+      custom_fields: input.custom_fields ?? {},
     })
     .select("*")
     .single();
@@ -238,6 +241,7 @@ export type DealUpdate = Partial<{
   notes: string | null;
   contact_id: string | null;
   expected_close_date: string | null;
+  custom_fields: Record<string, string | number | boolean | null>;
 }>;
 
 export async function updateDeal(dealId: string, patch: DealUpdate): Promise<Deal> {

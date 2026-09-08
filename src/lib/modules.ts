@@ -115,7 +115,10 @@ export const MODULES: ModuleDef[] = [
     label: "Recycle bin",
     description: "Restore deleted contacts, opportunities, tasks and invoices.",
     paths: ["/recycle-bin"],
+    // Deleted records land here, so it must always be reachable regardless of plan.
+    locked: true,
   },
+
   {
     key: "integrations",
     label: "Integrations",

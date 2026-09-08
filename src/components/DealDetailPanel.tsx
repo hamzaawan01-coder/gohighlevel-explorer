@@ -36,7 +36,8 @@ import {
 import { formatBytes, isImage } from "@/lib/contact-files";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { CURRENCIES, formatAmount } from "@/lib/custom-fields";
+import { CURRENCIES, formatAmount, fetchCustomFields, type CustomFieldDef, type CustomFieldValues } from "@/lib/custom-fields";
+import { CustomFieldInputs } from "@/components/CustomFieldInputs";
 import {
   Select,
   SelectContent,
@@ -355,6 +356,20 @@ function OverviewTab({
   const [contactId, setContactId] = useState<string>(deal.contact_id ?? "__none");
   const [closeDate, setCloseDate] = useState(deal.expected_close_date ?? "");
   const [currency, setCurrency] = useState(deal.currency ?? "GBP");
+  const subId = useTenancy((s) => s.currentSubAccountId);
+  const [customValues, setCustomValues] = useState<CustomFieldValues>(
+    (deal.custom_fields ?? {}) as CustomFieldValues,
+  );
+  const dealFieldsQuery = useQuery({
+    queryKey: ["custom-fields", subId, "deals"],
+    queryFn: () => fetchCustomFields(subId!, "deals"),
+    enabled: !!subId,
+  });
+  const dealFieldDefs: CustomFieldDef[] = dealFieldsQuery.data ?? [];
+
+  useEffect(() => {
+    setCustomValues((deal.custom_fields ?? {}) as CustomFieldValues);
+  }, [deal.id, deal.custom_fields]);
 
   useEffect(() => {
     setTitle(deal.title);
@@ -371,7 +386,8 @@ function OverviewTab({
     stageId !== deal.stage_id ||
     (contactId === "__none" ? null : contactId) !== deal.contact_id ||
     currency !== (deal.currency ?? "GBP") ||
-    (closeDate || null) !== (deal.expected_close_date ?? null);
+    (closeDate || null) !== (deal.expected_close_date ?? null) ||
+    JSON.stringify(customValues) !== JSON.stringify(deal.custom_fields ?? {});
 
   return (
     <div className="space-y-4">
@@ -432,6 +448,14 @@ function OverviewTab({
         </Field>
       </div>
 
+      {dealFieldDefs.length > 0 && (
+        <CustomFieldInputs
+          defs={dealFieldDefs}
+          values={customValues}
+          onChange={(key, v) => setCustomValues((prev) => ({ ...prev, [key]: v }))}
+        />
+      )}
+
       <div className="rounded-md border border-border p-4 text-xs text-muted-foreground">
         Added {formatDistanceToNow(new Date((deal as unknown as { created_at: string }).created_at ?? Date.now()), { addSuffix: true })}
       </div>
@@ -447,6 +471,7 @@ function OverviewTab({
               stage_id: stageId,
               contact_id: contactId === "__none" ? null : contactId,
               expected_close_date: closeDate || null,
+              custom_fields: customValues,
             })
           }
           className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground rounded-md py-1.5 px-3 text-xs font-medium hover:bg-primary/90 disabled:opacity-50"

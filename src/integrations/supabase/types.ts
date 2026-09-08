@@ -1406,6 +1406,7 @@ export type Database = {
           contact_id: string | null
           created_at: string
           currency: string
+          custom_fields: Json
           deleted_at: string | null
           deleted_by: string | null
           expected_close_date: string | null
@@ -1424,6 +1425,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           currency?: string
+          custom_fields?: Json
           deleted_at?: string | null
           deleted_by?: string | null
           expected_close_date?: string | null
@@ -1442,6 +1444,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           currency?: string
+          custom_fields?: Json
           deleted_at?: string | null
           deleted_by?: string | null
           expected_close_date?: string | null

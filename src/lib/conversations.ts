@@ -117,14 +117,25 @@ export async function ensureConversation(
     .eq("channel", channel)
     .maybeSingle();
   if (existing) return existing as Conversation;
+  // Always derive the workspace from the contact itself: the selected workspace in
+  // the switcher can be stale or belong to a different workspace than the contact,
+  // which would fail the row-level security check on insert.
+  const { data: contact, error: contactError } = await supabase
+    .from("contacts")
+    .select("sub_account_id")
+    .eq("id", contactId)
+    .maybeSingle();
+  if (contactError) throw contactError;
+  const owningSubId = (contact?.sub_account_id as string | undefined) ?? subAccountId;
   const { data, error } = await supabase
     .from("conversations")
-    .insert({ sub_account_id: subAccountId, contact_id: contactId, channel })
+    .insert({ sub_account_id: owningSubId, contact_id: contactId, channel })
     .select("*")
     .single();
   if (error) throw error;
   return data as Conversation;
 }
+
 
 export async function fetchMessages(conversationId: string): Promise<Message[]> {
   const { data, error } = await supabase

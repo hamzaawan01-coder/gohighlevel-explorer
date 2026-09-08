@@ -14,7 +14,8 @@ import type { Stage } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import { useTenancy } from "@/lib/tenancy";
 import { useQuery } from "@tanstack/react-query";
-import { CURRENCIES, fetchDefaultCurrency } from "@/lib/custom-fields";
+import { CURRENCIES, fetchDefaultCurrency, fetchCustomFields, type CustomFieldDef, type CustomFieldValues } from "@/lib/custom-fields";
+import { CustomFieldInputs } from "@/components/CustomFieldInputs";
 
 const NO_CONTACT = "__none__";
 
@@ -33,6 +34,7 @@ export function NewDealDialog({
     currency: string;
     stage_id: string;
     contact_id: string | null;
+    custom_fields: CustomFieldValues;
   }) => Promise<void>;
 }) {
   const [title, setTitle] = useState("");
@@ -41,6 +43,7 @@ export function NewDealDialog({
   const [contactId, setContactId] = useState<string>(NO_CONTACT);
   const [currency, setCurrency] = useState<string>("GBP");
   const [submitting, setSubmitting] = useState(false);
+  const [customValues, setCustomValues] = useState<CustomFieldValues>({});
 
   useEffect(() => {
     if (open) {
@@ -48,6 +51,7 @@ export function NewDealDialog({
       setValue("");
       setStageId(stages[0]?.id ?? "");
       setContactId(NO_CONTACT);
+      setCustomValues({});
     }
   }, [open, stages]);
 
@@ -66,6 +70,13 @@ export function NewDealDialog({
     queryFn: () => fetchContacts(subId!),
     enabled: open && !!subId,
   });
+
+  const customFieldsQuery = useQuery({
+    queryKey: ["custom-fields", subId, "deals"],
+    queryFn: () => fetchCustomFields(subId!, "deals"),
+    enabled: open && !!subId,
+  });
+  const dealFieldDefs: CustomFieldDef[] = customFieldsQuery.data ?? [];
 
   const contacts = contactsQuery.data ?? [];
   const contactOptions = useMemo(
@@ -92,6 +103,7 @@ export function NewDealDialog({
         currency,
         stage_id: stageId,
         contact_id: contactId === NO_CONTACT ? null : contactId,
+        custom_fields: customValues,
       });
       onOpenChange(false);
     } finally {
@@ -181,6 +193,11 @@ export function NewDealDialog({
               </p>
             )}
           </div>
+          <CustomFieldInputs
+            defs={dealFieldDefs}
+            values={customValues}
+            onChange={(key, v) => setCustomValues((prev) => ({ ...prev, [key]: v }))}
+          />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
