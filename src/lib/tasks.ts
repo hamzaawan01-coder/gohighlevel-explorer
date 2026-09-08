@@ -50,6 +50,7 @@ export async function fetchTasks(subAccountId: string): Promise<Task[]> {
     .from("tasks")
     .select("*")
     .eq("sub_account_id", subAccountId)
+    .is("deleted_at", null)
     .order("due_at", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -91,6 +92,6 @@ export async function updateTask(id: string, input: Partial<TaskInput>): Promise
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  const { error } = await supabase.from("tasks").delete().eq("id", id);
-  if (error) throw error;
+  const { softDelete } = await import("@/lib/recycle-bin");
+  await softDelete("tasks", id);
 }

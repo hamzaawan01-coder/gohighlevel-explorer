@@ -173,6 +173,7 @@ export async function fetchBoard(pipelineId: string) {
       .from("deals")
       .select("*")
       .eq("pipeline_id", pipelineId)
+      .is("deleted_at", null)
       .order("position", { ascending: true }),
   ]);
   if (stagesRes.error) throw stagesRes.error;
@@ -248,7 +249,7 @@ export async function updateDeal(dealId: string, patch: DealUpdate): Promise<Dea
 }
 
 export async function deleteDeal(dealId: string): Promise<void> {
-  const { error } = await supabase.from("deals").delete().eq("id", dealId);
-  if (error) throw error;
+  const { softDelete } = await import("@/lib/recycle-bin");
+  await softDelete("deals", dealId);
 }
 

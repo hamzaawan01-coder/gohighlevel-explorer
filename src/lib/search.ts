@@ -23,6 +23,7 @@ export async function globalSearch(
       .from("contacts")
       .select("id, first_name, last_name, email, company")
       .eq("sub_account_id", subAccountId)
+      .is("deleted_at", null)
       .or(
         `first_name.ilike.${like},last_name.ilike.${like},email.ilike.${like},company.ilike.${like}`,
       )
@@ -31,12 +32,14 @@ export async function globalSearch(
       .from("deals")
       .select("id, title, value")
       .eq("sub_account_id", subAccountId)
+      .is("deleted_at", null)
       .ilike("title", like)
       .limit(6),
     supabase
       .from("tasks")
       .select("id, title, status")
       .eq("sub_account_id", subAccountId)
+      .is("deleted_at", null)
       .ilike("title", like)
       .limit(6),
     supabase

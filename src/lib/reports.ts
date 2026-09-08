@@ -55,15 +55,18 @@ export async function fetchReports(subAccountId: string): Promise<ReportData> {
     supabase
       .from("deals")
       .select("id,title,value,stage_id,owner_id,contact_id,created_at,updated_at")
-      .eq("sub_account_id", subAccountId),
+      .eq("sub_account_id", subAccountId)
+      .is("deleted_at", null),
     supabase
       .from("contacts")
       .select("id,lead_source,owner_id,created_at")
-      .eq("sub_account_id", subAccountId),
+      .eq("sub_account_id", subAccountId)
+      .is("deleted_at", null),
     supabase
       .from("tasks")
       .select("id,assigned_to,status,completed_at")
-      .eq("sub_account_id", subAccountId),
+      .eq("sub_account_id", subAccountId)
+      .is("deleted_at", null),
     fetchMemberNames(subAccountId),
   ]);
 

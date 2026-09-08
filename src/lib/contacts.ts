@@ -32,6 +32,7 @@ export async function fetchContacts(subAccountId: string): Promise<Contact[]> {
     .from("contacts")
     .select("*")
     .eq("sub_account_id", subAccountId)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Contact[];
@@ -91,6 +92,6 @@ export async function updateContact(id: string, input: ContactInput) {
 }
 
 export async function deleteContact(id: string) {
-  const { error } = await supabase.from("contacts").delete().eq("id", id);
-  if (error) throw error;
+  const { softDelete } = await import("@/lib/recycle-bin");
+  await softDelete("contacts", id);
 }
