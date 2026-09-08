@@ -104,6 +104,21 @@ function TeamPage() {
     }
   };
 
+  const resendEmail = async (id: string, email: string) => {
+    try {
+      const { fetchInvitationToken } = await import("@/lib/invitations");
+      const { sendInvitationEmail } = await import("@/lib/invite-email.functions");
+      const token = await fetchInvitationToken(id);
+      const res = await sendInvitationEmail({
+        data: { invitationId: id, inviteUrl: buildInviteUrl(token) },
+      });
+      if (res?.sent) toast.success(`Invitation emailed to ${email}`);
+      else toast.info("Email could not be delivered — share the invite link instead.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not send the invitation email");
+    }
+  };
+
   return (
     <AppShell
       headerStatus={
@@ -193,6 +208,9 @@ function TeamPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => resendEmail(inv.id, inv.email)}>
+                      <Mail className="size-3.5 mr-1.5" /> Resend email
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => copyLink(inv.id)}>
                       <Copy className="size-3.5 mr-1.5" /> Copy link
                     </Button>
