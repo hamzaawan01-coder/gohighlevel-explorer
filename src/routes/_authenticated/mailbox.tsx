@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { beginOAuthHandoff } from "@/lib/oauth-handoff";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
