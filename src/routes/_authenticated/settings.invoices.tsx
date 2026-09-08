@@ -299,8 +299,8 @@ function InvoiceTemplatesPage() {
           </div>
         }
       />
-      <SettingsShell>
       <PageBody>
+      <SettingsShell>
         {q.isLoading ? (
           <PanelSkeleton />
         ) : q.error ? (
