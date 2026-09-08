@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export type PaletteKey = "emerald" | "navy" | "slate" | "indigo" | "graphite";
+export type PaletteKey = "mono" | "emerald" | "navy" | "slate" | "indigo" | "graphite";
 export type ModeKey = "light" | "dark" | "system";
 export type DensityKey = "comfortable" | "compact";
 
@@ -13,6 +13,12 @@ export type PalettePreset = {
 };
 
 export const PALETTES: PalettePreset[] = [
+  {
+    key: "mono",
+    label: "Mono Graphite",
+    description: "Black type on white with black buttons — plain, sharp, no colour accent.",
+    swatch: ["#111111", "#4a4a4a", "#f2f2f2", "#ffffff"],
+  },
   {
     key: "emerald",
     label: "Emerald Prestige",
@@ -46,14 +52,14 @@ export const PALETTES: PalettePreset[] = [
 ];
 
 export const DEFAULT_APPEARANCE = {
-  palette: "emerald" as PaletteKey,
+  palette: "mono" as PaletteKey,
   mode: "light" as ModeKey,
   density: "comfortable" as DensityKey,
 };
 
 export type Appearance = typeof DEFAULT_APPEARANCE;
 
-const KEY = "app.appearance.v1";
+const KEY = "app.appearance.v2";
 const EVENT = "app-appearance-change";
 
 function isPalette(v: unknown): v is PaletteKey {
@@ -142,4 +148,4 @@ export function useAppearance() {
 /** Inline script injected in <head> so the theme is applied before first paint. */
 export const APPEARANCE_BOOTSTRAP = `(function(){try{var a=JSON.parse(localStorage.getItem(${JSON.stringify(
   KEY,
-)})||"{}");var p=a.palette||"emerald";var m=a.mode||"light";var d=a.density||"comfortable";var r=document.documentElement;r.dataset.palette=p;r.dataset.density=d;var dark=m==="dark"||(m==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);r.classList.toggle("dark",dark);r.style.colorScheme=dark?"dark":"light";}catch(e){}})();`;
+)})||"{}");var p=a.palette||"mono";var m=a.mode||"light";var d=a.density||"comfortable";var r=document.documentElement;r.dataset.palette=p;r.dataset.density=d;var dark=m==="dark"||(m==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);r.classList.toggle("dark",dark);r.style.colorScheme=dark?"dark":"light";}catch(e){}})();`;

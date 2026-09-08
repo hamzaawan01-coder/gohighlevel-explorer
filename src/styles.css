@@ -110,7 +110,8 @@
  * Light palettes
  * ---------------------------------------------------------------- */
 /* Default: mono graphite — white surfaces, near-black text, black actions */
-:root {
+:root,
+[data-palette="mono"] {
   --background: oklch(1 0 0);
   --foreground: oklch(0.16 0 0);
   --card: oklch(1 0 0);
@@ -336,7 +337,8 @@
   --chart-5: oklch(0.7 0.18 20);
 }
 
-.dark {
+.dark,
+.dark[data-palette="mono"] {
   --background: oklch(0.15 0 0);
   --foreground: oklch(0.97 0 0);
   --card: oklch(0.2 0 0);
