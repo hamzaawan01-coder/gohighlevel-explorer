@@ -80,7 +80,7 @@ function OpportunitiesPage() {
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("opportunities");
-  const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [view, setView] = useState<"kanban" | "list" | "calendar">("kanban");
   const [search, setSearch] = useState("");
   const [savedView, setSavedView] = useState<SavedView>("all");
   const [newDealOpen, setNewDealOpen] = useState(false);
@@ -399,7 +399,21 @@ function OpportunitiesPage() {
                     >
                       <List className="size-3.5" />
                     </button>
+                    <button
+                      onClick={() => setView("calendar")}
+                      title="Calendar view"
+                      aria-label="Calendar view"
+                      aria-pressed={view === "calendar"}
+                      className={`size-7 rounded flex items-center justify-center ${
+                        view === "calendar"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <CalendarDays className="size-3.5" />
+                    </button>
                   </div>
+
                   <button
                     disabled
                     title="Coming soon"
