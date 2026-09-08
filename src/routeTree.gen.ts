@@ -79,6 +79,7 @@ import { Route as ApiPublicPaymentsReconcileRouteImport } from './routes/api/pub
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as ApiPublicBookingRescheduleTokenRouteImport } from './routes/api/public/booking.reschedule.$token'
 import { Route as ApiPublicHooksMetaTokenRouteImport } from './routes/api/public/hooks/meta.$token'
 import { Route as ApiPublicHooksWordpressTokenRouteImport } from './routes/api/public/hooks/wordpress.$token'
@@ -475,6 +476,12 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBookingRescheduleTokenRoute =
   ApiPublicBookingRescheduleTokenRouteImport.update({
     id: '/api/public/booking/reschedule/$token',
@@ -622,6 +629,7 @@ export interface FileRoutesByFullPath {
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
@@ -706,6 +714,7 @@ export interface FileRoutesByTo {
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
@@ -792,6 +801,7 @@ export interface FileRoutesById {
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/api/public/booking/reschedule/$token': typeof ApiPublicBookingRescheduleTokenRoute
   '/api/public/hooks/meta/$token': typeof ApiPublicHooksMetaTokenRoute
   '/api/public/hooks/wordpress/$token': typeof ApiPublicHooksWordpressTokenRoute
@@ -878,6 +888,7 @@ export interface FileRouteTypes {
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
     | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
@@ -962,6 +973,7 @@ export interface FileRouteTypes {
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
     | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
@@ -1047,6 +1059,7 @@ export interface FileRouteTypes {
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
     | '/api/public/booking/reschedule/$token'
     | '/api/public/hooks/meta/$token'
     | '/api/public/hooks/wordpress/$token'
@@ -1094,6 +1107,7 @@ export interface RootRouteChildren {
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiPublicBookingRescheduleTokenRoute: typeof ApiPublicBookingRescheduleTokenRoute
   ApiPublicHooksMetaTokenRoute: typeof ApiPublicHooksMetaTokenRoute
   ApiPublicHooksWordpressTokenRoute: typeof ApiPublicHooksWordpressTokenRoute
@@ -1601,6 +1615,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/booking/reschedule/$token': {
       id: '/api/public/booking/reschedule/$token'
       path: '/api/public/booking/reschedule/$token'
@@ -1818,6 +1839,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiPublicBookingRescheduleTokenRoute: ApiPublicBookingRescheduleTokenRoute,
   ApiPublicHooksMetaTokenRoute: ApiPublicHooksMetaTokenRoute,
   ApiPublicHooksWordpressTokenRoute: ApiPublicHooksWordpressTokenRoute,
