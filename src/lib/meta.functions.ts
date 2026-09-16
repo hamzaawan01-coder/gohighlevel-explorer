@@ -186,7 +186,11 @@ export const refreshMetaAccounts = createServerFn({ method: "POST" })
       );
     }
 
-    return { pages: pages.length, adAccounts: adAccounts.length };
+    return {
+      pages: pages.length,
+      adAccounts: adAccounts.length,
+      businesses: businessAssets.businesses.length,
+    };
   });
 
 /** Subscribe a page to webhooks + toggle inbox routing flags. */
