@@ -139,7 +139,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   }, [qc, subId]);
 
   const connect = useMutation({
-    mutationFn: (mode: "leads" | "messaging" | "ads" = "leads") => {
+    mutationFn: (mode: "leads" | "messaging" | "ads" | "business" = "leads") => {
       // Capture the click gesture before awaiting the server call.
       const handoff = beginOAuthHandoff();
       const id = toast.loading("Opening Facebook…");
