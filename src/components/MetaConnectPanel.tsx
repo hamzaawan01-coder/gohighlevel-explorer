@@ -475,6 +475,18 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
                 Connect ad accounts
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => connect.mutate("business")}
+                disabled={connect.isPending}
+                title="Adds access to your business portfolios, so Pages and ad accounts you hold through a portfolio also import."
+              >
+                <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
+                Connect business portfolios
+              </Button>
+
 
 
               {pages.length > 0 && (
