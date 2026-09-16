@@ -6,6 +6,8 @@ import {
   buildAuthorizeUrl,
   fetchUserPages,
   fetchUserAdAccounts,
+  fetchBusinessPages,
+  fetchBusinessAdAccounts,
   fetchAdAccountInsights,
   subscribePageToApp,
   sendPageMessage,
