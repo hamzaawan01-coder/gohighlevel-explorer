@@ -20,6 +20,9 @@ export const META_BASE_SCOPES = [
   "pages_show_list",
   "pages_read_engagement",
   "pages_manage_metadata",
+  // Required by Meta to read /{page}/leadgen_forms — without it the forms
+  // list comes back with error #200 "Requires pages_manage_ads permission".
+  "pages_manage_ads",
   "leads_retrieval",
 ] as const;
 
