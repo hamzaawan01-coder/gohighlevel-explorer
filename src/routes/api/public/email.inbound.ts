@@ -61,12 +61,12 @@ function safeEqual(a: string, b: string) {
   return diff === 0;
 }
 
-function basicAuthPassword(header: string | null) {
-  if (!header?.toLowerCase().startsWith("basic ")) return "";
+function basicAuthPassword(header: string | null): string | null {
+  if (!header?.toLowerCase().startsWith("basic ")) return null;
   try {
     return atob(header.slice(6)).split(":").slice(1).join(":");
   } catch {
-    return "";
+    return null;
   }
 }
 
