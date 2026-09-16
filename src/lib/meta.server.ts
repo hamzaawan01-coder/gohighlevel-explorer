@@ -42,7 +42,15 @@ export const META_MESSAGING_SCOPES = [
  */
 export const META_ADS_SCOPES = ["ads_read"] as const;
 
-export type MetaOAuthMode = "leads" | "messaging" | "ads";
+/**
+ * Business portfolio scopes. `business_management` is what lets us walk
+ * /me/businesses and pull the Pages / ad accounts a portfolio owns or has
+ * partner access to — including Pages the signed-in user holds only through
+ * the portfolio, which /me/accounts never returns.
+ */
+export const META_BUSINESS_SCOPES = ["business_management"] as const;
+
+export type MetaOAuthMode = "leads" | "messaging" | "ads" | "business";
 
 export function metaScopes(mode: MetaOAuthMode = "leads"): string[] {
   const extra = (process.env.META_EXTRA_SCOPES || "")
@@ -51,7 +59,8 @@ export function metaScopes(mode: MetaOAuthMode = "leads"): string[] {
     .filter(Boolean);
   const messaging = mode === "messaging" ? [...META_MESSAGING_SCOPES] : [];
   const ads = mode === "ads" ? [...META_ADS_SCOPES] : [];
-  return [...new Set([...META_BASE_SCOPES, ...messaging, ...ads, ...extra])];
+  const business = mode === "business" ? [...META_BUSINESS_SCOPES, ...META_ADS_SCOPES] : [];
+  return [...new Set([...META_BASE_SCOPES, ...messaging, ...ads, ...business, ...extra])];
 }
 
 
@@ -214,6 +223,92 @@ export async function fetchUserAdAccounts(token: string): Promise<MetaAdAccountD
     return [];
   }
 }
+
+export type MetaBusinessDTO = { id: string; name?: string };
+
+/** Business portfolios (Business Manager) the signed-in user can see. Needs `business_management`. */
+export async function fetchUserBusinesses(token: string): Promise<MetaBusinessDTO[]> {
+  try {
+    const out: MetaBusinessDTO[] = [];
+    let after: string | undefined;
+    for (let i = 0; i < 20; i++) {
+      const r = await graph<{ data?: MetaBusinessDTO[]; paging?: { cursors?: { after?: string }; next?: string } }>(
+        "/me/businesses",
+        { fields: "id,name", limit: "100", ...(after ? { after } : {}) },
+        token,
+      );
+      out.push(...(r.data ?? []));
+      if (!r.paging?.next || !r.paging?.cursors?.after) break;
+      after = r.paging.cursors.after;
+    }
+    return out;
+  } catch (e) {
+    console.warn("[meta] businesses unavailable:", e instanceof Error ? e.message : e);
+    return [];
+  }
+}
+
+async function graphEdgeAll<T>(path: string, fields: string, token: string): Promise<T[]> {
+  const out: T[] = [];
+  let after: string | undefined;
+  for (let i = 0; i < 40; i++) {
+    try {
+      const r = await graph<{ data?: T[]; paging?: { cursors?: { after?: string }; next?: string } }>(
+        path,
+        { fields, limit: "100", ...(after ? { after } : {}) },
+        token,
+      );
+      out.push(...(r.data ?? []));
+      if (!r.paging?.next || !r.paging?.cursors?.after) break;
+      after = r.paging.cursors.after;
+    } catch (e) {
+      console.warn(`[meta] ${path} unavailable:`, e instanceof Error ? e.message : e);
+      break;
+    }
+  }
+  return out;
+}
+
+/**
+ * Pages owned by, or shared with, every visible business portfolio.
+ * Complements /me/accounts, which omits Pages the user holds only via a portfolio.
+ */
+export async function fetchBusinessPages(
+  token: string,
+): Promise<{ pages: MetaPageDTO[]; businesses: MetaBusinessDTO[] }> {
+  const businesses = await fetchUserBusinesses(token);
+  const byId = new Map<string, MetaPageDTO>();
+  const fields = "id,name,access_token,category,instagram_business_account";
+  for (const b of businesses) {
+    for (const edge of ["owned_pages", "client_pages"]) {
+      const rows = await graphEdgeAll<MetaPageDTO>(`/${b.id}/${edge}`, fields, token);
+      for (const p of rows) {
+        if (!p?.id) continue;
+        // A Page without a token cannot be subscribed to webhooks; keep the
+        // richest record we have for it.
+        const prev = byId.get(p.id);
+        if (!prev || (!prev.access_token && p.access_token)) byId.set(p.id, p);
+      }
+    }
+  }
+  return { pages: [...byId.values()], businesses };
+}
+
+/** Ad accounts owned by / shared with the visible business portfolios. */
+export async function fetchBusinessAdAccounts(token: string): Promise<MetaAdAccountDTO[]> {
+  const businesses = await fetchUserBusinesses(token);
+  const byId = new Map<string, MetaAdAccountDTO>();
+  const fields = "id,name,currency,timezone_name,account_status";
+  for (const b of businesses) {
+    for (const edge of ["owned_ad_accounts", "client_ad_accounts"]) {
+      const rows = await graphEdgeAll<MetaAdAccountDTO>(`/${b.id}/${edge}`, fields, token);
+      for (const a of rows) if (a?.id) byId.set(a.id, a);
+    }
+  }
+  return [...byId.values()];
+}
+
+
 
 
 export type MetaInsightsRow = {

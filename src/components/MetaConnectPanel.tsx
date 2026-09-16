@@ -139,7 +139,7 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
   }, [qc, subId]);
 
   const connect = useMutation({
-    mutationFn: (mode: "leads" | "messaging" | "ads" = "leads") => {
+    mutationFn: (mode: "leads" | "messaging" | "ads" | "business" = "leads") => {
       // Capture the click gesture before awaiting the server call.
       const handoff = beginOAuthHandoff();
       const id = toast.loading("Opening Facebook…");
@@ -161,8 +161,11 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
       const id = toast.loading("Refreshing pages and ad accounts from Meta…");
       return refreshFn({ data: { subAccountId: subId } }).finally(() => toast.dismiss(id));
     },
-    onSuccess: ({ pages, adAccounts }) => {
-      toast.success(`Refreshed: ${pages} pages, ${adAccounts} ad accounts`);
+    onSuccess: ({ pages, adAccounts, businesses }) => {
+      toast.success(
+        `Refreshed: ${pages} pages, ${adAccounts} ad accounts` +
+          (businesses ? `, ${businesses} business portfolios` : ""),
+      );
       stampNow({ countsAt: new Date().toISOString() });
       qc.invalidateQueries({ queryKey: ["meta-connection", subId] });
     },
@@ -475,6 +478,18 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
                 <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
                 Connect ad accounts
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => connect.mutate("business")}
+                disabled={connect.isPending}
+                title="Adds access to your business portfolios, so Pages and ad accounts you hold through a portfolio also import."
+              >
+                <Link2 className={`size-3.5 ${connect.isPending ? "animate-pulse" : ""}`} />
+                Connect business portfolios
+              </Button>
+
 
 
               {pages.length > 0 && (

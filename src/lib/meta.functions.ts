@@ -6,6 +6,8 @@ import {
   buildAuthorizeUrl,
   fetchUserPages,
   fetchUserAdAccounts,
+  fetchBusinessPages,
+  fetchBusinessAdAccounts,
   fetchAdAccountInsights,
   subscribePageToApp,
   sendPageMessage,
@@ -48,12 +50,12 @@ async function ensureSubAccess(supabase: any, userId: string, subId: string) {
 /** Start OAuth: create signed state, return Facebook authorize URL. */
 export const startMetaOAuth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { subAccountId: string; redirectAfter?: string; mode?: "leads" | "messaging" | "ads" }) =>
+  .inputValidator((d: { subAccountId: string; redirectAfter?: string; mode?: "leads" | "messaging" | "ads" | "business" }) =>
     z
       .object({
         subAccountId: z.string().uuid(),
         redirectAfter: z.string().optional(),
-        mode: z.enum(["leads", "messaging", "ads"]).optional(),
+        mode: z.enum(["leads", "messaging", "ads", "business"]).optional(),
       })
       .parse(d),
   )
@@ -133,10 +135,27 @@ export const refreshMetaAccounts = createServerFn({ method: "POST" })
     const conn = (conns ?? [])[0] as MetaConnectionRow | undefined;
     if (!conn) throw new Error("No Meta connection linked to this workspace.");
 
-    const [pages, adAccounts] = await Promise.all([
+    // /me/accounts only returns Pages with a direct role. When the connection
+    // granted business_management we also walk each business portfolio, which
+    // surfaces Pages/ad accounts held only through the portfolio.
+    const [directPages, directAdAccounts, businessAssets, businessAdAccounts] = await Promise.all([
       fetchUserPages(conn.access_token),
       fetchUserAdAccounts(conn.access_token),
+      fetchBusinessPages(conn.access_token),
+      fetchBusinessAdAccounts(conn.access_token),
     ]);
+
+    const pageMap = new Map<string, (typeof directPages)[number]>();
+    for (const p of [...directPages, ...businessAssets.pages]) {
+      if (!p?.id) continue;
+      const prev = pageMap.get(p.id);
+      if (!prev || (!prev.access_token && p.access_token)) pageMap.set(p.id, p);
+    }
+    const pages = [...pageMap.values()];
+
+    const adMap = new Map<string, (typeof directAdAccounts)[number]>();
+    for (const a of [...directAdAccounts, ...businessAdAccounts]) if (a?.id) adMap.set(a.id, a);
+    const adAccounts = [...adMap.values()];
 
     for (const p of pages) {
       await (supabaseAdmin as any).from("meta_pages").upsert(
@@ -167,7 +186,11 @@ export const refreshMetaAccounts = createServerFn({ method: "POST" })
       );
     }
 
-    return { pages: pages.length, adAccounts: adAccounts.length };
+    return {
+      pages: pages.length,
+      adAccounts: adAccounts.length,
+      businesses: businessAssets.businesses.length,
+    };
   });
 
 /** Subscribe a page to webhooks + toggle inbox routing flags. */
