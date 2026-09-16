@@ -161,8 +161,11 @@ export function MetaConnectPanel({ subId }: { subId: string }) {
       const id = toast.loading("Refreshing pages and ad accounts from Meta…");
       return refreshFn({ data: { subAccountId: subId } }).finally(() => toast.dismiss(id));
     },
-    onSuccess: ({ pages, adAccounts }) => {
-      toast.success(`Refreshed: ${pages} pages, ${adAccounts} ad accounts`);
+    onSuccess: ({ pages, adAccounts, businesses }) => {
+      toast.success(
+        `Refreshed: ${pages} pages, ${adAccounts} ad accounts` +
+          (businesses ? `, ${businesses} business portfolios` : ""),
+      );
       stampNow({ countsAt: new Date().toISOString() });
       qc.invalidateQueries({ queryKey: ["meta-connection", subId] });
     },
