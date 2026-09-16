@@ -50,12 +50,12 @@ async function ensureSubAccess(supabase: any, userId: string, subId: string) {
 /** Start OAuth: create signed state, return Facebook authorize URL. */
 export const startMetaOAuth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { subAccountId: string; redirectAfter?: string; mode?: "leads" | "messaging" | "ads" }) =>
+  .inputValidator((d: { subAccountId: string; redirectAfter?: string; mode?: "leads" | "messaging" | "ads" | "business" }) =>
     z
       .object({
         subAccountId: z.string().uuid(),
         redirectAfter: z.string().optional(),
-        mode: z.enum(["leads", "messaging", "ads"]).optional(),
+        mode: z.enum(["leads", "messaging", "ads", "business"]).optional(),
       })
       .parse(d),
   )
