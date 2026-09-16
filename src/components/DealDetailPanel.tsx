@@ -367,8 +367,15 @@ function OverviewTab({
   });
   const dealFieldDefs: CustomFieldDef[] = dealFieldsQuery.data ?? [];
 
+  // Only reset local custom-field edits when the SAVED values actually change
+  // (a jsonb refetch returns a new object identity on every refresh).
+  const lastSyncedJsonRef = useRef(JSON.stringify(deal.custom_fields ?? {}));
   useEffect(() => {
-    setCustomValues((deal.custom_fields ?? {}) as CustomFieldValues);
+    const json = JSON.stringify(deal.custom_fields ?? {});
+    if (json !== lastSyncedJsonRef.current) {
+      lastSyncedJsonRef.current = json;
+      setCustomValues((deal.custom_fields ?? {}) as CustomFieldValues);
+    }
   }, [deal.id, deal.custom_fields]);
 
   useEffect(() => {
