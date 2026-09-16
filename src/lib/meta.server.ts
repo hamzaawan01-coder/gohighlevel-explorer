@@ -42,7 +42,15 @@ export const META_MESSAGING_SCOPES = [
  */
 export const META_ADS_SCOPES = ["ads_read"] as const;
 
-export type MetaOAuthMode = "leads" | "messaging" | "ads";
+/**
+ * Business portfolio scopes. `business_management` is what lets us walk
+ * /me/businesses and pull the Pages / ad accounts a portfolio owns or has
+ * partner access to — including Pages the signed-in user holds only through
+ * the portfolio, which /me/accounts never returns.
+ */
+export const META_BUSINESS_SCOPES = ["business_management"] as const;
+
+export type MetaOAuthMode = "leads" | "messaging" | "ads" | "business";
 
 export function metaScopes(mode: MetaOAuthMode = "leads"): string[] {
   const extra = (process.env.META_EXTRA_SCOPES || "")
@@ -51,7 +59,8 @@ export function metaScopes(mode: MetaOAuthMode = "leads"): string[] {
     .filter(Boolean);
   const messaging = mode === "messaging" ? [...META_MESSAGING_SCOPES] : [];
   const ads = mode === "ads" ? [...META_ADS_SCOPES] : [];
-  return [...new Set([...META_BASE_SCOPES, ...messaging, ...ads, ...extra])];
+  const business = mode === "business" ? [...META_BUSINESS_SCOPES, ...META_ADS_SCOPES] : [];
+  return [...new Set([...META_BASE_SCOPES, ...messaging, ...ads, ...business, ...extra])];
 }
 
 
