@@ -135,10 +135,27 @@ export const refreshMetaAccounts = createServerFn({ method: "POST" })
     const conn = (conns ?? [])[0] as MetaConnectionRow | undefined;
     if (!conn) throw new Error("No Meta connection linked to this workspace.");
 
-    const [pages, adAccounts] = await Promise.all([
+    // /me/accounts only returns Pages with a direct role. When the connection
+    // granted business_management we also walk each business portfolio, which
+    // surfaces Pages/ad accounts held only through the portfolio.
+    const [directPages, directAdAccounts, businessAssets, businessAdAccounts] = await Promise.all([
       fetchUserPages(conn.access_token),
       fetchUserAdAccounts(conn.access_token),
+      fetchBusinessPages(conn.access_token),
+      fetchBusinessAdAccounts(conn.access_token),
     ]);
+
+    const pageMap = new Map<string, (typeof directPages)[number]>();
+    for (const p of [...directPages, ...businessAssets.pages]) {
+      if (!p?.id) continue;
+      const prev = pageMap.get(p.id);
+      if (!prev || (!prev.access_token && p.access_token)) pageMap.set(p.id, p);
+    }
+    const pages = [...pageMap.values()];
+
+    const adMap = new Map<string, (typeof directAdAccounts)[number]>();
+    for (const a of [...directAdAccounts, ...businessAdAccounts]) if (a?.id) adMap.set(a.id, a);
+    const adAccounts = [...adMap.values()];
 
     for (const p of pages) {
       await (supabaseAdmin as any).from("meta_pages").upsert(
