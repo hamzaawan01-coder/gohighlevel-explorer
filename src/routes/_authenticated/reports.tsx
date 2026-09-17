@@ -24,12 +24,17 @@ import { AppShell } from "@/components/AppShell";
 import { useTenancy } from "@/lib/tenancy";
 import { fetchReports } from "@/lib/reports";
 import { useSessionReady } from "@/lib/session-ready";
+import { fetchDefaultCurrency, formatAmount } from "@/lib/custom-fields";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
     meta: [
-      { title: "Reports — Agency Engine" },
+      { title: "Reports — Lead Convert" },
       { name: "description", content: "Win rate, cycle time, source attribution, and per-rep activity." },
+      { property: "og:title", content: "Reports — Lead Convert" },
+      { property: "og:description", content: "Win rate, cycle time, source attribution, and per-rep activity." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ReportsPage,
@@ -44,6 +49,12 @@ function ReportsPage() {
     enabled: !!subId && sessionReady,
     queryFn: () => fetchReports(subId!),
   });
+  const { data: currency } = useQuery({
+    queryKey: ["default-currency", subId],
+    enabled: !!subId,
+    queryFn: () => fetchDefaultCurrency(subId!),
+  });
+  const cash = (v: number) => formatAmount(v, currency);
 
   return (
     <AppShell>
@@ -70,12 +81,12 @@ function ReportsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Kpi label="Win rate" value={`${data.winRate}%`} sub={`${data.wonCount} won · ${data.lostCount} lost`} icon={Target} tint="text-emerald-500" />
-                <Kpi label="Won value" value={`$${data.totalWonValue.toLocaleString()}`} sub={`${data.wonCount} deals`} icon={Trophy} tint="text-amber-500" />
+                <Kpi label="Won value" value={cash(data.totalWonValue)} sub={`${data.wonCount} deals`} icon={Trophy} tint="text-amber-500" />
                 <Kpi label="Avg cycle" value={data.avgCycleDays == null ? "—" : `${data.avgCycleDays}d`} sub="Created → won" icon={Clock} tint="text-blue-500" />
                 <Kpi label="Pipeline sources" value={String(data.sourceBreakdown.length)} sub="Attributed channels" icon={DollarSign} tint="text-violet-500" />
               </div>
 
-              <div className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+              <div className="surface-card p-5">
                 <h2 className="text-sm font-semibold mb-4">Deals over time (last 8 weeks)</h2>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
@@ -92,7 +103,7 @@ function ReportsPage() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+                <div className="surface-card p-5">
                   <h2 className="text-sm font-semibold mb-4">Source attribution</h2>
                   {data.sourceBreakdown.length === 0 ? (
                     <p className="text-xs text-muted-foreground py-8 text-center">No sources yet.</p>
@@ -103,7 +114,7 @@ function ReportsPage() {
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                           <XAxis type="number" stroke="hsl(var(--muted-foreground))" style={{ fontSize: 10 }} />
                           <YAxis type="category" dataKey="source" stroke="hsl(var(--muted-foreground))" style={{ fontSize: 10 }} width={80} />
-                          <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} formatter={(v: number) => `$${v.toLocaleString()}`} />
+                          <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} formatter={(v: number) => cash(v)} />
                           <Bar dataKey="value" fill="#8b5cf6" name="Deal value" radius={[0, 4, 4, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
@@ -111,7 +122,7 @@ function ReportsPage() {
                   )}
                 </div>
 
-                <div className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+                <div className="surface-card p-5">
                   <h2 className="text-sm font-semibold mb-4">Per-rep activity</h2>
                   {data.repActivity.length === 0 ? (
                     <p className="text-xs text-muted-foreground py-8 text-center">No activity yet.</p>
@@ -131,7 +142,7 @@ function ReportsPage() {
                           <tr key={i} className="border-b border-border/50">
                             <td className="py-2 font-medium truncate max-w-[140px]">{r.name}</td>
                             <td className="py-2 text-right font-mono">{r.deals}</td>
-                            <td className="py-2 text-right font-mono">${r.value.toLocaleString()}</td>
+                            <td className="py-2 text-right font-mono">{cash(r.value)}</td>
                             <td className="py-2 text-right font-mono">{r.tasksDone}</td>
                           </tr>
                         ))}
@@ -157,7 +168,7 @@ function Kpi({
   icon: React.ComponentType<{ className?: string }>; tint: string;
 }) {
   return (
-    <div className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+    <div className="surface-card p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</p>
         <Icon className={`size-4 ${tint}`} />

@@ -7,9 +7,9 @@ export const Route = createFileRoute("/auth_/callback")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Signing you in — Agency Engine" },
+      { title: "Signing you in — Lead Convert" },
       { name: "description", content: "Completing your secure sign-in." },
-      { property: "og:title", content: "Signing you in — Agency Engine" },
+      { property: "og:title", content: "Signing you in — Lead Convert" },
       { property: "og:description", content: "Completing your secure sign-in." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

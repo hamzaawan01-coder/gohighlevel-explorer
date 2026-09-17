@@ -68,7 +68,7 @@ function LeadRow({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{deal.title}</p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {contactName ? `${contactName} · ` : ""}
+          {contactName && contactName !== deal.title ? `${contactName} · ` : ""}
           {money(Number(deal.value), deal.currency)}
         </p>
       </div>

@@ -32,12 +32,12 @@ import {
 export const Route = createFileRoute("/_authenticated/invoices/")({
   head: () => ({
     meta: [
-      { title: "Invoices — Agency Engine" },
+      { title: "Invoices — Lead Convert" },
       {
         name: "description",
         content: "Create, send and track client invoices with line items, tax and payment status.",
       },
-      { property: "og:title", content: "Invoices — Agency Engine" },
+      { property: "og:title", content: "Invoices — Lead Convert" },
       { property: "og:description", content: "Client invoicing with line items, tax and payment tracking." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

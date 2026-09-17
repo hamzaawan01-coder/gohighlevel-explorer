@@ -38,7 +38,7 @@ import {
 export const Route = createFileRoute("/_authenticated/templates")({
   head: () => ({
     meta: [
-      { title: "Message templates — Agency Engine" },
+      { title: "Message templates — Lead Convert" },
       {
         name: "description",
         content: "Reusable email and SMS templates with personalization tokens.",

@@ -30,7 +30,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/tasks")({
   head: () => ({
     meta: [
-      { title: "Tasks — Agency Engine" },
+      { title: "Tasks — Lead Convert" },
       { name: "description", content: "Follow-ups, calls, and to-dos scoped to this workspace." },
     ],
   }),

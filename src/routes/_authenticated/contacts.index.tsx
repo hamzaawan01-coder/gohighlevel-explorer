@@ -42,7 +42,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/contacts/")({
   head: () => ({
     meta: [
-      { title: "Contacts — Agency Engine" },
+      { title: "Contacts — Lead Convert" },
       { name: "description", content: "Manage your contacts, tags, and accounts." },
     ],
   }),

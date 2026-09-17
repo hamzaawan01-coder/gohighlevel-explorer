@@ -40,17 +40,17 @@ import {
 export const Route = createFileRoute("/_authenticated/modules-explorer")({
   head: () => ({
     meta: [
-      { title: "Module Explorer — Agency Engine" },
+      { title: "Module Explorer — Lead Convert" },
       {
         name: "description",
         content:
-          "Browse every GoHighLevel-style module with category, coverage status, and the source of each piece of information.",
+          "Browse every module with category, coverage status, and the source of each piece of information.",
       },
-      { property: "og:title", content: "Module Explorer — Agency Engine" },
+      { property: "og:title", content: "Module Explorer — Lead Convert" },
       {
         property: "og:description",
         content:
-          "Browse every GoHighLevel-style module with category, coverage status, and data provenance.",
+          "Browse every module with category, coverage status, and data provenance.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -134,7 +134,7 @@ function ModuleExplorerPage() {
     <AppShell>
       <PageHeader
         title="Module Explorer"
-        description="Every GoHighLevel-style module we catalogued, its category, whether your build covers it, and where the information came from."
+        description="Every module we catalogued, its category, whether your build covers it, and where the information came from."
         crumbs={[{ label: "Platform" }, { label: "Module Explorer" }]}
         meta={
           <>

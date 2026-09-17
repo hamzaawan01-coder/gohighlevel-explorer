@@ -76,7 +76,7 @@ function PublicFormPage() {
 
   return (
     <div className="min-h-screen bg-secondary/40 flex items-center justify-center p-6">
-      <div className="w-full max-w-lg bg-card ring-1 ring-black/5 rounded-lg p-8">
+      <div className="w-full max-w-lg surface-card p-8">
         {done ? (
           <div className="text-center py-6">
             <CheckCircle2 className="size-10 text-emerald-500 mx-auto mb-3" />

@@ -9,7 +9,7 @@ import { PALETTES, useAppearance, type ModeKey } from "@/lib/appearance";
 export const Route = createFileRoute("/_authenticated/settings/appearance")({
   head: () => ({
     meta: [
-      { title: "Appearance — Agency Engine" },
+      { title: "Appearance — Lead Convert" },
       {
         name: "description",
         content: "Choose your colour theme, light or dark mode, and table density for the CRM.",

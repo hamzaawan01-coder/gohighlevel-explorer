@@ -27,7 +27,7 @@ import { formatDistanceToNow } from "date-fns";
 export const Route = createFileRoute("/_authenticated/workflows")({
   head: () => ({
     meta: [
-      { title: "Workflows — Agency Engine" },
+      { title: "Workflows — Lead Convert" },
       { name: "description", content: "Automate follow-ups, tagging, and notifications." },
     ],
   }),

@@ -54,7 +54,7 @@ import { formatAmount } from "@/lib/custom-fields";
 export const Route = createFileRoute("/_authenticated/opportunities")({
   head: () => ({
     meta: [
-      { title: "Opportunities — Agency Engine" },
+      { title: "Opportunities — Lead Convert" },
       {
         name: "description",
         content:

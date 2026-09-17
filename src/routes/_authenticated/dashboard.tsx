@@ -18,16 +18,17 @@ import { Button } from "@/components/ui/button";
 import { useTenancy } from "@/lib/tenancy";
 import { fetchDashboardStats } from "@/lib/dashboard-stats";
 import { SetupChecklist } from "@/components/SetupChecklist";
+import { fetchDefaultCurrency, formatAmount } from "@/lib/custom-fields";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Agency Engine" },
+      { title: "Dashboard — Lead Convert" },
       {
         name: "description",
         content: "Pipeline value, deals won, tasks due, and recent activity at a glance.",
       },
-      { property: "og:title", content: "Dashboard — Agency Engine" },
+      { property: "og:title", content: "Dashboard — Lead Convert" },
       {
         property: "og:description",
         content: "Pipeline value, deals won, tasks due, and recent activity at a glance.",
@@ -47,6 +48,12 @@ function DashboardHome() {
     queryFn: () => fetchDashboardStats(subId!),
   });
   const { data, isLoading, isError, error, refetch, isFetching } = query;
+  const { data: currency } = useQuery({
+    queryKey: ["default-currency", subId],
+    enabled: !!subId,
+    queryFn: () => fetchDefaultCurrency(subId!),
+  });
+  const cash = (v: number) => formatAmount(v, currency);
 
   return (
     <AppShell>
@@ -98,14 +105,14 @@ function DashboardHome() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
               <KpiCard
                 label="Pipeline value"
-                value={`$${data.pipelineValue.toLocaleString()}`}
+                value={cash(data.pipelineValue)}
                 sub={`${data.openDeals} open deals`}
                 icon={TrendingUp}
                 tone="primary"
               />
               <KpiCard
                 label="Won this month"
-                value={`$${data.wonValueThisMonth.toLocaleString()}`}
+                value={cash(data.wonValueThisMonth)}
                 sub={`${data.wonThisMonth} deals closed`}
                 icon={Trophy}
                 tone="success"
@@ -166,7 +173,7 @@ function DashboardHome() {
                               <span className="text-muted-foreground">· {s.count}</span>
                             </div>
                             <span className="font-mono text-[11px]">
-                              ${s.value.toLocaleString()}
+                              {cash(s.value)}
                             </span>
                           </div>
                           <div className="h-1.5 overflow-hidden rounded-full bg-secondary">

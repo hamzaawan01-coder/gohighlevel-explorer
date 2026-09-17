@@ -9,7 +9,7 @@ import { fetchDeal, type Stage } from "@/lib/pipeline";
 
 export const Route = createFileRoute("/_authenticated/deals/$id")({
   head: () => ({
-    meta: [{ title: "Deal — Agency Engine" }],
+    meta: [{ title: "Deal — Lead Convert" }],
   }),
   component: DealDetailPage,
 });

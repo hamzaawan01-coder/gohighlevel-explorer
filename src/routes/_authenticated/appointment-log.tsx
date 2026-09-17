@@ -16,13 +16,13 @@ import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/states";
 export const Route = createFileRoute("/_authenticated/appointment-log")({
   head: () => ({
     meta: [
-      { title: "Appointment activity log — Agency Engine" },
+      { title: "Appointment activity log — Lead Convert" },
       {
         name: "description",
         content:
           "Filterable audit trail of bookings, reschedules, edits, cancellations and reminder sends.",
       },
-      { property: "og:title", content: "Appointment activity log — Agency Engine" },
+      { property: "og:title", content: "Appointment activity log — Lead Convert" },
       {
         property: "og:description",
         content: "Every booking, reschedule, cancellation and reminder send in one filterable log.",

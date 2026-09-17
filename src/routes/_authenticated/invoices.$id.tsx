@@ -45,9 +45,9 @@ import { Switch } from "@/components/ui/switch";
 export const Route = createFileRoute("/_authenticated/invoices/$id")({
   head: () => ({
     meta: [
-      { title: "Invoice — Agency Engine" },
+      { title: "Invoice — Lead Convert" },
       { name: "description", content: "Edit invoice line items, tax, due date and payment status." },
-      { property: "og:title", content: "Invoice — Agency Engine" },
+      { property: "og:title", content: "Invoice — Lead Convert" },
       { property: "og:description", content: "Edit invoice line items, tax and payment status." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

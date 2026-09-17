@@ -51,7 +51,7 @@ import { ListSkeleton, EmptyState, ErrorState } from "@/components/ui/states";
 export const Route = createFileRoute("/_authenticated/conversations")({
   head: () => ({
     meta: [
-      { title: "Conversations — Agency Engine" },
+      { title: "Conversations — Lead Convert" },
       {
         name: "description",
         content:

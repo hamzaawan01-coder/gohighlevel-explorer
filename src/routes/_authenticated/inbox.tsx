@@ -15,7 +15,7 @@ import {
 } from "@/lib/notifications";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
-  head: () => ({ meta: [{ title: "Inbox — Agency Engine" }] }),
+  head: () => ({ meta: [{ title: "Inbox — Lead Convert" }] }),
   component: InboxPage,
 });
 

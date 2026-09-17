@@ -28,7 +28,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/forms")({
   head: () => ({
     meta: [
-      { title: "Forms — Agency Engine" },
+      { title: "Forms — Lead Convert" },
       { name: "description", content: "Hosted lead-capture forms." },
     ],
   }),
@@ -103,7 +103,7 @@ function FormsPage() {
           ) : formsQ.isError ? (
             <ErrorState onRetry={() => formsQ.refetch()} />
           ) : forms.length === 0 ? (
-            <div className="bg-card ring-1 ring-black/5 rounded-lg">
+            <div className="surface-card">
               <EmptyState
                 title="No forms yet"
                 description="Create a hosted lead-capture form to start collecting submissions."
@@ -119,7 +119,7 @@ function FormsPage() {
               {forms.map((f) => {
                 const url = `${window.location.origin}/f/${f.slug}`;
                 return (
-                  <div key={f.id} className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+                  <div key={f.id} className="surface-card p-4">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:flex sm:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1 min-w-0">
