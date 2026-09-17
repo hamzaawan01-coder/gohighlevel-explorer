@@ -81,7 +81,7 @@ function ReportsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Kpi label="Win rate" value={`${data.winRate}%`} sub={`${data.wonCount} won · ${data.lostCount} lost`} icon={Target} tint="text-emerald-500" />
-                <Kpi label="Won value" value={`$${data.totalWonValue.toLocaleString()}`} sub={`${data.wonCount} deals`} icon={Trophy} tint="text-amber-500" />
+                <Kpi label="Won value" value={cash(data.totalWonValue)} sub={`${data.wonCount} deals`} icon={Trophy} tint="text-amber-500" />
                 <Kpi label="Avg cycle" value={data.avgCycleDays == null ? "—" : `${data.avgCycleDays}d`} sub="Created → won" icon={Clock} tint="text-blue-500" />
                 <Kpi label="Pipeline sources" value={String(data.sourceBreakdown.length)} sub="Attributed channels" icon={DollarSign} tint="text-violet-500" />
               </div>
@@ -114,7 +114,7 @@ function ReportsPage() {
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                           <XAxis type="number" stroke="hsl(var(--muted-foreground))" style={{ fontSize: 10 }} />
                           <YAxis type="category" dataKey="source" stroke="hsl(var(--muted-foreground))" style={{ fontSize: 10 }} width={80} />
-                          <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} formatter={(v: number) => `$${v.toLocaleString()}`} />
+                          <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} formatter={(v: number) => cash(v)} />
                           <Bar dataKey="value" fill="#8b5cf6" name="Deal value" radius={[0, 4, 4, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
@@ -142,7 +142,7 @@ function ReportsPage() {
                           <tr key={i} className="border-b border-border/50">
                             <td className="py-2 font-medium truncate max-w-[140px]">{r.name}</td>
                             <td className="py-2 text-right font-mono">{r.deals}</td>
-                            <td className="py-2 text-right font-mono">${r.value.toLocaleString()}</td>
+                            <td className="py-2 text-right font-mono">{cash(r.value)}</td>
                             <td className="py-2 text-right font-mono">{r.tasksDone}</td>
                           </tr>
                         ))}
