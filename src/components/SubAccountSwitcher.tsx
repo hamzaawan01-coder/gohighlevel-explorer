@@ -35,7 +35,7 @@ export function SubAccountSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="w-full flex items-center gap-3 px-2 py-1.5 bg-card ring-1 ring-black/5 rounded-md hover:bg-card/80 transition-colors text-left">
+        <button className="w-full flex items-center gap-3 px-2 py-1.5 surface-card rounded-md hover:bg-card/80 transition-colors text-left">
           <div className="size-6 bg-accent rounded flex items-center justify-center text-[10px] text-accent-foreground font-bold">
             {(current?.name ?? "A")[0]?.toUpperCase()}
           </div>
