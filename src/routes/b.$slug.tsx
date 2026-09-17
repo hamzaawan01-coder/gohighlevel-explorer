@@ -89,7 +89,7 @@ function BookingPublicPage() {
   if (done) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-secondary/40 p-6">
-        <div className="w-full max-w-md bg-card ring-1 ring-black/5 rounded-lg p-8 text-center">
+        <div className="w-full max-w-md surface-card p-8 text-center">
           <CheckCircle2 className="size-10 text-emerald-500 mx-auto mb-3" />
           <h1 className="text-lg font-semibold mb-1">You're booked</h1>
           <p className="text-sm text-muted-foreground">
@@ -103,7 +103,7 @@ function BookingPublicPage() {
 
   return (
     <div className="min-h-screen bg-secondary/40 p-6">
-      <div className="max-w-4xl mx-auto bg-card ring-1 ring-black/5 rounded-lg overflow-hidden">
+      <div className="max-w-4xl mx-auto surface-card overflow-hidden">
         <div className="p-8 border-b border-border">
           <h1 className="text-2xl font-bold mb-1">{page.name}</h1>
           {page.description && (

@@ -23,7 +23,7 @@ const STEPS: Step[] = [
   },
   {
     title: "Explore every module",
-    body: "The Module Explorer lists every GoHighLevel-style module with its category and whether it's covered in your build. Search or filter to find CRM, pipelines, messaging or campaigns instantly.",
+    body: "The Module Explorer lists every module in your workspace with its category and whether it's covered in your build. Search or filter to find CRM, pipelines, messaging or campaigns instantly.",
     icon: Compass,
     to: "/modules-explorer",
     linkLabel: "Open Module Explorer",

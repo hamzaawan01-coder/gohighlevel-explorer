@@ -75,7 +75,7 @@ function ReportsPage() {
                 <Kpi label="Pipeline sources" value={String(data.sourceBreakdown.length)} sub="Attributed channels" icon={DollarSign} tint="text-violet-500" />
               </div>
 
-              <div className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+              <div className="surface-card p-5">
                 <h2 className="text-sm font-semibold mb-4">Deals over time (last 8 weeks)</h2>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
@@ -92,7 +92,7 @@ function ReportsPage() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+                <div className="surface-card p-5">
                   <h2 className="text-sm font-semibold mb-4">Source attribution</h2>
                   {data.sourceBreakdown.length === 0 ? (
                     <p className="text-xs text-muted-foreground py-8 text-center">No sources yet.</p>
@@ -111,7 +111,7 @@ function ReportsPage() {
                   )}
                 </div>
 
-                <div className="bg-card ring-1 ring-black/5 rounded-lg p-5">
+                <div className="surface-card p-5">
                   <h2 className="text-sm font-semibold mb-4">Per-rep activity</h2>
                   {data.repActivity.length === 0 ? (
                     <p className="text-xs text-muted-foreground py-8 text-center">No activity yet.</p>
@@ -157,7 +157,7 @@ function Kpi({
   icon: React.ComponentType<{ className?: string }>; tint: string;
 }) {
   return (
-    <div className="bg-card ring-1 ring-black/5 rounded-lg p-4">
+    <div className="surface-card p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</p>
         <Icon className={`size-4 ${tint}`} />
