@@ -137,7 +137,7 @@ export function SetupChecklist({ subAccountId }: { subAccountId: string }) {
             <Rocket className="size-4 text-primary" />
           </span>
           <div className="min-w-0">
-            <h2 id="setup-checklist-heading" className="truncate font-display text-sm font-bold">
+            <h2 id="setup-checklist-heading" className="font-display text-sm font-bold">
               Finish setting up your workspace
             </h2>
             <p className="text-[11px] text-muted-foreground">
@@ -202,8 +202,8 @@ export function SetupChecklist({ subAccountId }: { subAccountId: string }) {
                 {s.done ? <Check className="size-3" /> : null}
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-xs font-semibold">{s.label}</span>
-                <span className="block truncate text-[11px] text-muted-foreground">
+                <span className="block text-xs font-semibold">{s.label}</span>
+                <span className="block text-[11px] text-muted-foreground">
                   {s.description}
                 </span>
               </span>
