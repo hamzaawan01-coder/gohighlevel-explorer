@@ -12,8 +12,8 @@ export const Route = createFileRoute("/auth")({
   },
   head: () => ({
     meta: [
-      { title: "Sign in — Agency Engine" },
-      { name: "description", content: "Sign in or create your Agency Engine account." },
+      { title: "Sign in — Lead Convert" },
+      { name: "description", content: "Sign in or create your Lead Convert account." },
     ],
   }),
   component: AuthPage,
@@ -153,7 +153,7 @@ function AuthPage() {
           <div className="size-8 bg-accent rounded flex items-center justify-center text-sm font-bold text-accent-foreground">
             A
           </div>
-          <span className="font-bold tracking-tight">Agency Engine</span>
+          <span className="font-bold tracking-tight">Lead Convert</span>
         </Link>
         <div>
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-3">

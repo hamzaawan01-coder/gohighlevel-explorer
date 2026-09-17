@@ -21,7 +21,7 @@ import { UpcomingAppointments } from "@/components/UpcomingAppointments";
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
-      { title: "Calendar — Agency Engine" },
+      { title: "Calendar — Lead Convert" },
       { name: "description", content: "Events, meetings, and task due dates." },
     ],
   }),

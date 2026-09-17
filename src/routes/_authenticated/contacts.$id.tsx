@@ -5,7 +5,7 @@ import { ContactDetailPanel } from "@/components/ContactDetailPanel";
 
 export const Route = createFileRoute("/_authenticated/contacts/$id")({
   head: () => ({
-    meta: [{ title: "Contact — Agency Engine" }],
+    meta: [{ title: "Contact — Lead Convert" }],
   }),
   component: ContactDetailPage,
 });

@@ -28,7 +28,7 @@ import { useSessionReady } from "@/lib/session-ready";
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
     meta: [
-      { title: "Reports — Agency Engine" },
+      { title: "Reports — Lead Convert" },
       { name: "description", content: "Win rate, cycle time, source attribution, and per-rep activity." },
     ],
   }),

@@ -22,12 +22,12 @@ import { SetupChecklist } from "@/components/SetupChecklist";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Agency Engine" },
+      { title: "Dashboard — Lead Convert" },
       {
         name: "description",
         content: "Pipeline value, deals won, tasks due, and recent activity at a glance.",
       },
-      { property: "og:title", content: "Dashboard — Agency Engine" },
+      { property: "og:title", content: "Dashboard — Lead Convert" },
       {
         property: "og:description",
         content: "Pipeline value, deals won, tasks due, and recent activity at a glance.",

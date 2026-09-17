@@ -28,7 +28,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/settings/booking")({
   head: () => ({
     meta: [
-      { title: "Booking pages — Agency Engine" },
+      { title: "Booking pages — Lead Convert" },
       { name: "description", content: "Create public booking links for clients." },
     ],
   }),

@@ -32,7 +32,7 @@ import { LIFECYCLE_STAGES } from "@/lib/contacts";
 export const Route = createFileRoute("/_authenticated/marketing")({
   head: () => ({
     meta: [
-      { title: "Marketing — Agency Engine" },
+      { title: "Marketing — Lead Convert" },
       { name: "description", content: "Email & SMS campaigns, templates, trigger links, social posts, ads." },
     ],
   }),
