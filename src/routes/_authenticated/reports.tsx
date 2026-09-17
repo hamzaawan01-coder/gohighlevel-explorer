@@ -24,12 +24,17 @@ import { AppShell } from "@/components/AppShell";
 import { useTenancy } from "@/lib/tenancy";
 import { fetchReports } from "@/lib/reports";
 import { useSessionReady } from "@/lib/session-ready";
+import { fetchDefaultCurrency, formatAmount } from "@/lib/custom-fields";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
     meta: [
       { title: "Reports — Lead Convert" },
       { name: "description", content: "Win rate, cycle time, source attribution, and per-rep activity." },
+      { property: "og:title", content: "Reports — Lead Convert" },
+      { property: "og:description", content: "Win rate, cycle time, source attribution, and per-rep activity." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ReportsPage,
@@ -44,6 +49,12 @@ function ReportsPage() {
     enabled: !!subId && sessionReady,
     queryFn: () => fetchReports(subId!),
   });
+  const { data: currency } = useQuery({
+    queryKey: ["default-currency", subId],
+    enabled: !!subId,
+    queryFn: () => fetchDefaultCurrency(subId!),
+  });
+  const cash = (v: number) => formatAmount(v, currency);
 
   return (
     <AppShell>
