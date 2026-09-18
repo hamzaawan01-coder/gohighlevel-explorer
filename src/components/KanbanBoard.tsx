@@ -17,6 +17,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+
 import type { Deal, Stage } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import { useTenancy } from "@/lib/tenancy";
