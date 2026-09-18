@@ -71,7 +71,7 @@ export const Route = createFileRoute("/api/public/twilio/$token/voicemail")({
           .eq("call_sid", callSid)
           .maybeSingle();
 
-        await (supabaseAdmin as any).from("voicemails").insert({
+        const vm = await (supabaseAdmin as any).from("voicemails").insert({
           sub_account_id: conn.sub_account_id,
           phone_call_id: call?.id ?? null,
           contact_id: contact?.id ?? null,
@@ -80,7 +80,16 @@ export const Route = createFileRoute("/api/public/twilio/$token/voicemail")({
           recording_sid: recordingSid,
           recording_url: `${recordingUrl}.mp3`,
           duration_seconds: duration || null,
-        });
+        }).select("id").single();
+        if (vm.data?.id) {
+          const { notifyTeam } = await import("@/lib/twilio-inbound.server");
+          await notifyTeam(supabaseAdmin as any, {
+            subAccountId: conn.sub_account_id,
+            title: `New voicemail from ${from}`,
+            body: `${duration || 0}s — listen on the Calls page.`,
+            link: "/calls",
+          });
+        }
 
         return new Response(
           '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Thank you. Goodbye.</Say><Hangup/></Response>',

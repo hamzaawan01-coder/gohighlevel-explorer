@@ -51,6 +51,50 @@ export async function ensureInboundConversation(
 }
 
 /**
+ * Fan a notification out to everyone in the workspace (agency members +
+ * sub-account members) so it shows up in the in-app Inbox. Best effort.
+ */
+export async function notifyTeam(
+  supabaseAdmin: Admin,
+  args: { subAccountId: string; title: string; body?: string; link?: string },
+): Promise<void> {
+  try {
+    const { data: sub } = await supabaseAdmin
+      .from("sub_accounts")
+      .select("agency_id")
+      .eq("id", args.subAccountId)
+      .single();
+    if (!sub?.agency_id) return;
+
+    const [{ data: agencyMembers }, { data: subMembers }] = await Promise.all([
+      supabaseAdmin.from("agency_memberships").select("user_id").eq("agency_id", sub.agency_id),
+      supabaseAdmin
+        .from("sub_account_memberships")
+        .select("user_id")
+        .eq("sub_account_id", args.subAccountId),
+    ]);
+
+    const ids = new Set<string>();
+    for (const m of [...(agencyMembers ?? []), ...(subMembers ?? [])]) {
+      if (m?.user_id) ids.add(m.user_id as string);
+    }
+    if (ids.size === 0) return;
+
+    await supabaseAdmin.from("notifications").insert(
+      [...ids].map((user_id) => ({
+        user_id,
+        sub_account_id: args.subAccountId,
+        title: args.title,
+        body: args.body ?? null,
+        link: args.link ?? null,
+      })),
+    );
+  } catch {
+    // Notifications are a convenience; inbound delivery must still succeed.
+  }
+}
+
+/**
  * Tell the workspace team about an inbound message so it shows up in the
  * in-app Inbox and the notification bell. Best effort — never fails the
  * webhook.
