@@ -77,6 +77,7 @@ function InboxPage() {
     >
       <div className="h-full flex flex-col">
         <h1 className="sr-only">Inbox</h1>
+        <LiveCallBar />
         <div className="px-6 py-3 border-b border-border flex items-center gap-1.5">
           {(["all", "unread"] as Filter[]).map((f) => (
             <button
