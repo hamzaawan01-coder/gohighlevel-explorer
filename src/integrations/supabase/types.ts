@@ -995,6 +995,66 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          company: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          status: string
+          sub_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          sub_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          sub_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_sub_account_id_fkey"
+            columns: ["sub_account_id"]
+            isOneToOne: false
+            referencedRelation: "sub_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_files: {
         Row: {
           contact_id: string
@@ -1403,6 +1463,7 @@ export type Database = {
       }
       deals: {
         Row: {
+          client_id: string | null
           contact_id: string | null
           created_at: string
           currency: string
@@ -1415,6 +1476,7 @@ export type Database = {
           owner_id: string
           pipeline_id: string
           position: number
+          signed_at: string | null
           stage_id: string
           sub_account_id: string
           title: string
@@ -1422,6 +1484,7 @@ export type Database = {
           value: number
         }
         Insert: {
+          client_id?: string | null
           contact_id?: string | null
           created_at?: string
           currency?: string
@@ -1434,6 +1497,7 @@ export type Database = {
           owner_id: string
           pipeline_id: string
           position?: number
+          signed_at?: string | null
           stage_id: string
           sub_account_id: string
           title: string
@@ -1441,6 +1505,7 @@ export type Database = {
           value?: number
         }
         Update: {
+          client_id?: string | null
           contact_id?: string | null
           created_at?: string
           currency?: string
@@ -1453,6 +1518,7 @@ export type Database = {
           owner_id?: string
           pipeline_id?: string
           position?: number
+          signed_at?: string | null
           stage_id?: string
           sub_account_id?: string
           title?: string
@@ -1460,6 +1526,13 @@ export type Database = {
           value?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "deals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "deals_contact_id_fkey"
             columns: ["contact_id"]
