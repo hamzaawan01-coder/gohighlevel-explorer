@@ -716,3 +716,107 @@ function WhatsAppCell({ subId, number }: { subId: string; number: any }) {
     </Dialog>
   );
 }
+
+// ============ Import existing numbers ============
+function ImportNumbersPanel({ subId }: { subId: string }) {
+  const listFn = useServerFn(listAccountNumbers);
+  const importFn = useServerFn(importTwilioNumber);
+  const qc = useQueryClient();
+
+  const q = useQuery({
+    queryKey: ["twilio-account-numbers", subId],
+    queryFn: () => listFn({ data: { subAccountId: subId } }),
+  });
+
+  const importM = useMutation({
+    mutationFn: (sid: string) => importFn({ data: { subAccountId: subId, twilioSid: sid } }),
+    onSuccess: (r) => {
+      toast.success(`${r.phoneNumber} now points at the CRM — texts and calls will land in the inbox.`);
+      qc.invalidateQueries({ queryKey: ["twilio-account-numbers", subId] });
+      qc.invalidateQueries({ queryKey: ["twilio-numbers", subId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label="Refresh Twilio account numbers"
+          onClick={() => qc.invalidateQueries({ queryKey: ["twilio-account-numbers", subId] })}
+        >
+          Refresh
+        </Button>
+      </div>
+
+      {q.error ? (
+        <ErrorState compact onRetry={() => q.refetch()} error={q.error} />
+      ) : q.isLoading ? (
+        <ListSkeleton rows={3} />
+      ) : (q.data ?? []).length === 0 ? (
+        <EmptyState
+          compact
+          icon={PhoneCall}
+          title="No numbers in this Twilio account"
+          description="Numbers you buy or already own on this Twilio account will show up here."
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Number</TableHead>
+                <TableHead>Capabilities</TableHead>
+                <TableHead>Webhooks</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(q.data ?? []).map((n: any) => (
+                <TableRow key={n.sid}>
+                  <TableCell className="font-mono">
+                    {n.friendly_name}
+                    {n.imported && <Badge className="ml-2" variant="default">In CRM</Badge>}
+                  </TableCell>
+                  <TableCell className="space-x-1 text-xs">
+                    {n.capabilities?.voice && <Badge variant="secondary">Voice</Badge>}
+                    {(n.capabilities?.sms ?? n.capabilities?.SMS) && <Badge variant="secondary">SMS</Badge>}
+                    {(n.capabilities?.mms ?? n.capabilities?.MMS) && <Badge variant="secondary">MMS</Badge>}
+                  </TableCell>
+                  <TableCell>
+                    {n.pointedAtCrm ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-primary">
+                        <CheckCircle2 className="size-3.5" /> Pointed at CRM
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Elsewhere</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {n.pointedAtCrm ? (
+                      <span className="text-xs text-muted-foreground">Connected</span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        disabled={importM.isPending}
+                        onClick={() => importM.mutate(n.sid)}
+                      >
+                        {n.imported ? "Repoint at CRM" : "Import & connect"}
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Importing switches the number's calls and texts over to this workspace instantly — no Twilio console edits
+        needed. Anyone texting or ringing the number reaches the CRM inbox and softphone.
+      </p>
+    </div>
+  );
+}
