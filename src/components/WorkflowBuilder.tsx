@@ -57,6 +57,9 @@ export function WorkflowBuilder({
       case "add_contact_tag":
         a = { type, tag: "" };
         break;
+      case "create_client":
+        a = { type };
+        break;
       case "create_notification":
         a = { type, title: name || "Workflow ran" };
         break;
@@ -311,6 +314,14 @@ function ActionFields({
         <Label className="text-[11px]">Tag</Label>
         <Input value={action.tag} onChange={(e) => onChange({ tag: e.target.value } as Partial<WorkflowAction>)} />
       </div>
+    );
+  }
+  if (action.type === "create_client") {
+    return (
+      <p className="text-[11px] text-muted-foreground">
+        Creates a client record from the opportunity's contact (or reuses a matching one) and links the
+        opportunity to it.
+      </p>
     );
   }
   if (action.type === "create_notification") {

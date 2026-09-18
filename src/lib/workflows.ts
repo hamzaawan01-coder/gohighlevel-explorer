@@ -31,6 +31,7 @@ export type WorkflowAction =
   | { type: "create_task"; title: string; priority?: TaskPriority; due_in_days?: number }
   | { type: "set_contact_stage"; stage: LifecycleStage }
   | { type: "add_contact_tag"; tag: string }
+  | { type: "create_client" }
   | { type: "create_notification"; title: string; body?: string; link?: string }
   | { type: "send_email"; to?: string; subject: string; body_html?: string; body_text?: string; delay_minutes?: number; respect_quiet_hours?: boolean }
   | { type: "send_sms"; to?: string; body: string; delay_minutes?: number; respect_quiet_hours?: boolean };
@@ -39,6 +40,7 @@ export const WORKFLOW_ACTION_TYPES: { value: WorkflowAction["type"]; label: stri
   { value: "create_task", label: "Create task" },
   { value: "set_contact_stage", label: "Set contact stage" },
   { value: "add_contact_tag", label: "Add tag to contact" },
+  { value: "create_client", label: "Create client account from opportunity" },
   { value: "create_notification", label: "Send in-app notification" },
   { value: "send_email", label: "Send email" },
   { value: "send_sms", label: "Send SMS" },
