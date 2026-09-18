@@ -140,6 +140,24 @@ export function Softphone() {
     setMuted(next);
   };
 
+  // Publish call state so other screens (Inbox) can answer from their own UI.
+  useEffect(() => {
+    const fromNumber =
+      (incoming?.parameters.From as string | undefined) ??
+      (activeCall?.parameters.From as string | undefined) ??
+      (activeCall?.parameters.To as string | undefined) ??
+      (callState === "dialing" ? dialTo : null) ??
+      null;
+    setSoftphoneState({
+      callState,
+      from: fromNumber,
+      answer: incoming ? answer : null,
+      reject: incoming ? reject : null,
+      hangup: activeCall ? hangup : null,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callState, incoming, activeCall, dialTo]);
+
   if (!subId || !conn.data?.connected) return null;
 
   return (
