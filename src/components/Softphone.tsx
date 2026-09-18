@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTenancy } from "@/lib/tenancy";
 import { getVoiceToken, listMyNumbers, getTwilioConnection } from "@/lib/twilio.functions";
+import { setSoftphoneState } from "@/lib/softphone-bus";
 import { toast } from "sonner";
 
 export function Softphone() {
@@ -101,6 +102,13 @@ export function Softphone() {
     }
   }, [callState]);
 
+  // Register with Twilio as soon as the workspace has a connection so inbound
+  // calls ring even when the dialer panel is closed.
+  useEffect(() => {
+    if (conn.data?.connected && !device && status === "idle") void initDevice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conn.data?.connected, device, status]);
+
   const dial = async () => {
     if (!device || !dialTo || !fromId) return;
     try {
@@ -131,6 +139,24 @@ export function Softphone() {
     activeCall.mute(next);
     setMuted(next);
   };
+
+  // Publish call state so other screens (Inbox) can answer from their own UI.
+  useEffect(() => {
+    const fromNumber =
+      (incoming?.parameters.From as string | undefined) ??
+      (activeCall?.parameters.From as string | undefined) ??
+      (activeCall?.parameters.To as string | undefined) ??
+      (callState === "dialing" ? dialTo : null) ??
+      null;
+    setSoftphoneState({
+      callState,
+      from: fromNumber,
+      answer: incoming ? answer : null,
+      reject: incoming ? reject : null,
+      hangup: activeCall ? hangup : null,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callState, incoming, activeCall, dialTo]);
 
   if (!subId || !conn.data?.connected) return null;
 

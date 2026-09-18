@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Bell, Check, CheckCheck, Inbox } from "lucide-react";
+import { Bell, Check, CheckCheck, Inbox, Phone, PhoneOff } from "lucide-react";
+import { useSoftphone } from "@/lib/softphone-bus";
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/states";
 import { formatDistanceToNow } from "date-fns";
 import { AppShell } from "@/components/AppShell";
@@ -76,6 +77,7 @@ function InboxPage() {
     >
       <div className="h-full flex flex-col">
         <h1 className="sr-only">Inbox</h1>
+        <LiveCallBar />
         <div className="px-6 py-3 border-b border-border flex items-center gap-1.5">
           {(["all", "unread"] as Filter[]).map((f) => (
             <button
@@ -121,6 +123,54 @@ function InboxPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+/** Live call strip: answer, decline or hang up a call without leaving the Inbox. */
+function LiveCallBar() {
+  const { callState, from, answer, reject, hangup } = useSoftphone();
+  if (callState === "idle") return null;
+
+  const ringing = callState === "ringing";
+  return (
+    <div className="flex flex-wrap items-center gap-3 border-b border-border bg-secondary px-6 py-3">
+      <span className={"flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground " + (ringing ? "animate-pulse" : "")}>
+        <Phone className="size-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium truncate">
+          {ringing ? "Incoming call" : callState === "in-call" ? "On a call" : "Dialing"}
+          {from ? ` · ${from}` : ""}
+        </p>
+        <p className="text-[11px] text-muted-foreground">
+          {ringing ? "Answer here to talk in the app." : "Audio runs through this browser tab."}
+        </p>
+      </div>
+      {ringing && answer && (
+        <button
+          onClick={answer}
+          className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+        >
+          <Phone className="size-3.5" /> Answer
+        </button>
+      )}
+      {ringing && reject && (
+        <button
+          onClick={reject}
+          className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-background"
+        >
+          <PhoneOff className="size-3.5" /> Decline
+        </button>
+      )}
+      {!ringing && hangup && (
+        <button
+          onClick={hangup}
+          className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-background"
+        >
+          <PhoneOff className="size-3.5" /> Hang up
+        </button>
+      )}
+    </div>
   );
 }
 
