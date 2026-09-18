@@ -102,6 +102,13 @@ export function Softphone() {
     }
   }, [callState]);
 
+  // Register with Twilio as soon as the workspace has a connection so inbound
+  // calls ring even when the dialer panel is closed.
+  useEffect(() => {
+    if (conn.data?.connected && !device && status === "idle") void initDevice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conn.data?.connected, device, status]);
+
   const dial = async () => {
     if (!device || !dialTo || !fromId) return;
     try {
