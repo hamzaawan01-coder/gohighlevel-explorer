@@ -128,6 +128,20 @@ export async function purchaseNumber(
   };
 }
 
+/** List the phone numbers already owned by this Twilio account. */
+export async function listIncomingNumbers(auth: TwilioAuth) {
+  const url = `${TWILIO_BASE}/Accounts/${auth.accountSid}/IncomingPhoneNumbers.json?PageSize=100`;
+  const res = await twilioRequest("GET", url, auth);
+  return ((res?.incoming_phone_numbers ?? []) as any[]).map((n) => ({
+    sid: n.sid as string,
+    phoneNumber: n.phone_number as string,
+    friendlyName: (n.friendly_name ?? n.phone_number) as string,
+    capabilities: (n.capabilities ?? {}) as Record<string, boolean>,
+    voiceUrl: (n.voice_url ?? null) as string | null,
+    smsUrl: (n.sms_url ?? null) as string | null,
+  }));
+}
+
 /** Release (delete) a purchased number. */
 export async function releaseNumber(auth: TwilioAuth, sid: string) {
   const url = `${TWILIO_BASE}/Accounts/${auth.accountSid}/IncomingPhoneNumbers/${sid}.json`;
@@ -155,7 +169,7 @@ export async function updateNumberWebhooks(
 
 export function webhookBaseUrl() {
   // Use the stable published origin when available; fall back to preview
-  return process.env.PUBLIC_APP_URL ?? "https://gohighlevel-explorer.lovable.app";
+  return process.env.PUBLIC_APP_URL ?? "https://leadsconvert.co.uk";
 }
 
 export function voiceWebhookUrl(token: string) {

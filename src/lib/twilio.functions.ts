@@ -258,6 +258,108 @@ export const buyNumber = createServerFn({ method: "POST" })
     return { id: row.id, phoneNumber: purchased.phoneNumber };
   });
 
+/**
+ * List numbers that already exist in the connected Twilio account, flagging
+ * which ones are already wired into this workspace.
+ */
+export const listAccountNumbers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string }) => z.object({ subAccountId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureMember(context.supabase, context.userId, data.subAccountId);
+    const conn = await loadConnection(data.subAccountId);
+    const { listIncomingNumbers } = await import("./twilio.server");
+    const remote = await listIncomingNumbers({
+      accountSid: conn.account_sid,
+      apiKeySid: conn.api_key_sid,
+      apiKeySecret: conn.api_key_secret,
+    });
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await (supabaseAdmin as any)
+      .from("twilio_numbers")
+      .select("twilio_sid")
+      .eq("sub_account_id", data.subAccountId)
+      .is("released_at", null);
+    const known = new Set<string>(((rows ?? []) as any[]).map((r) => r.twilio_sid));
+
+    const expectedSms = smsWebhookUrl(conn.webhook_token);
+    const expectedVoice = voiceWebhookUrl(conn.webhook_token);
+
+    return remote.map((n) => ({
+      ...n,
+      imported: known.has(n.sid),
+      pointedAtCrm: n.smsUrl === expectedSms && n.voiceUrl === expectedVoice,
+    }));
+  });
+
+/**
+ * Import a number the account already owns: repoint its voice/SMS webhooks at
+ * this workspace's inbox and record it locally.
+ */
+export const importTwilioNumber = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subAccountId: string; twilioSid: string }) =>
+    z.object({ subAccountId: z.string().uuid(), twilioSid: z.string().min(10) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context.supabase, context.userId, data.subAccountId);
+    const conn = await loadConnection(data.subAccountId);
+    const auth = {
+      accountSid: conn.account_sid,
+      apiKeySid: conn.api_key_sid,
+      apiKeySecret: conn.api_key_secret,
+    };
+
+    const { listIncomingNumbers } = await import("./twilio.server");
+    const remote = await listIncomingNumbers(auth);
+    const match = remote.find((n) => n.sid === data.twilioSid);
+    if (!match) throw new Error("That number is not in the connected Twilio account.");
+
+    const voiceUrl = voiceWebhookUrl(conn.webhook_token);
+    const smsUrl = smsWebhookUrl(conn.webhook_token);
+    const statusUrl = statusWebhookUrl(conn.webhook_token);
+    await updateNumberWebhooks(auth, match.sid, { voiceUrl, smsUrl, statusCallback: statusUrl });
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await (supabaseAdmin as any)
+      .from("twilio_numbers")
+      .select("id")
+      .eq("sub_account_id", data.subAccountId)
+      .eq("twilio_sid", match.sid)
+      .maybeSingle();
+
+    const payload = {
+      sub_account_id: data.subAccountId,
+      connection_id: conn.id,
+      phone_number: match.phoneNumber,
+      friendly_name: match.friendlyName,
+      twilio_sid: match.sid,
+      capabilities: match.capabilities,
+      voice_url: voiceUrl,
+      sms_url: smsUrl,
+      status_callback: statusUrl,
+      released_at: null,
+    };
+
+    if (existing) {
+      const { error } = await (supabaseAdmin as any)
+        .from("twilio_numbers")
+        .update(payload)
+        .eq("id", existing.id);
+      if (error) throw new Error(error.message);
+      return { id: existing.id, phoneNumber: match.phoneNumber };
+    }
+
+    const { data: row, error } = await (supabaseAdmin as any)
+      .from("twilio_numbers")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: row.id, phoneNumber: match.phoneNumber };
+  });
+
 /** List numbers owned by a sub-account. */
 export const listMyNumbers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

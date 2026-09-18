@@ -50,6 +50,8 @@ import {
   releaseTwilioNumber,
   setDefaultTwilioNumber,
   enableWhatsappOnNumber,
+  listAccountNumbers,
+  importTwilioNumber,
 } from "@/lib/twilio.functions";
 import {
   Dialog,
@@ -125,6 +127,13 @@ function PhonePanels({ subId }: { subId: string }) {
           </ConsoleSection>
           {connQ.data?.connected && (
             <>
+              <ConsoleSection
+                title="Numbers already in your Twilio account"
+                icon={Link2}
+                hint="Point an existing number at the CRM inbox"
+              >
+                <ImportNumbersPanel subId={subId} />
+              </ConsoleSection>
               <ConsoleSection title="Search & buy numbers" icon={Search} hint="Twilio inventory search">
                 <SearchAndBuyPanel subId={subId} />
               </ConsoleSection>
