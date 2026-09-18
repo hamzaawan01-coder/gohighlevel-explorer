@@ -29,6 +29,8 @@ export type Deal = {
   owner_id: string | null;
   expected_close_date: string | null;
   custom_fields: Record<string, string | number | boolean | null>;
+  client_id: string | null;
+  signed_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -253,6 +255,18 @@ export async function updateDeal(dealId: string, patch: DealUpdate): Promise<Dea
     .single();
   if (error) throw error;
   return data as Deal;
+}
+
+/** Marks an opportunity as signed — fires any "Deal marked as signed" automations. */
+export async function markDealSigned(dealId: string, signed = true): Promise<Deal> {
+  const { data, error } = await supabase
+    .from("deals")
+    .update({ signed_at: signed ? new Date().toISOString() : null } as never)
+    .eq("id", dealId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as unknown as Deal;
 }
 
 export async function deleteDeal(dealId: string): Promise<void> {
