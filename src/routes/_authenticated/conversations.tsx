@@ -193,6 +193,20 @@ function ConversationsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Deep link: /conversations?contact=<id> opens (or starts) that contact's thread.
+  const { contact: contactParam } = Route.useSearch();
+  const handledContactRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!contactParam || !subId || convosQ.isLoading) return;
+    if (handledContactRef.current === contactParam) return;
+    handledContactRef.current = contactParam;
+    const existing = convos.find((c) => c.contact_id === contactParam);
+    if (existing) setSelectedConvoId(existing.id);
+    else openForContact.mutate({ contactId: contactParam, channel: "sms" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contactParam, subId, convosQ.isLoading]);
+
+
   const patchMut = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Parameters<typeof updateConversation>[1] }) =>
       updateConversation(id, patch),
