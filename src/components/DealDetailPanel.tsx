@@ -21,7 +21,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenancy } from "@/lib/tenancy";
-import { fetchDeal, updateDeal, deleteDeal, type Deal, type Stage } from "@/lib/pipeline";
+import { fetchDeal, updateDeal, deleteDeal, markDealSigned, type Deal, type Stage } from "@/lib/pipeline";
 import { fetchTasks, updateTask, type Task } from "@/lib/tasks";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import { fetchContactMessages } from "@/lib/contact-messages";
@@ -105,6 +105,16 @@ export function DealDetailPanel({
       qc.invalidateQueries({ queryKey: ["board"] });
       toast.success("Deal deleted");
       onClose();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const signMut = useMutation({
+    mutationFn: (signed: boolean) => markDealSigned(dealId, signed),
+    onSuccess: (_d, signed) => {
+      qc.invalidateQueries({ queryKey: ["deal", dealId] });
+      qc.invalidateQueries({ queryKey: ["board"] });
+      toast.success(signed ? "Marked as signed" : "Signed status cleared");
     },
     onError: (e: Error) => toast.error(e.message),
   });
