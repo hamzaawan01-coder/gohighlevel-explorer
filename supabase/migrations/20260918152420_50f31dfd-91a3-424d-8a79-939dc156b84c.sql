@@ -1,0 +1,1 @@
+ALTER TYPE public.workflow_trigger ADD VALUE IF NOT EXISTS 'deal.signed';

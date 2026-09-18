@@ -21,7 +21,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenancy } from "@/lib/tenancy";
-import { fetchDeal, updateDeal, deleteDeal, type Deal, type Stage } from "@/lib/pipeline";
+import { fetchDeal, updateDeal, deleteDeal, markDealSigned, type Deal, type Stage } from "@/lib/pipeline";
 import { fetchTasks, updateTask, type Task } from "@/lib/tasks";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import { fetchContactMessages } from "@/lib/contact-messages";
@@ -109,6 +109,16 @@ export function DealDetailPanel({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const signMut = useMutation({
+    mutationFn: (signed: boolean) => markDealSigned(dealId, signed),
+    onSuccess: (_d, signed) => {
+      qc.invalidateQueries({ queryKey: ["deal", dealId] });
+      qc.invalidateQueries({ queryKey: ["board"] });
+      toast.success(signed ? "Marked as signed" : "Signed status cleared");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const toggleTaskMut = useMutation({
     mutationFn: (t: Task) => updateTask(t.id, { status: t.status === "done" ? "open" : "done" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
@@ -174,9 +184,22 @@ export function DealDetailPanel({
               </span>
             )}
             <span className="font-mono">#{d.id.slice(0, 6).toUpperCase()}</span>
+            {d.signed_at && (
+              <span className="inline-block rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-mono uppercase text-primary">
+                Signed {format(new Date(d.signed_at), "MMM d")}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => signMut.mutate(!d.signed_at)}
+            disabled={signMut.isPending}
+            className="h-8 rounded-md border border-border px-2.5 text-[11px] font-medium hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+            title={d.signed_at ? "Clear signed status" : "Mark this opportunity as signed"}
+          >
+            {d.signed_at ? "Signed ✓" : "Mark signed"}
+          </button>
           <button
             onClick={() => {
               if (confirm(`Delete "${d.title}"?`)) deleteMut.mutate();
