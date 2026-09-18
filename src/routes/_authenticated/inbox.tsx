@@ -126,6 +126,54 @@ function InboxPage() {
   );
 }
 
+/** Live call strip: answer, decline or hang up a call without leaving the Inbox. */
+function LiveCallBar() {
+  const { callState, from, answer, reject, hangup } = useSoftphone();
+  if (callState === "idle") return null;
+
+  const ringing = callState === "ringing";
+  return (
+    <div className="flex flex-wrap items-center gap-3 border-b border-border bg-secondary px-6 py-3">
+      <span className={"flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground " + (ringing ? "animate-pulse" : "")}>
+        <Phone className="size-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium truncate">
+          {ringing ? "Incoming call" : callState === "in-call" ? "On a call" : "Dialing"}
+          {from ? ` · ${from}` : ""}
+        </p>
+        <p className="text-[11px] text-muted-foreground">
+          {ringing ? "Answer here to talk in the app." : "Audio runs through this browser tab."}
+        </p>
+      </div>
+      {ringing && answer && (
+        <button
+          onClick={answer}
+          className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+        >
+          <Phone className="size-3.5" /> Answer
+        </button>
+      )}
+      {ringing && reject && (
+        <button
+          onClick={reject}
+          className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-background"
+        >
+          <PhoneOff className="size-3.5" /> Decline
+        </button>
+      )}
+      {!ringing && hangup && (
+        <button
+          onClick={hangup}
+          className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-background"
+        >
+          <PhoneOff className="size-3.5" /> Hang up
+        </button>
+      )}
+    </div>
+  );
+}
+
 function NoteRow({ note, onRead }: { note: Notification; onRead: (id: string) => void }) {
   const body = (
     <div className={"px-6 py-3 flex gap-3 items-start hover:bg-muted/40 transition-colors " + (note.read_at ? "opacity-60" : "")}>
