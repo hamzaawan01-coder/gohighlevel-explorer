@@ -17,6 +17,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+
 import type { Deal, Stage } from "@/lib/pipeline";
 import { fetchContacts, type Contact } from "@/lib/contacts";
 import { useTenancy } from "@/lib/tenancy";
@@ -348,16 +350,29 @@ function DealCardView({
         >
           <Phone className="size-3.5" />
         </a>
-        <a
-          href={email ? `mailto:${email}` : phone ? `sms:${phone}` : undefined}
-          onClick={email || phone ? stop : (e) => act(e, () => onOpen?.())}
-          aria-disabled={!email && !phone}
-          aria-label={email ? `Email ${email}` : phone ? `Text ${phone}` : "No contact info"}
-          title={email ? `Email ${email}` : phone ? `Text ${phone}` : "No contact info"}
-          className={iconBtn}
-        >
-          <MessageSquare className="size-3.5" />
-        </a>
+        {contact ? (
+          <Link
+            to="/conversations"
+            search={{ contact: contact.id }}
+            onClick={stop}
+            aria-label="Message contact in inbox"
+            title="Message in inbox"
+            className={iconBtn}
+          >
+            <MessageSquare className="size-3.5" />
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => act(e, () => onOpen?.())}
+            aria-label="No contact linked"
+            title="No contact linked"
+            className={iconBtn}
+          >
+            <MessageSquare className="size-3.5" />
+          </button>
+        )}
+
         <button
           type="button"
           onClick={(e) => act(e, () => onOpen?.())}

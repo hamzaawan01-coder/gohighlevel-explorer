@@ -49,6 +49,9 @@ import { initials, stringHue } from "@/lib/initials";
 import { ListSkeleton, EmptyState, ErrorState } from "@/components/ui/states";
 
 export const Route = createFileRoute("/_authenticated/conversations")({
+  validateSearch: (search: Record<string, unknown>): { contact?: string } =>
+    typeof search.contact === "string" ? { contact: search.contact } : {},
+
   head: () => ({
     meta: [
       { title: "Conversations — Lead Convert" },
@@ -61,6 +64,7 @@ export const Route = createFileRoute("/_authenticated/conversations")({
   }),
   component: ConversationsPage,
 });
+
 
 type FilterKey = "all" | MessageChannel;
 type StatusFilter = "all" | ConversationStatus;
@@ -188,6 +192,20 @@ function ConversationsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Deep link: /conversations?contact=<id> opens (or starts) that contact's thread.
+  const { contact: contactParam } = Route.useSearch();
+  const handledContactRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!contactParam || !subId || convosQ.isLoading) return;
+    if (handledContactRef.current === contactParam) return;
+    handledContactRef.current = contactParam;
+    const existing = convos.find((c) => c.contact_id === contactParam);
+    if (existing) setSelectedConvoId(existing.id);
+    else openForContact.mutate({ contactId: contactParam, channel: "sms" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contactParam, subId, convosQ.isLoading]);
+
 
   const patchMut = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Parameters<typeof updateConversation>[1] }) =>
