@@ -52,7 +52,7 @@ export const Route = createFileRoute("/api/public/twilio/$token/voice")({
             .maybeSingle();
           contactId = existing?.id ?? null;
 
-          await (supabaseAdmin as any).from("phone_calls").insert({
+          const inserted = await (supabaseAdmin as any).from("phone_calls").insert({
             sub_account_id: conn.sub_account_id,
             twilio_number_id: numRow.id,
             contact_id: contactId,
@@ -61,7 +61,17 @@ export const Route = createFileRoute("/api/public/twilio/$token/voice")({
             to_number: to,
             call_sid: callSid,
             status: "ringing",
-          });
+          }).select("id").single();
+          // Created exactly once per call → natural dedup for the inbox note.
+          if (inserted.data?.id) {
+            const { notifyTeam } = await import("@/lib/twilio-inbound.server");
+            await notifyTeam(supabaseAdmin as any, {
+              subAccountId: conn.sub_account_id,
+              title: `Incoming call from ${from}`,
+              body: `Ringing your numbers now — answered calls and voicemails land on the Calls page.`,
+              link: "/calls",
+            });
+          }
         }
 
         // Load call flow for this number (or workspace default)
