@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Bell, Check, CheckCheck, Inbox } from "lucide-react";
+import { Bell, Check, CheckCheck, Inbox, Phone, PhoneOff } from "lucide-react";
+import { useSoftphone } from "@/lib/softphone-bus";
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/states";
 import { formatDistanceToNow } from "date-fns";
 import { AppShell } from "@/components/AppShell";
