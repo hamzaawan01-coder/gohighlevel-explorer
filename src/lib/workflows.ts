@@ -7,6 +7,7 @@ export type WorkflowTrigger =
   | "contact.stage_changed"
   | "deal.created"
   | "deal.stage_changed"
+  | "deal.signed"
   | "task.completed"
   | "form.submitted"
   | "task.due_soon"
@@ -18,6 +19,7 @@ export const WORKFLOW_TRIGGERS: { value: WorkflowTrigger; label: string }[] = [
   { value: "contact.stage_changed", label: "Contact stage changed" },
   { value: "deal.created", label: "New opportunity created" },
   { value: "deal.stage_changed", label: "Deal moved to stage" },
+  { value: "deal.signed", label: "Deal marked as signed" },
   { value: "task.completed", label: "Task completed" },
   { value: "form.submitted", label: "Form submitted" },
   { value: "task.due_soon", label: "Task due soon (scheduled)" },
