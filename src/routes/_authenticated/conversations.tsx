@@ -49,6 +49,9 @@ import { initials, stringHue } from "@/lib/initials";
 import { ListSkeleton, EmptyState, ErrorState } from "@/components/ui/states";
 
 export const Route = createFileRoute("/_authenticated/conversations")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    contact: typeof search.contact === "string" ? search.contact : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Conversations — Lead Convert" },
@@ -61,6 +64,7 @@ export const Route = createFileRoute("/_authenticated/conversations")({
   }),
   component: ConversationsPage,
 });
+
 
 type FilterKey = "all" | MessageChannel;
 type StatusFilter = "all" | ConversationStatus;
