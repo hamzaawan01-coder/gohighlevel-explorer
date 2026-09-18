@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTenancy } from "@/lib/tenancy";
 import { getVoiceToken, listMyNumbers, getTwilioConnection } from "@/lib/twilio.functions";
+import { setSoftphoneState } from "@/lib/softphone-bus";
 import { toast } from "sonner";
 
 export function Softphone() {
