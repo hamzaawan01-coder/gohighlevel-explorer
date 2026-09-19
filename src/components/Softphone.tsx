@@ -56,7 +56,7 @@ export function Softphone() {
     setStatus("registering");
     try {
       const { token } = await fetchToken({ data: { subAccountId: subId } });
-      const { Device } = await import("@twilio/voice-sdk");
+      const Device = await loadTwilioDevice();
       const d = new Device(token, { logLevel: 1, codecPreferences: ["opus" as any, "pcmu" as any] });
       d.on("registered", () => setStatus("ready"));
       d.on("error", (e: any) => {
@@ -275,4 +275,19 @@ function formatDuration(sec: number) {
   const m = Math.floor(sec / 60).toString().padStart(2, "0");
   const s = (sec % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
+}
+
+// The SDK's ESM build extends Node's EventEmitter, which doesn't exist in the
+// browser ("Class extends value undefined"). The prebuilt dist bundle is
+// self-contained UMD and exposes window.Twilio.Device, so use that instead.
+let devicePromise: Promise<typeof DeviceType> | null = null;
+function loadTwilioDevice(): Promise<typeof DeviceType> {
+  if (!devicePromise) {
+    devicePromise = import("@twilio/voice-sdk/dist/twilio.min.js").then(() => {
+      const Device = (window as any).Twilio?.Device;
+      if (!Device) throw new Error("Twilio voice library failed to load");
+      return Device;
+    });
+  }
+  return devicePromise;
 }
