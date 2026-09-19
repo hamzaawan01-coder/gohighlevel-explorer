@@ -7,7 +7,6 @@ import type {
   ResendConfig,
   SendGridConfig,
   TwilioConfig,
-  TextMagicConfig,
 } from "./integrations";
 
 export type SendEmailArgs = {
@@ -105,79 +104,3 @@ export async function sendSmsViaTwilio(args: SendSmsArgs): Promise<{ id: string 
   return { id: body.sid ?? "twilio" };
 }
 
-/**
- * Send an SMS through the workspace-linked Twilio connector via the Lovable
- * gateway. No per-tenant credentials required — auth flows through
- * LOVABLE_API_KEY + TWILIO_API_KEY set by the connector.
- */
-export async function sendSmsViaTwilioGateway(args: {
-  from: string;
-  to: string;
-  body: string;
-}): Promise<{ id: string }> {
-  const lovableKey = process.env.LOVABLE_API_KEY;
-  const twilioKey = process.env.TWILIO_API_KEY;
-  if (!lovableKey) throw new Error("LOVABLE_API_KEY is not configured");
-  if (!twilioKey) throw new Error("Twilio connector is not linked to this project");
-
-  const res = await fetch("https://connector-gateway.lovable.dev/twilio/Messages.json", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": twilioKey,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({ To: args.to, From: args.from, Body: args.body }),
-  });
-  const body = (await res.json().catch(() => ({}))) as { sid?: string; message?: string };
-  if (!res.ok) throw new Error(`Twilio gateway ${res.status}: ${body.message ?? JSON.stringify(body)}`);
-  return { id: body.sid ?? "twilio" };
-}
-
-/**
- * Send an SMS through TextMagic's REST API (v2).
- * Auth is HTTP basic-style headers: X-TM-Username + X-TM-Key.
- */
-export async function sendSmsViaTextMagic(args: {
-  config: TextMagicConfig;
-  from: string;
-  to: string;
-  body: string;
-}): Promise<{ id: string }> {
-  // Per-workspace credentials win; otherwise fall back to the project-wide
-  // TextMagic account so a single agency key can serve every workspace.
-  const username = args.config?.username || process.env['TEXTMAGIC_USERNAME'] || "";
-  const apiKey = args.config?.api_key || process.env['TEXTMAGIC_API_KEY'] || "";
-  if (!username || !apiKey) {
-    throw new Error("TextMagic username or API key is not configured");
-  }
-
-  const params = new URLSearchParams({
-    text: args.body,
-    phones: args.to.replace(/\s+/g, ""),
-  });
-  // A sender id is optional in TextMagic; only send it when present.
-  if (args.from) params.set("from", args.from.replace(/\s+/g, ""));
-
-  const res = await fetch("https://rest.textmagic.com/api/v2/messages", {
-    method: "POST",
-    headers: {
-      "X-TM-Username": username,
-      "X-TM-Key": apiKey,
-
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: params,
-  });
-  const body = (await res.json().catch(() => ({}))) as {
-    id?: number;
-    message?: string;
-    errors?: unknown;
-  };
-  if (!res.ok) {
-    throw new Error(
-      `TextMagic ${res.status}: ${body.message ?? JSON.stringify(body.errors ?? body)}`,
-    );
-  }
-  return { id: body.id ? String(body.id) : "textmagic" };
-}

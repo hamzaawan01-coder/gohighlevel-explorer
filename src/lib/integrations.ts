@@ -18,12 +18,7 @@ export type TwilioConfig = {
   auth_token: string;
 };
 
-export type TextMagicConfig = {
-  username: string;
-  api_key: string;
-};
-
-export type SmsProvider = "twilio" | "twilio_connector" | "textmagic";
+export type SmsProvider = "twilio";
 
 /**
  * Non-secret integration settings. Provider credentials (email_config /
