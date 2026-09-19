@@ -223,7 +223,7 @@ export const sendTestSms = createServerFn({ method: "POST" })
       .eq("sub_account_id", data.sub_account_id)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!row.sms_provider) throw new Error("No SMS provider configured");
+    if (!row || !row.sms_provider) throw new Error("No SMS provider configured");
     if (!row.sms_from_number) {
       throw new Error("Missing from number");
     }
