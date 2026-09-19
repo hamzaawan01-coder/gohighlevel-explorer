@@ -61,7 +61,7 @@ export function Softphone() {
       d.on("registered", () => setStatus("ready"));
       d.on("error", (e: any) => {
         console.error("Twilio device error", e);
-        toast.error(`Softphone: ${e.message ?? "error"}`);
+        toast.error(`Softphone: ${e?.message ?? String(e ?? "error")}`);
         setStatus("error");
       });
       d.on("incoming", (call: Call) => {
@@ -79,7 +79,7 @@ export function Softphone() {
       await d.register();
       setDevice(d);
     } catch (e: any) {
-      toast.error(`Softphone init failed: ${e.message ?? e}`);
+      toast.error(`Softphone init failed: ${e?.message ?? String(e ?? "error")}`);
       setStatus("error");
     }
   };
@@ -118,9 +118,9 @@ export function Softphone() {
       call.on("accept", () => setCallState("in-call"));
       call.on("disconnect", () => { setActiveCall(null); setCallState("idle"); setMuted(false); });
       call.on("cancel", () => { setActiveCall(null); setCallState("idle"); });
-      call.on("error", (e: any) => toast.error(`Call error: ${e.message}`));
+      call.on("error", (e: any) => toast.error(`Call error: ${e?.message ?? String(e ?? "error")}`));
     } catch (e: any) {
-      toast.error(`Dial failed: ${e.message ?? e}`);
+      toast.error(`Dial failed: ${e?.message ?? String(e ?? "error")}`);
     }
   };
 
