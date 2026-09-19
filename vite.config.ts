@@ -27,6 +27,12 @@ export default defineConfig({
         "entities/lib/decode.js": path.resolve(process.cwd(), "node_modules/entities/lib/decode.js"),
         "entities/lib/encode.js": path.resolve(process.cwd(), "node_modules/entities/lib/encode.js"),
         entities: path.resolve(process.cwd(), "node_modules/entities"),
+        // Twilio's ESM build extends Node's EventEmitter (absent in browsers);
+        // map the deep import to the self-contained UMD bundle on disk.
+        "@twilio/voice-sdk/dist/twilio.min.js": path.resolve(
+          process.cwd(),
+          "node_modules/@twilio/voice-sdk/dist/twilio.min.js",
+        ),
       },
     },
   },
