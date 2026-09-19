@@ -626,12 +626,10 @@ function SmsPanel({ subId }: { subId: string }) {
       await saveFn({
         data: {
           sub_account_id: subId,
-          provider,
+          provider: "twilio",
           from_number: fromNumber,
           account_sid: sid,
           auth_token: token || undefined,
-          username: tmUser,
-          api_key: tmKey || undefined,
         },
       });
     },
