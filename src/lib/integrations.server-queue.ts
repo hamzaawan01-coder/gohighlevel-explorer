@@ -13,8 +13,8 @@
  *  - drainAll never throws — a bad row is logged and skipped so one message
  *    can't take the whole cron run down (no more 500 storm on /process-outbound).
  */
-import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig, TextMagicConfig } from "./integrations";
-import { sendEmailViaProvider, sendSmsViaTwilio, sendSmsViaTwilioGateway } from "./integrations.server";
+import type { SmtpConfig, ResendConfig, SendGridConfig, TwilioConfig } from "./integrations";
+import { sendEmailViaProvider, sendSmsViaTwilio } from "./integrations.server";
 
 const MAX_ATTEMPTS = 5;
 const BASE_BACKOFF_MS = 60_000; // 1 minute
@@ -146,7 +146,7 @@ async function attemptSend(row: Row): Promise<SendOutcome> {
     }
 
     if (row.channel === "sms") {
-      if (!cfg.sms_provider || (!cfg.sms_from_number && cfg.sms_provider !== "textmagic")) {
+      if (!cfg.sms_provider || !cfg.sms_from_number) {
         return {
           ok: false,
           provider: cfg.sms_provider ?? null,
@@ -156,27 +156,12 @@ async function attemptSend(row: Row): Promise<SendOutcome> {
           latencyMs: Date.now() - start,
         };
       }
-      const { sendSmsViaTextMagic } = await import("./integrations.server");
-      const r =
-        cfg.sms_provider === "twilio_connector"
-          ? await sendSmsViaTwilioGateway({
-              from: cfg.sms_from_number ?? "",
-              to: row.to_address,
-              body: row.body_text ?? "",
-            })
-          : cfg.sms_provider === "textmagic"
-            ? await sendSmsViaTextMagic({
-                config: cfg.sms_config as TextMagicConfig,
-                from: cfg.sms_from_number ?? "",
-                to: row.to_address,
-                body: row.body_text ?? "",
-              })
-            : await sendSmsViaTwilio({
-                config: cfg.sms_config as TwilioConfig,
-                from: cfg.sms_from_number ?? "",
-                to: row.to_address,
-                body: row.body_text ?? "",
-              });
+      const r = await sendSmsViaTwilio({
+        config: cfg.sms_config as TwilioConfig,
+        from: cfg.sms_from_number ?? "",
+        to: row.to_address,
+        body: row.body_text ?? "",
+      });
       return {
         ok: true,
         provider: cfg.sms_provider,
