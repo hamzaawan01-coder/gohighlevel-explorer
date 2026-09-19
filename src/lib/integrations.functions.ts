@@ -5,7 +5,6 @@ import type {
   ResendConfig,
   SendGridConfig,
   TwilioConfig,
-  TextMagicConfig,
 } from "./integrations";
 
 /**
@@ -130,12 +129,10 @@ export const saveSmsIntegrationSecure = createServerFn({ method: "POST" })
   .inputValidator(
     (data: {
       sub_account_id: string;
-      provider: "twilio" | "twilio_connector" | "textmagic";
+      provider: "twilio";
       from_number: string;
       account_sid?: string;
       auth_token?: string;
-      username?: string;
-      api_key?: string;
     }) => data,
   )
   .handler(async ({ data, context }) => {
@@ -148,19 +145,10 @@ export const saveSmsIntegrationSecure = createServerFn({ method: "POST" })
       .maybeSingle();
     const prev = (existing?.sms_config ?? {}) as ConfigRecord;
 
-    const config: ConfigRecord =
-      data.provider === "twilio_connector"
-        ? {}
-        : data.provider === "textmagic"
-          ? {
-              username: data.username ?? str(prev.username),
-              api_key: data.api_key ? data.api_key : str(prev.api_key),
-            }
-          : {
-              account_sid: data.account_sid ?? str(prev.account_sid),
-              auth_token: data.auth_token ? data.auth_token : str(prev.auth_token),
-            };
-
+    const config: ConfigRecord = {
+      account_sid: data.account_sid ?? str(prev.account_sid),
+      auth_token: data.auth_token ? data.auth_token : str(prev.auth_token),
+    };
 
     const { error } = await sb.from("sub_account_integrations").upsert(
       {
